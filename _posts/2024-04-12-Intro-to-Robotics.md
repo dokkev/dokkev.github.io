@@ -1,10 +1,10 @@
 ---
-title: "Tuning Legged Locomotion Controllers via Safe Bayesian Optimization"
-description: 7th Annual Conference on Robot Learning (CoRL 2023)
+title: "Resources for Learning Robotics"
+description: Collection of useful resources for learning robotics. 
 layout: distill
 published: true
 date: 2024-04-12 00:00:00
-img: /assets/img/widmer2023tuning/widmer2023tuning.png
+img: /assets/img/learning_robotics/darwinop.jpg
 permalink: /Intro-to-Robotics/
 tags: [robotics]
 categories: robotics101
