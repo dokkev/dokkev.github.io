@@ -11,12 +11,11 @@ categories: robotics101
 
 ---
 
-Collection of useful resources for learning robotics. 
+Robotics research requires multidisciplinary knowledge in mathematics, mechanical engineering, electrical engineering, computer engineering, and computer science. 
 
-
-# Fundamental Robotics Concepts (Short Videos)
+## Fundamental Robotics Concepts (Short Videos)
 ### Robot Configuration
-- [Quaternions and 3d rotation, explained interactively](https://www.youtube.com/watch?v=zjMuIxRvygQ&t=33s)
+- [Quaternions and Rotation in 3D Space, explained interactively](https://www.youtube.com/watch?v=zjMuIxRvygQ&t=33s)
 - [Visualizing quaternions (4d numbers) with stereographic projection](https://www.youtube.com/watch?v=d4EgbgTm0Bg&t=469s)
 - [Explaining Gibmal Lock](https://www.youtube.com/watch?v=zc8b2Jo7mno)
 - [Configuration Space](https://www.youtube.com/watch?v=FyLNR3edOds&list=PLggLP4f-rq02vX0OQQ5vrCxbJrzamYDfx&index=6)
@@ -55,7 +54,7 @@ Collection of useful resources for learning robotics.
 - [Transformer (2)](https://www.youtube.com/watch?v=eMlx5fFNoYc&list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi&index=6)
 
 
-# Learning Robot Operating System (ROS)
+##  Robot Operating System (ROS)
 
 ### Basics of ROS 2
 - [ROS 2 Documentation](https://docs.ros.org/en/iron/index.html)
