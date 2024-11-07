@@ -1,12 +1,12 @@
 {
   "basics": {
-    "name": "Albert Einstein",
-    "label": "Scientist",
+    "name": "Kang, Dong Ho",
+    "label": "Robotics Scientist",
     "image": "",
-    "email": "albert@einstein.de",
-    "phone": "(912) 123-4567",
-    "url": "https://alshedivat.github.io/al-folio/",
-    "summary": "A German-born theoretical physicist, widely ranked among the greatest and most influential scientists of all time",
+    "email": "dongho@utexas.edu",
+    // "phone": "(912) 123-4567",
+    "url": "https://dokkev.github.io/",
+    "summary": "Robotics Ph.D. student at the University of Texas at Austin.",
     "location": {
       "address": "2712 Broadway St",
       "postalCode": "CA 94115",
@@ -24,13 +24,44 @@
   },
   "work": [
     {
-      "name": "Institute for Advanced Study, Princeton University",
-      "position": "Professor of Theoretical Physics",
-      "url": "https://example.com",
-      "startDate": "1933-01-01",
-      "endDate": "1955-01-01",
-      "summary": "Teaching at Palmer Physical Laboratory (now 302 Frist Campus Center). While not a professor at Princeton, I associated with the physics professors and continued to give lectures on campus.",
-      "highlights": ["Relativity"]
+      "name": "Human Centered Robotics Lab, The University of Texas as Austin",
+      "position": "Research Assistant",
+      "url": "https://sites.utexas.edu/hcrl/",
+      "startDate": "2023-08",
+      "endDate": "Current",
+      "summary": "Sony PLATO Project: Interactive and Safe Human-Robot Collaboration via Teleoperation",
+      "highlights": ["Robotic Hand Design, Teleoperation, Whole-body Control"]
+    },
+    {
+      "name": "The Micah Program, Saint Louis University",
+      "position": "Senior Intern",
+      "url": "https://www.slu.edu/mission-identity/micah/index.php",
+      "startDate": "2019-07",
+      "endDate": "2020-05",
+      "summary": "Event planning, community outreach, and mentoring for the service and social justice-based program"
+    },
+    {
+      "name": "HQ Tech, Daejeon, Rebublic of Korea",
+      "position": "Research Intern",
+      "startData": "2017-06",
+      "endDate": "2017-08",
+      "summary": "Quadcopter UAV control algorithm development for the reservoir flow measurement"
+    }
+
+  ],
+  "teaching": [
+    {
+      "name": "ME 144L: Mechatronics Lab",
+      "position": "Teaching Assistant",
+      "startDate": "2022-08",
+      "endDate": "2022-12"
+     
+    },
+    {
+      "name": "ME 3001: Mechanical Enginnering Lab",
+      "position": "Teaching Assistant",
+      "startDate": "2020-01",
+      "endDate": "2020-05"
     }
   ],
   "volunteer": [
