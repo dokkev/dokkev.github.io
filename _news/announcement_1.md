@@ -5,4 +5,4 @@ inline: true
 related_posts: false
 ---
 
-The Website is in construction!
+The New website is in construction!
