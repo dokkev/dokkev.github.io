@@ -10,7 +10,9 @@ related_publications: false
 
 HDT Adroit 6DOF A24 Pincer Manipulation of a fire extingushier using a thermal camera
 
-This is a Winter Project of MSR Program at Northwestern University.
+This is a Winter Project of MSR Program at Northwestern University. 
+
+
 
 **Code: [[GitHub](https://github.com/rubberdk/Firefighting_Robot_Arm)]**
 
@@ -20,7 +22,7 @@ The idea of a firefighting robot is not a new concept, and there have been a lot
 
 Firefighting Robot "Colossus"
 <div class="post-flex-display">
-    <img src="assets/img/colossus.jpg" alt="colossus">
+    <img src="assets/img/adroit/colossus.jpg" alt="colossus">
 </div>
 
 

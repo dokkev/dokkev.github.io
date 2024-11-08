@@ -122,14 +122,14 @@ Taking advantage of other types of data we obtained from the simulation, we expa
     Figure 7: Average Peak Moment of Contact
 </div>
 
-<div class="row">
+<!-- <div class="row">
     <div class="col-sm mt-3 mt-md-0">
         {% include figure.liquid loading="eager" path="assets/img/whisker/fig8.png" title="fig8 class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 <div class="caption">
     Figure 8: Peak Moment Classification with Neural Network
-</div>
+</div> -->
 
 
 [![IMAGE_ALT](https://img.youtube.com/vi/_m3zXwX3_xM/0.jpg)](https://youtu.be/_m3zXwX3_xM)
