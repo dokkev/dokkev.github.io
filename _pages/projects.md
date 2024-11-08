@@ -5,7 +5,7 @@ permalink: /projects/
 description: Robotics Portfolio
 nav: true
 nav_order: 3
-display_categories: [Robotics Research, Other Projects]
+display_categories: [robotics, other]
 horizontal: false
 ---
 
