@@ -124,7 +124,7 @@ Taking advantage of other types of data we obtained from the simulation, we expa
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/whisker/chart2.png" title="chart2" class="img-fluid rounded z-depth-1" %}
+        {% include figure.liquid loading="eager" path="assets/img/whisker/fig8.png" title="fig8" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 <div class="caption">
@@ -151,6 +151,10 @@ The inner radius of both concave and convex objects varied 20 mm to 40 mm by 2 m
         {% include figure.liquid loading="eager" path="assets/img/whisker/fig9.png" title="fig9 class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
+
+
+
+
 <div class="caption">
    Figure 9: Yaw adjustment of the Rat Head
 </div>
