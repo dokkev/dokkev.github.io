@@ -31,7 +31,7 @@ Inspired by the ability of animals to maneuver effectively in their environment,
     </div>
 </div>
 <div class="caption">
-    *Figure 1: A rat exploring a tunnel*
+    Figure 1: A rat exploring a tunnel
 </div>
 
 In this project, we are particularly interested in a rat's ability to navigate intricate underground tunnels systems to the surface for scavenging in complete darkness. The rat's exploratory behavior is dominated by intense “whisking,” rhythmic sweeps of the vibrissae (whiskers) that provide a continuous flow of tactile information to the rat's brain. As they navigate, their whiskers make unexpected contact with an object, and the rat then explores the object to extract the details of its shape. The use of whisker inputs to detect, localize and extract the spatial properties of objects. These unique features allow rats to operate in complete darkness <sup>2</sup>.
@@ -45,7 +45,8 @@ In this project, we are particularly interested in a rat's ability to navigate i
     </div>
 </div>
 <div class="caption">
-    * Figure 2: WHISKiT Physics Simulator (left)* *Figure 3: Whisker Mechanics and Matrix<sup>3</sup> (right)*
+    Figure 2: WHISKiT Physics Simulator (left) 
+    Figure 3: Whisker Mechanics and Matrix<sup>3</sup> (right)
 </div>
 
 Studying real rats as a model is time-consuming and complex. Primarily, researchers have been unable to quantify the mechanosensory input at the base of each whisker. However, [Nadina Zweifel](https://nadinazweifel.com/) has implemented [WHISKiT Physics Simulator](https://github.com/SeNSE-lab/whiskitphysics), and it allows us to investigate three-dimensional dynamic information of individual whisker.
@@ -82,11 +83,12 @@ We can investigate how an individual whisker affects the neural network to outpu
 
 In his research, Chris Rodgers suggests that mice compared the number of contacts across whiskers to discriminate concave and convex shapes [4]. We replicated his experiment in simulations. Since Rodgers did not provide exact parameters for the experiment apparatus, such as radius of objects and distance between the mice and objects, we estimated those parameters from figures and videos. We created 3D modeling of a concave object with a 40 mm inner radius and a 42 outer radius with 25 mm height using Onshape. 
 
-<div class="post-flex-display">
-    <img src="assets/img/whisker/table1.png" alt="t1">
+
+<div class="row">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/whisker/table1.png" title="table1" class="img-fluid rounded z-depth-1" %}
+    </div>
 </div>
-
-
 
 
 
