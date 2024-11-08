@@ -148,11 +148,9 @@ The inner radius of both concave and convex objects varied 20 mm to 40 mm by 2 m
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/whisker/fig9.png" title="fig9 class="img-fluid rounded z-depth-1" %}
+        {% include figure.liquid loading="eager" path="assets/img/whisker/fig9.png" title="fig9" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
-
-
 
 
 <div class="caption">
@@ -166,7 +164,7 @@ One cycle of whisking takes 125 ms in the simulation time, and contact duration 
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/whisker/fig10.png" title="fig10 class="img-fluid rounded z-depth-1" %}
+        {% include figure.liquid loading="eager" path="assets/img/whisker/fig10.png" title="fig10" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 <div class="caption">
@@ -186,7 +184,7 @@ We have witnessed how the orientation of a rat’s head during active whisking a
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/whisker/eq1.png" title="eq1 class="img-fluid rounded z-depth-1" %}
+        {% include figure.liquid loading="eager" path="assets/img/whisker/eq1.png" title="eq1" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 <div class="caption">
@@ -218,7 +216,7 @@ The rat successfully classified concave and convex objects with 54 whiskers whil
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/whisker/fig11.png" title="fig11 class="img-fluid rounded z-depth-1" %}
+        {% include figure.liquid loading="eager" path="assets/img/whisker/fig11.png" title="fig11" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 <div class="caption">
@@ -234,7 +232,7 @@ Data from whiskers have temporal and spatial dependencies. However, the WHISKiT 
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/whisker/fig12.png" title="fig12 class="img-fluid rounded z-depth-1" %}
+        {% include figure.liquid loading="eager" path="assets/img/whisker/fig12.png" title="fig12" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 <div class="caption">
@@ -250,7 +248,7 @@ The same concept can be applied to three-dimensional force data. Inserting Mx da
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/whisker/fig13.png" title="fig13 class="img-fluid rounded z-depth-1" %}
+        {% include figure.liquid loading="eager" path="assets/img/whisker/fig13.png" title="fig13" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 <div class="caption">
@@ -262,7 +260,7 @@ Since data is normalized for images, it is not feasible to produce a real-time R
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/whisker/fig14.png" title="fig14 class="img-fluid rounded z-depth-1" %}
+        {% include figure.liquid loading="eager" path="assets/img/whisker/fig14.png" title="fig14" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 <div class="caption">
