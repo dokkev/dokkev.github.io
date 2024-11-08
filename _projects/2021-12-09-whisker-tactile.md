@@ -65,7 +65,7 @@ While the contents of this project are wildly divergent, we have main objectives
 - After sufficient training, we can evaluate the weights of each whisker to neurons in the input layer. 
 We can investigate how an individual whisker affects the neural network to output the rat’s action during active sensing in the simulation (coordinate transformation from whisker frame to the head frame).
 
-## RESULT
+## Results
 
 ### Comparison to Rodger’s Experiment: Classification with Contact Number
 
@@ -88,24 +88,23 @@ In his research, Chris Rodgers suggests that mice compared the number of contact
     <div class="col-sm mt-3 mt-md-0">
         {% include figure.liquid loading="eager" path="assets/img/whisker/table1.png" title="table1" class="img-fluid rounded z-depth-1" %}
     </div>
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/whisker/table2.png" title="table2" class="img-fluid rounded z-depth-1" %}
+    </div>
 </div>
-
 
 
 The simulation involved 3 different positions for both concave and convex objects adjusted with small variations of noise. For each orientation of the object, one cycle of whisking with C0, C1, C2, and C3 right whiskers was simulated 1,000 times to obtain a total of 6,000 samples of contact data. Table 2 below shows some samples of binary contact data. If a whisker made contact with an object anytime during the trial (one cycle of whisking), it received 1 to indicate contact. Figure 6 below shows the general trend of the data. Concave objects experienced a longer duration of contact compared to the convex objects overall, and C0 showed a significant difference between the concave and convex objects. 
 
 
-<div class="post-flex-display">
-    <img src="assets/img/whisker/table2.png" alt="t2">
+<div class="row">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/whisker/chart.png" title="table1" class="img-fluid rounded z-depth-1" %}
+    </div>
 </div>
-
-
-
-<div class="post-flex-display">
-    <img src="assets/img/whisker/chart.png" alt="c1">
+<div class="caption">
+    Figure 6: Average Duration of Contact
 </div>
-*Figure 6: Average Duration of Contact*
-
 
 A binary classifier was implemented using logistic regression to discriminate concave and convex objects with contact numbers, and its accuracy was 0.81. However, Rodgers mentions he did not include C0 data in his analysis since the C0 whisker rarely touched the object during his experiments. Training and testing without C0 data, my logistic regression classifier could not perform its task with an accuracy rate below 0.5.
 
@@ -113,24 +112,30 @@ A binary classifier was implemented using logistic regression to discriminate co
 Taking advantage of other types of data we obtained from the simulation, we expanded our classifier to train moment data. We calculated the magnitude of peak protraction moment excluding Mx for each trial, trained with logistic regression, and had the result of the accuracy of 0.84. Since moment data contained a more complex data type than binary contact data, we built a neural network-based classifier with Tensorflow and Keras. The classification accuracy improved to 0.92 using one hidden layer with four neurons.
 
 
-<div class="post-flex-display">
-    <img src="assets/img/whisker/chart2.png" alt="c2">
+
+<div class="row">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/whisker/chart2.png" title="chart2" class="img-fluid rounded z-depth-1" %}
+    </div>
 </div>
-*Figure 7: Average Peak Moment of Contact*
-
-
-<div class="post-flex-display">
-    <img src="assets/img/whisker/fig8.png" alt="f8">
+<div class="caption">
+    Figure 7: Average Peak Moment of Contact
 </div>
-*Figure 8: Peak Moment Classification with Neural Network*
 
+<div class="row">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/whisker/fig8.png" title="fig8 class="img-fluid rounded z-depth-1" %}
+    </div>
+</div>
+<div class="caption">
+    Figure 8: Peak Moment Classification with Neural Network
+</div>
 
 
 [![IMAGE_ALT](https://img.youtube.com/vi/_m3zXwX3_xM/0.jpg)](https://youtu.be/_m3zXwX3_xM)
 
 
 *Video 1: Real-time Classification with Peak Moment*
-
 
 
 While training input only contained simulation output with a fixed rat head orientation, we investigated how changing the pitch (looking up and down motion) affected classification accuracy. Video 1 shows the real-time classification with a pre-trained model (refer to Figure 7 for detailed information for the model). Gradually increasing the pitch, the classification failed around 26 degrees incrementation. The classification accuracy dropped significantly when the C0 whisker did not make contact. Since the model only takes inputs from four whiskers, each whisker takes a large proportion of classification accuracy. Hence, we proceeded with a different simulation setup to utilize all whiskers.
@@ -141,21 +146,29 @@ Utilizing more whiskers can increase the real-time classification performance wh
 The inner radius of both concave and convex objects varied 20 mm to 40 mm by 2 mm increment.  An object was placed at [X: 0 mm, Y: 30 mm, and Z: -10 mm, Yaw: 0.2 rad (concave) or 3.34 (convex), Pitch: 0 rad, Roll: 0 rad] configuration. The orientation of the rat head was varied by randomly adjusting the yaw of the rat head by +-90 degrees. Five cycles of whisking over each object were simulated 1,200 times, outputting 132,000 samples. Each sample contained data of force, moment, and contact of 54 whiskers during one cycle of whisking (125 ms in simulation time). 
 
 
-
-<div class="post-flex-display">
-    <img src="assets/img/whisker/fig9.png" alt="f9">
+<div class="row">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/whisker/fig9.png" title="fig9 class="img-fluid rounded z-depth-1" %}
+    </div>
 </div>
-*Figure 9: Yaw adjustment of the Rat Head*
+<div class="caption">
+   Figure 9: Yaw adjustment of the Rat Head
+</div>
 
 
 ### All Whiskers Classification: Contact Duration
 One cycle of whisking takes 125 ms in the simulation time, and contact duration is determined by how long the whisker made contact with the object during one cycle of whisking. This data was used to build a classifier. It converged to 0.99 accuracies using one hidden layer with 36 neurons which is ⅔ of the input size. This model was verified with a real-time classification which allowed the rat head’s forward motion and rotation in the yaw axis. Video 2 demonstrates the real-time classification of a moving rat head with a concave object. The classification failed when not a sufficient number of whiskers were making contact with the objects. This result leads us to the next step of the project to ensure the rat’s optimal orientation while actively whisking.
 
 
-<div class="post-flex-display">
-    <img src="assets/img/whisker/fig10.png" alt="f10">
+<div class="row">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/whisker/fig10.png" title="fig10 class="img-fluid rounded z-depth-1" %}
+    </div>
 </div>
-*Figure 10: Contact Duration Classification with Neural Network*
+<div class="caption">
+   Figure 10: Contact Duration Classification with Neural Network
+</div>
+
 
 [![IMAGE_ALT](https://img.youtube.com/vi/QAoV4th5TsM/0.jpg)](https://youtu.be/QAoV4th5TsM)
 
@@ -163,15 +176,18 @@ One cycle of whisking takes 125 ms in the simulation time, and contact duration 
 *Video 2: All Whisker Real-time Classification*
 
 
-
-##  Reinforcement Learning and Coordinate Transformation
+###  Reinforcement Learning and Coordinate Transformation
 We have witnessed how the orientation of a rat’s head during active whisking affects classification performance. We implemented a model which enables symmetric contact of whiskers while maximizing the contact number using the Deep-Q learning algorithm.
 
 
-<div class="post-flex-display">
-    <img src="assets/img/whisker/eq1.png" alt="eq1">
+<div class="row">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/whisker/eq1.png" title="eq1 class="img-fluid rounded z-depth-1" %}
+    </div>
 </div>
-*Equation 1: Q-algorithm*
+<div class="caption">
+   Equation 1: Q-algorithm
+</div>
 
 
 During simulation, the q-function is updated upon every action the rat takes. The rat has five actions which are: [turn right, turn left, look up, look down, stay]. Gamma decides which rat should take its next action based on the q-function or completely random action. The rat takes random actions due to limited information in the q-function. As the training progresses, the gamma value is adjusted to encourage the rat to take action based on q-function. Alpha is a learning rate that affects how much the neural network will embrace the new value replacing the existing value. The learning rate in the training depends on the protraction status of the whiskers. The learning rate is proportional to the angle of whiskers to weight information received during peak protraction. 
@@ -185,7 +201,7 @@ During simulation, the q-function is updated upon every action the rat takes. Th
 
 The symmetrical contact of whiskers and contact number decide the reward value. Contact symmetry is weighted more heavily than a contact number to replicate a real rat’s behavior. When the sum of rewards of one cycle of whisking does not reach the given threshold, the rat head orientation is set to the default position and receives a negative reward. 
 
-# DISCUSSION
+## Discussion
 
 
 ### Whisking Amplitude Adjustment is Necessary To Replicate a Real Rat
@@ -196,10 +212,14 @@ Rodgers states that he excluded the C0 whisker from his analysis since “it rar
 The rat successfully classified concave and convex objects with 54 whiskers while actively adjusting its orientation. This model was trained with one hidden layer with 36 neurons. The number of neurons was decided by factoring ⅔ to the input size. Adjusting the number of neurons in the hidden layer changed convergence time, but it did not significantly affect the classification accuracy. 
 
 
-<div class="post-flex-display">
-    <img src="assets/img/whisker/fig11.png" alt="fig11">
+<div class="row">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/whisker/fig11.png" title="fig11 class="img-fluid rounded z-depth-1" %}
+    </div>
 </div>
-*Figure 11: Contact Duration (left) vs Contact Number (right)*
+<div class="caption">
+   Figure 11: Contact Duration (left) vs Contact Number (right)
+</div>
 
 Besides contact duration classifiers, other types of classifiers use more high-level dynamic data input such as the averages of moments, derivatives of moments, averages of forces, and derivatives of forces of each whisker. They all successfully converged to 0.99 accuracies and outperformed in real-time classification. On the other hand, the contact number and peak moment classifier lacked the capabilities to process simulation output from various yaw angles of the rat head since they underperformed with around 0.85 accuracies.  We concluded that data such as contact duration involves time-dependent information, and it allows successful classification with non-fixed head orientation. 
 
@@ -208,10 +228,14 @@ Besides contact duration classifiers, other types of classifiers use more high-l
 Data from whiskers have temporal and spatial dependencies. However, the WHISKiT Physics Simulator saves its results as tabular data. In his paper, Zhu states that most tabular data do not assume a spatial and temporal relationship between features. Convolutional Neural Networks (CNN) are inspired by visual neuroscience and possess key features that exploit the properties of natural signals, including local connections in receptive fields, parameter sharing via convolution kernel, and hierarchical feature abstraction through pooling and multiple layers. These features make CNNs suitable for analyzing data with spatial or temporal dependencies between components <sup>4</sup>. 
 
 
-<div class="post-flex-display">
-    <img src="assets/img/whisker/contact_image.gif" alt="fig12">
+<div class="row">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/whisker/fig12.png" title="fig12 class="img-fluid rounded z-depth-1" %}
+    </div>
 </div>
-*Figure 12: Conversion of Binary Contact to Gray Image*
+<div class="caption">
+   Figure 12: Conversion of Binary Contact to Gray Image
+</div>
 
 
 Hence we attempted to convert tabular data to images to train CNN based classifiers. While the image row represents each whisker, the column represents time series in simulation. Data is fed into a 2D array 0 as no-contact and 255 as contact to make a gray-scale image, and we are able to visualize when and where the whiskers made contact with objects during the simulation.
@@ -220,26 +244,34 @@ Hence we attempted to convert tabular data to images to train CNN based classifi
 The same concept can be applied to three-dimensional force data. Inserting Mx data into a red layer, My into a green layer, and Mz into a blue layer, we can represent each moment data with whisker type and time as separate dimensions. 
 
 
-<div class="post-flex-display">
-    <img src="assets/img/whisker/fig13.png" alt="fig13">
+<div class="row">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/whisker/fig13.png" title="fig13 class="img-fluid rounded z-depth-1" %}
+    </div>
 </div>
-*Figure 13: Conversion of 3D Moment to RGB Image*
+<div class="caption">
+   Figure 13: Conversion of 3D Moment to RGB Image
+</div>
+
 
 Since data is normalized for images, it is not feasible to produce a real-time RGB image unless color values are pre-defined as ranges. However, these RGB images allow us to interpret the data easily with an RGB combination diagram. Figure 14 shows the average three-dimensional moment during five cycles of whisking. Training image classifiers was more time-consuming than tabular data classifiers. Since concave and convex simulation was simple enough to use contact duration tabular classifiers and had 0.99 accuracy, training image classifiers were not further investigated.
 
-
-<div class="post-flex-display">
-    <img src="assets/img/whisker/fig14.png" alt="fig14">
+<div class="row">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/whisker/fig14.png" title="fig14 class="img-fluid rounded z-depth-1" %}
+    </div>
 </div>
-*Figure 14: 3D Average Moment in RGB Image*
+<div class="caption">
+   Figure 14: 3D Average Moment in RGB Image
+</div>
 
 
-### Heat Map of Neural Network Layers
-A heat map visualizes the activation of each neuron connecting layers. A heat map of the input layer shows us how each whisker affected the neural network. This section will be updated as soon as possible after successful training of DQN neural networks.
 
-# CONCLUSION
+<!-- ### Heat Map of Neural Network Layers -->
+<!-- A heat map visualizes the activation of each neuron connecting layers. A heat map of the input layer shows us how each whisker affected the neural network. This section will be updated as soon as possible after successful training of DQN neural networks. -->
+
+## Conclusion
 In this project, we investigated neural networks for concave and convex shape classification. This task was achieved using tabular data training, but future works that require more complicated multi-class classification will require image classification. We will plan to modify WHISKiT Physics Simulator to compare to Rodger’s experiment. It was especially challenging to implement temporal dependencies in the DQN algorithm. Since previous actions taken by the rat affects the present reward, we had to keep track of real-time reward that captures real-time contact data and long-time reward which evaluates the whisking performance of each cycle. Moreover, it was crucial that the simulator does not have multi-threading functions. Training DQN was time-consuming due to the slow physics calculations of each whisker. 
-
 
 
 
