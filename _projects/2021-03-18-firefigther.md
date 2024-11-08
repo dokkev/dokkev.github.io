@@ -2,7 +2,7 @@
 layout: distill
 title: Autonomous Fire Fighting Robot 
 description: Sensing and Localization of Fire, Grasping, and Operating Fire Extinguisher
-img: assetsassets/img/adroit/fire.jpg
+img: assets/img/adroit/fire.jpg
 importance: 11
 category: robotics
 related_publications: false
@@ -17,23 +17,32 @@ This is a Winter Project of MSR Program at Northwestern University.
 **Code: [[GitHub](https://github.com/rubberdk/Firefighting_Robot_Arm)]**
 
 
-# BACKGROUND & MOTIVATION
+# Background
 The idea of a firefighting robot is not a new concept, and there have been a lot of propositions of using firefighter robots. In fact, a robot called Colossus helped save much of the historic structure by braving conditions deemed too dangerous for human firefighters after Notre Dame Cathedral in Paris caught fire in 2019 [1], and LA Fire Department tested autonomous fire fighting robots in the major Downtown blaze in 2020 [2].
 
-Firefighting Robot "Colossus"
-<div class="post-flex-display">
-    <img src="assets/img/adroit/colossus.jpg" alt="colossus">
+<div class="row">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/adroit/colossus.jpg" title="colossus" class="img-fluid rounded z-depth-1" %}
+    </div>
 </div>
-
+<div class="caption">
+   Firefighting Robot "Colossus"
+</div>
 
 The problems with currently existing firefighting robots are that they are not suitable for domestic or commercial usages because they are big and built specifically to operate in firefighting missions. I believe that manipulating a robot arm to detect a fire and use a fire extinguisher can be beneficial in industrial settings such as warehouses that have already adapted using robot arms. Especially, maintenance costs of fire sprinkles due to frozen pipes can be deducted in warehouses. Additionally, implementing a fire safety feature to domestic service robot arms can appeal to the general crowd.
 
 Therefore, I implemented a firefighting mechanism using HDT Adroit 6 DOF A24 Pincer robot arm (I will refer it as an Adroit through out this post) and FLIR Lepton 2.5 thermal camera for this project. The goal of this project is to detect a heat source (fire), grab the fire extinguisher, and operate it.
 
-# HARDWARES
-HDT Adroit 6DOF A24 Pincer
-<div class="post-flex-display">
-    <img src="assets/img/adroit/adroit.jpg" alt="adroit">
+# Hardwares
+
+
+<div class="row">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/adroit/adroit.jpg" title="adroit" class="img-fluid rounded z-depth-1" %}
+    </div>
+</div>
+<div class="caption">
+   HDT Adroit 6DOF A24 Pincer
 </div>
 
 
