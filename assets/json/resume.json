@@ -4,8 +4,8 @@
     "label": "Robotics Scientist",
     "image": "",
     "email": "dongho@utexas.edu",
-    // "phone": "(912) 123-4567",
-    "url": "https://dokkev.github.io/",
+    "phone": "(000) 000-0000",
+    "url": "https://dokkev.github.io",
     "summary": "Robotics Ph.D. student at the University of Texas at Austin.",
     "location": {
       "address": "2712 Broadway St",
@@ -43,7 +43,7 @@
     {
       "name": "HQ Tech, Daejeon, Rebublic of Korea",
       "position": "Research Intern",
-      "url": "https://dokkev.github.io/",
+      "url": "https://dokkev.github.io",
       "startData": "2017-06",
       "endDate": "2017-08",
       "summary": "Quadcopter UAV control algorithm development for the reservoir flow measurement"
