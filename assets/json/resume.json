@@ -86,7 +86,7 @@
 
   "skills": [
     {
-      "name": "Programming Languages and Software Skills",
+      "name": "Programming and Software Skills",
       "icon": "fa-solid fa-hashtag",
       "keywords": ["C++", "C", "Python", "ROS 1&2", "MATLAB/Simulink", "Linux", "Git"]
 
@@ -104,7 +104,12 @@
     {
       "name": "Simulation",
       "icon": "fa-solid fa-hashtag",
-      "keywords": ["Drake", "Mujoco", "PyBullet", "Gazebo Ignition/Classic", "CoppeilaSim (V-REP)"]
+      "keywords": ["Drake", "MuJoCo", "PyBullet", "Gazebo Ignition/Classic", "CoppeilaSim (V-REP)"]
+    },
+    {
+      "name": "Embedded Systems",
+      "icon": "fa-solid fa-hashtag",
+      "keywords": ["FreeRTOS", "ArduinoIDE", "STM32CubeIDE"]
     },
     {
       "name": "CAD/FEA Tools",
