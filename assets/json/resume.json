@@ -1,10 +1,10 @@
 {
   "basics": {
     "name": "Kang, Dong Ho",
-    "label": "Robotics Scientist",
+    // "label": "Robotics Scientist",
     "image": "",
     "email": "dongho@utexas.edu",
-    "phone": "(000) 000-0000",
+    // "phone": "(000) 000-0000",
     "url": "https://dokkev.github.io",
     "summary": "Robotics Ph.D. student at the University of Texas at Austin.",
     "location": {
@@ -54,7 +54,7 @@
   "education": [
     {
       "institution": "The University of Texas at Austin",
-      "location": "Austin, United States of America",
+      "location": "Austin, USA",
       "url": "https://www.utexas.edu/",
       "area": "Mechanical Engineering",
       "studyType": "Doctor of Philosophy",
@@ -64,7 +64,7 @@
 
     {
       "institution": "Northwestern University",
-      "location": "Evanston, United States of America",
+      "location": "Evanston, USA",
       "url": "https://www.northwestern.edu/",
       "area": "Robotics",
       "studyType": "Master of Science",
@@ -74,7 +74,7 @@
 
     {
       "institution": "Saint Louis University",
-      "location": "St. Louis, United States of America",
+      "location": "St. Louis, USA",
       "url": "https://www.slu.edu/",
       "area": "Mechanical Engineering",
       "studyType": "Bachelor of Science",
@@ -84,31 +84,40 @@
 
   ],
 
-  "teaching": [
+  "skills": [
     {
-      "name": "ME 144L: Mechatronics Lab",
-      "position": "Teaching Assistant",
-      "startDate": "2022-08",
-      "endDate": "2022-12"
-     
+      "name": "Programming Languages and Software Skills",
+      "icon": "fa-solid fa-hashtag",
+      "keywords": ["C++", "C", "Python", "ROS 1&2", "MATLAB/Simulink", "Linux", "Git"]
+
     },
     {
-      "name": "ME 3001: Mechanical Enginnering Lab",
-      "position": "Teaching Assistant",
-      "startDate": "2020-01",
-      "endDate": "2020-05"
-    }
-  ],
-  "volunteer": [
+      "name": "Control Frameworks",
+      "icon": "fa-solid fa-hashtag",
+      "keywords": ["Pinocchio", "Crocoddyl", "CasADi", "OCS2", "ModernRobotics", "OMPL"]
+    },
     {
-      "organization": "Firm Foundation South Tutoring Program",
-      "location": "St. Louis, United States of America",
-      "position": "Tutor",
-      "url": "https://restorestlouis.org/tutoring/",
-      "startDate": "2016-08",
-      "endDate": "2020-05"
+      "name": "Learning Frameworks",
+      "icon": "fa-solid fa-hashtag",
+      "keywords": ["Isaac Gym", "Isaac Lab", "Robosuite", "OpenAI Gym", "PyTorch", "TensorFlow"]
+    },
+    {
+      "name": "Simulation",
+      "icon": "fa-solid fa-hashtag",
+      "keywords": ["Drake", "Mujoco", "PyBullet", "Gazebo Ignition/Classic", "CoppeilaSim (V-REP)"]
+    },
+    {
+      "name": "CAD/FEA Tools",
+      "icon": "fa-solid fa-hashtag",
+      "keywords": ["Creo", "Onshape", "SolidWorks", "ANSYS", "Abaqus", "EAGLE"]
     }
+    
+
   ]
+
+  
+
+
 
 
 }
