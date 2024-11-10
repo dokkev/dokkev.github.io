@@ -109,7 +109,7 @@
     {
       "name": "Embedded Systems",
       "icon": "fa-solid fa-hashtag",
-      "keywords": ["FreeRTOS", "ArduinoIDE", "STM32CubeIDE"]
+      "keywords": ["FreeRTOS", "ArduinoIDE", "STM32CubeIDE", "CAN", "EtherCAT", "RS485"]
     },
     {
       "name": "CAD/FEA Tools",
