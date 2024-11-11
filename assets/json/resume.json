@@ -119,7 +119,7 @@
     {
       "name": "Robot Hardware",
       "icon": "fa-solid fa-hashtag",
-      "keywords": ["Apptronik DRACO3, Franka Emika Research 3 (Panda), Boston Dynamics Spot, Rethink Robotics Baxter & Sawyer", "HDT Adroit A24", "CLEARPATH Robotics Jackal" ]
+      "keywords": ["Apptronik DRACO3", "Roboligent Optimo", "Franka Emika Research 3 (Panda)"," Boston Dynamics Spot", "Rethink Robotics Baxter & Sawyer", "HDT Adroit A24", "CLEARPATH Robotics Jackal" ]
     }
 
     

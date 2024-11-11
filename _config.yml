@@ -134,7 +134,7 @@ bing_site_verification: # out your bing-site-verification ID (Bing Webmaster)
 # -----------------------------------------------------------------------------
 
 blog_name: Robotics # blog_name will be displayed in your blog page
-blog_description: Robotics Hardware, Manipulation, Locomotion, Optimal Control, Design Optimization
+blog_description: Hardware Development, Design Optimization,  Control,  Manipulation, Locomotion
 permalink: /blog/:year/:title/
 lsi: false # produce an index for related posts
 
