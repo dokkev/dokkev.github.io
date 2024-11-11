@@ -7,11 +7,11 @@ date: 2024-04-12 00:00:00
 img: /assets/img/learning_robotics/darwinop.jpg
 permalink: /Intro-to-Robotics/
 tags: [robotics]
-categories: robotics101
+# categories: robotics101
 
 ---
 
-Robotics research requires multidisciplinary knowledge in mathematics, mechanical engineering, electrical engineering, computer engineering, and computer science. This  
+Robotics research requires multidisciplinary knowledge in mathematics, mechanical engineering, electrical engineering, computer engineering, and computer science. This post provides a collection of resources for learning robotics for beginners.
 
 ## Fundamental Robotics Knowledge
 
