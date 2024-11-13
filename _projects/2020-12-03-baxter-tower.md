@@ -33,7 +33,7 @@ My role in this project was image processing using AprilTags. I implemented Apri
 
 ### 10 Cups Tower
 
-[!(http://img.youtube.com/vi/YzLpgf8ozkA/0.jpg)](http://www.youtube.com/watch?v=YzLpgf8ozkA)
+[![Video](http://img.youtube.com/vi/YzLpgf8ozkA/0.jpg)](http://www.youtube.com/watch?v=YzLpgf8ozkA)
 <div class="caption">
    *10 Cups Tower Demonstration*
 </div>
@@ -41,13 +41,13 @@ My role in this project was image processing using AprilTags. I implemented Apri
 
 
 ### 6 Cups Tower
-[!(http://img.youtube.com/vi/H2U9Fk785CE/0.jpg)](http://www.youtube.com/watch?v=H2U9Fk785CE)
+[![Video](http://img.youtube.com/vi/H2U9Fk785CE/0.jpg)](http://www.youtube.com/watch?v=H2U9Fk785CE)
 <div class="caption">
    *6 Cups Tower Demonstration*
 </div>
 
 ### 6 Cups Sorting
-[!(http://img.youtube.com/vi/yFVovQYhw8g/0.jpg)](http://www.youtube.com/watch?v=yFVovQYhw8g)
+[![Video](http://img.youtube.com/vi/yFVovQYhw8g/0.jpg)](http://www.youtube.com/watch?v=yFVovQYhw8g)
 <div class="caption">
    *6 Cups Sorting Demonstration*
 </div>
