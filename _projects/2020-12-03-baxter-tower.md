@@ -32,31 +32,22 @@ My role in this project was image processing using AprilTags. I implemented Apri
 # Demonstration
 
 ### 10 Cups Tower
-<div class="row">
-    <div class="col-sm mt-3 mt-md-0">
-        [![1](http://img.youtube.com/vi/YzLpgf8ozkA/0.jpg)](http://www.youtube.com/watch?v=YzLpgf8ozkA)
-    </div>
-</div>
+
+[!(http://img.youtube.com/vi/YzLpgf8ozkA/0.jpg)](http://www.youtube.com/watch?v=YzLpgf8ozkA)
 <div class="caption">
    *10 Cups Tower Demonstration*
 </div>
 
+
+
 ### 6 Cups Tower
-<div class="row">
-    <div class="col-sm mt-3 mt-md-0">
-        [![2](http://img.youtube.com/vi/H2U9Fk785CE/0.jpg)](http://www.youtube.com/watch?v=H2U9Fk785CE)
-    </div>
-</div>
+[!(http://img.youtube.com/vi/H2U9Fk785CE/0.jpg)](http://www.youtube.com/watch?v=H2U9Fk785CE)
 <div class="caption">
    *6 Cups Tower Demonstration*
 </div>
 
 ### 6 Cups Sorting
-<div class="row">
-    <div class="col-sm mt-3 mt-md-0">
-        [![3](http://img.youtube.com/vi/yFVovQYhw8g/0.jpg)](http://www.youtube.com/watch?v=yFVovQYhw8g)
-    </div>
-</div>
+[!(http://img.youtube.com/vi/yFVovQYhw8g/0.jpg)](http://www.youtube.com/watch?v=yFVovQYhw8g)
 <div class="caption">
    *6 Cups Sorting Demonstration*
 </div>
