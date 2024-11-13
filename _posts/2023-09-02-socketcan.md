@@ -11,7 +11,10 @@ tags: [Hardware Development]
 
 ---
 
-In the previous post [What is CAN?](/aboutcan/), we discussed the basics of CAN bus and its applications in robotics. In this post, we will learn how to set up SocketCAN on Ubuntu computers to set up CAN communication.
+Previous Post:
+- [What is CAN?](/aboutcan/)
+
+In the previous post, we discussed the basics of CAN bus and its applications in robotics. In this post, we will learn how to set up SocketCAN on Ubuntu computers to set up CAN communication.
 
 ## Hardware
 
