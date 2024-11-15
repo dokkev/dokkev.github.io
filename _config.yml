@@ -306,7 +306,7 @@ jekyll-archives:
     category: "/blog/category/:name/"
 
 display_tags: ["hardware development", "real-time control", "humanoids", "robotic hand","robotic manipulation", "legged locomotion"] # these tags will be displayed on the front page of your blog
-display_categories: ["external-services"] # these categories will be displayed on the front page of your blog
+display_categories: ["-services"] # these categories will be displayed on the front page of your blog
 
 # -----------------------------------------------------------------------------
 # Jekyll Scholar
