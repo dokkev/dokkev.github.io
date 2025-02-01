@@ -29,7 +29,7 @@ Robotics research requires multidisciplinary knowledge in mathematics, mechanica
 - [2D Coordinate Transformation](https://www.youtube.com/watch?v=H_94DTWd8ck)
 - [3D Coordinate Transformation](https://www.youtube.com/watch?v=rHLEWRxRGiM)
 
-### Jacobian and Kinematics
+### Robot Kinematics
 - [Jacobian Matrix](https://www.youtube.com/watch?v=bohL918kXQk)
 - [Change of Variables and the Jacobian](https://www.youtube.com/watch?v=hhFzJvaY__U&t=510s)
 - [Robot Singularities](https://www.youtube.com/watch?v=vCEWORZbD3Y&t=55s)
@@ -44,10 +44,12 @@ Robotics research requires multidisciplinary knowledge in mathematics, mechanica
 - [Motion Planning in C-Space](https://www.youtube.com/watch?v=s2qrMwqm4D0&list=PLggLP4f-rq02vX0OQQ5vrCxbJrzamYDfx&index=51)
 - [Motion Planning Tutorial](https://msl.cs.illinois.edu/~lavalle/papers/Lav11b.pdf)
 
-### Euler-Lagrangian Dynamics
+### Euler-Lagrangian Mechanics
+- [Introduction to Lagrangian Mechanics](https://www.youtube.com/watch?v=8UtnDaGHpq0)
 - [Simple Pendulum via Lagrangian Mechanics](http://www.aoengr.com/Dynamics/LagrangianMechanicsPendulum.pdf)
 - [Lagrangian Formulation of Robot Dynamics](https://www.youtube.com/watch?v=1U6y_68CjeY)
 - [Inverse Dynamics](https://www.youtube.com/watch?v=ZASVKAlegfQ)
+- [Constrained Lagrangian Mechanics](https://www.youtube.com/watch?v=keMzpa_iWjs)
 
 ### Machine Learning
 - [Residual and Least Squares Regression](https://www.youtube.com/watch?v=yMgFHbjbAW8)
@@ -96,11 +98,15 @@ Online Courses
 
 -----
 
-## Robot Mechanics and Control
+## Robot Mechanics, Design, and Control
 
 ### Robotic Manipulation
 -  [Modern Robotics](https://modernrobotics.northwestern.edu/nu-gm-book-resource/foundations-of-robot-motion/) by Kevin Lynch at Northwestern University
 -  [Robotic Manipulation](https://manipulation.csail.mit.edu/index.html) by Russ Tedrake at MIT
+
+### Robot Mechanism Design
+- [Applied Robot Design](https://www.youtube.com/@StanfordCS235/videos)by Reuben Brewer at Stanford University
+
 
 ### Optimal Control
 - [Underacutated Robotics](https://underactuated.mit.edu/index.html) by Russ Tedrake at MIT
@@ -108,6 +114,7 @@ Online Courses
 - [Optimal Control](https://www.youtube.com/watch?v=Kj88Nory8ec&list=PLZnJoM76RM6Jv4f7E7RnzW4rijTUTPI4u) by Zachery Manchester at CMU
 
 -----
+
 
 ## Robot Perception and Navigation
 
