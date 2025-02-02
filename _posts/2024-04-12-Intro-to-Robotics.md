@@ -113,7 +113,12 @@ Online Courses
 - [Convex Optimization](https://web.stanford.edu/class/ee364a/) by Stephen Boyd at Stanford University
 - [Optimal Control](https://www.youtube.com/watch?v=Kj88Nory8ec&list=PLZnJoM76RM6Jv4f7E7RnzW4rijTUTPI4u) by Zachery Manchester at CMU
 
+
+### Dynamic 
+
 -----
+
+
 
 
 ## Robot Perception and Navigation
