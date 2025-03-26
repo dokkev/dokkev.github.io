@@ -61,6 +61,9 @@ Robotics research requires multidisciplinary knowledge in mathematics, mechanica
 - [Transformer (1)](https://www.youtube.com/watch?v=wjZofJX0v4M&list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi&index=5)
 - [Transformer (2)](https://www.youtube.com/watch?v=eMlx5fFNoYc&list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi&index=6)
 
+### Locomotion
+- [Zero Moment Point](https://www.youtube.com/watch?v=Pt_ikHJnNs4)
+
 -----
 ##  Robot Operating System (ROS)
 
