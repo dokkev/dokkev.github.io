@@ -1,0 +1,380 @@
+<!-- ---
+layout: distill
+title: Proprioceptive Sensing via Hybrid Contact Mechanism for Versatile Interaction
+description: Bidirectional Transmission and Hybrid Contact Mechanism
+img: assets/img/plato/hybrid.png
+importance: 8
+category: robotics
+related_publications: false
+published: false
+---
+
+# Design of the Bidirectional Transmission and Hybrid Contact Mechanism of a Robotic Finger
+
+\subsection{Transmission Topology}
+
+In a closed kinematic chain (CKC) mechanism, the position and orientation of each link in $SE(2)$ must satisfy the loop-closure constraint to ensure kinematic consistency which is shown as:
+\begin{align}
+\begin{aligned}
+f_1(\phi_1 (t), \phi_2 (t), \phi_3, \phi_4) &= 0 \\
+f_2(\phi_1 (t), \phi_2 (t), \phi_3, \phi_4) &= 0
+\end{aligned}
+\end{align}
+
+An overview of the finger transmission is shown in Figure 2. The independent actuator-driven variables, $\phi_1$ and $\phi_2$, determine the passive angles $\phi_3$ and $\phi_4$ through the five-bar linkage. Both actuators are grounded at the base of the hand, but their axes are not coaxial due to spatial constraints in the design. The fixed separation between them, denoted as $L_5$, introduces kinematic nonlinearity. As a result, the ratio between the angular displacement of the PIP input linkage ($d\phi_4$) and the output linkage ($d\phi_2$) is not constant and varies with the finger configuration throughout its workspace.
+
+We characterize the transmission topology from the rotor configuration space of the motor ($\boldsymbol{\psi}$) to actuator output configuration space ($\boldsymbol{\phi}$) and the joint configuration of the finger space($\boldsymbol{\theta}$) using the following expression \cite{Sim2021TheRobots}:
+\begin{align*}
+d\boldsymbol{\psi} \xrightarrow[]{\mathbf{R}} 
+d\boldsymbol{\phi} \xrightarrow[]{\mathbf{D}} 
+d\boldsymbol{\theta}
+\end{align*}
+
+Where:
+\begin{align}
+\begin{aligned}
+\mathbf{R} = \begin{bmatrix} \frac{1}{R_1} & 0 \\ 0 & \frac{1}{R_2} \end{bmatrix} &&
+\mathbf{D} = \begin{bmatrix} \frac{1}{D_1} & 0 \\ -1 & \frac{1}{D_2} \end{bmatrix}
+\end{aligned}
+\end{align}
+\\$\mathbf{R}$ is a mapping matrix that represents the gear ratios of the two input actuators $R_1$ and $R_2$, while $\mathbf{D}$ is a mapping matrix for five-bar linkage kinematics describing how joint angles change with the linkage geometry factors $D_1$ and $D_2$.
+
+
+\subsection{Linkage Geometry Analysis}
+
+Expanding the loop closure condition in Equation (1) using the representation in Figure 2(f), we close the closed kinematic chain (CKC) loop at the joint where links $L_3$ and $L_4$ meet. This yields the following loop closure equation:
+\begin{align}
+\begin{aligned}
+&L_2\cos(\phi_2) + L_3\cos(\phi_3) = L_4\cos(\phi_4) + L_1\cos(\phi_1) + L_5 \\
+&L_2\sin(\phi_2) + L_3\sin(\phi_3) = L_4\sin(\phi_4) + L_1\sin(\phi_1)
+\end{aligned}
+\end{align}
+With the placement of the two actuators vertically aligned along the x-direction, there is no $L_5$ term in the y-term. From Equation. (2), \(\phi_4\) and \(\phi_3\) can be found \cite{Zi2011DynamicControl}:
+\begin{equation}
+\phi_4 = \arctan2\left(\frac{A + \sqrt{A^2 + B^2 - C^2}}{B-C}\right)
+\end{equation}
+%
+\begin{equation}
+\phi_3 = \arcsin\left(\frac{L_4\sin(\phi_4) + L_1\sin(\phi_1) - L_2\sin(\phi_2)}{L_3}\right)
+\end{equation}
+
+where
+\begin{align*}
+     A(\phi_1,\phi_2) &= 2L_4L_1\sin(\phi_1) - 2L_4L_2\sin(\phi_2) \\
+     B(\phi_1,\phi_2) &= 2L_4L_5 - 2L_2L_4\cos(\phi_2) + 2L_4L_1\cos(\phi_1) \\
+     C(\phi_1,\phi_2) &= \begin{aligned}[t]
+          &L_2^2 - L_3^2 + L_4^2 + L_1^2 + L_5^2 -  \\
+          &2L_2L_1\sin(\phi_2)\sin(\phi_1) - \\
+          &2L_2L_5\cos(\phi_2) + 2L_1L_5\cos(\phi_1) - \\
+          &2L_2L_1\cos(\phi_2)\cos(\phi_1)
+     \end{aligned}
+\end{align*}
+
+\subsection{Velocity Reduction and Mechanical Advantage}
+Using Equations. (4) and (5), we can evaluate the actuator output angle displacements of the input linkage and output linkage for the PIP joint to obtain the instantaneous velocity reduction, which is the inverse of the mechanical advantage. While the MCP joint is directly driven by its actuator yielding \(D_1 = 1\),  the PIP joint's torque amplification is influenced by the linkage mechanism.  Given the input torque (\(\tau_{\phi_2}\)),  we express the  mechanical advantage, \(D_2\) and resulting output torque ($\tau_{\theta_2}$) at its instantaneous linkage configuration:
+\begin{align}
+D_2(\phi_2, \phi_1) = \frac{\tau_{\theta_2}}{\tau_{\phi_2}} = \frac{d\phi_2}{d\phi_4} = \frac{\dot{\phi_2}}{\dot{\phi_4}}
+\end{align}
+
+To analyze how passive joints \(\phi_3\) and \(\phi_4\) vary with \(\phi_2\), we differentiate and rearrange Equation. (1), assuming constant \(\phi_1\), and these can be written in matrix form:
+\begin{align}
+\begin{bmatrix}
+\displaystyle\frac{\partial f_1}{\partial \phi_3} & \displaystyle\frac{\partial f_1}{\partial \phi_4}\\[8pt]
+\displaystyle\frac{\partial f_2}{\partial \phi_3} & \displaystyle\frac{\partial f_2}{\partial \phi_4}
+\end{bmatrix}
+\begin{bmatrix}
+\displaystyle\frac{d\phi_3}{d\phi_2}\\[8pt]
+\displaystyle\frac{d\phi_4}{d\phi_2}
+\end{bmatrix}
+=
+-\begin{bmatrix}
+\displaystyle\frac{\partial f_1}{\partial \phi_2}\\[8pt]
+\displaystyle\frac{\partial f_2}{\partial \phi_2}
+\end{bmatrix}
+\end{align}
+
+% And it can be expressed with the Jacobian matrix \(\mathbf{J}\) and the vector on the right-hand side \(\mathbf{b}\) as
+
+% \begin{align}
+% \mathbf{J}
+% \begin{bmatrix}
+% \displaystyle\frac{d\phi_3}{d\phi_2}\\[8pt]
+% \displaystyle\frac{d\phi_4}{d\phi_2}
+% \end{bmatrix}
+% = \mathbf{b}
+% \end{align}
+
+We then solve for $\frac{d\phi_4}{d\phi_2}$ in Equation. (7) using Cramer's rule and showing the mechanical advantage of the PIP joint in the linkage geometry as follows with Equation. (6) :
+\begin{align}
+D_2 =  \frac{-L_4\sin(\phi_3 - \phi_4)}{L_2\sin(\phi_2 - \phi_3)}
+\end{align}
+
+\section{Dissipative Equations of Motion}
+
+We analyze the dissipative dynamics of a fixed-base robotic finger, incorporating reflected inertias, mechanical losses, and direction-dependent transmission efficiencies. Let the redundant generalized coordinates be:
+\begin{equation}
+\mathbf{q} = 
+\begin{bmatrix}
+\boldsymbol{\theta} \\[2pt]
+\boldsymbol{\psi}
+\end{bmatrix},
+\end{equation}
+where \(\boldsymbol{\theta}\) are joint-space angles and \(\boldsymbol{\psi}\) are rotor angles. The mechanism is subject to the holonomic constraint:
+\begin{equation}
+\mathbf{h}(\mathbf{q}) = \boldsymbol{\theta} - \mathbf{D}\mathbf{R}\boldsymbol{\psi} = \mathbf{0},
+\end{equation}
+
+To compute the constraint Jacobian \(\mathbf{A}\), we take the partial derivative of \(\mathbf{h}(\mathbf{q})\) with respect to the generalized coordinates, $\mathbf{q}$
+\begin{equation}
+\mathbf{A} = \frac{\partial \mathbf{h}}{\partial \mathbf{q}} = 
+\left[\frac{\partial \mathbf{h}}{\partial \boldsymbol{\theta}}, \frac{\partial \mathbf{h}}{\partial \boldsymbol{\psi}} \right]
+\end{equation}
+
+Since
+\[
+\frac{\partial \mathbf{h}}{\partial \boldsymbol{\theta}} = \mathbf{I}, \quad
+\frac{\partial \mathbf{h}}{\partial \boldsymbol{\psi}} = -\mathbf{D}\mathbf{R},
+\]
+the constraint Jacobian becomes:
+\begin{equation}
+\mathbf{A} = \left[\,\mathbf{I},\; -\mathbf{D}\mathbf{R}\,\right]
+\end{equation}
+
+
+where \(\mathbf{D}\) is the linkage transmission matrix and \(\mathbf{R}\) is the gear reduction matrix. The constraint Jacobian and its nullspace basis are:
+\begin{equation}
+\mathbf{N} = 
+\begin{bmatrix}
+\mathbf{I} \\[2pt]
+(\mathbf{D}\mathbf{R})^{-1}
+\end{bmatrix}, 
+\quad 
+\dot{\mathbf{q}} = \mathbf{N} \dot{\boldsymbol{\theta}}
+\end{equation}
+\subsection{Directional Efficiency Modeling}
+
+To model transmission losses, we use direction-dependent efficiencies for each actuator. Let \(\eta_i^+ \in (0, 1]\) denote the forward-driving (motor to joint) efficiency and \(\eta_i^-\) denote the backward-driving (joint to motor) efficiency. The backward efficiency is derived from \(\eta_i^+\) and gear ratio \(R_i\) using the following expression \cite{Matsuki2019BilateralActuators}:
+\begin{equation}
+\eta_i^- = \frac{\eta_i^+ R_i^2 - (1 - \eta_i^+)}{\eta_i^+ R_i^2 + (1 - \eta_i^+)}
+\end{equation}
+
+The diagonal efficiency matrix \(\boldsymbol{\eta} \in \mathbb{R}^{n \times n}\) is constructed such that:
+\begin{equation}
+\eta_i = 
+\begin{cases}
+\eta_i^+ & \text{if } \tau_i \dot{\psi}_i \geq 0 \quad \text{(forward-driving)} \\
+\eta_i^- & \text{if } \tau_i \dot{\psi}_i < 0 \quad \text{(back-driving)}
+\end{cases}
+\end{equation}
+
+The full block-diagonal efficiency matrix \(\mathbf{E} \in \mathbb{R}^{2n \times 2n}\) is then defined as:
+\begin{equation}
+\mathbf{E} = 
+\begin{bmatrix}
+\mathbf{I} & \mathbf{0} \\[2pt]
+\mathbf{0} & \boldsymbol{\eta}
+\end{bmatrix}
+\end{equation}
+
+
+\subsection{Redundant Dynamics and Meshing Force}
+
+The equations of motion in redundant coordinates are:
+\begin{equation}
+\mathbf{H}_q\ddot{\mathbf{q}} + \mathbf{b}_q + \mathbf{g}_q - \mathbf{A}^\top \boldsymbol{\lambda}
+= \boldsymbol{\tau}_q + \boldsymbol{\tau}_{d,q} + \mathbf{J}_q^\top \mathbf{f},
+\end{equation}
+where \(\mathbf{H}_q, \mathbf{b}_q, \mathbf{g}_q\) are the inertia, Coriolis, and gravity terms, respectively; \(\boldsymbol{\tau}_q\) are the actuation torques; \(\boldsymbol{\tau}_{d,q}\) are the dissipative torques; and \(\mathbf{J}_q\) maps external forces \(\mathbf{f}\). We define the internal meshing force vector:
+\begin{equation}
+\mathbf{r} = \mathbf{A}^\top \boldsymbol{\lambda} + \boldsymbol{\tau}_{d,q} 
+= \mathbf{H}_q\ddot{\mathbf{q}} + \mathbf{b}_q + \mathbf{g}_q - \boldsymbol{\tau}_q - \mathbf{J}_q^\top \mathbf{f}
+\end{equation}
+
+
+\subsection{Efficiency-Null Constraint}
+
+To enforce energy consistency in the presence of direction-dependent dissipation, we impose the efficiency-null constraint \cite{Sim2021TheRobots}:
+\begin{equation}
+\mathbf{N}^\top \mathbf{E} \mathbf{r} = \mathbf{0},
+\end{equation}
+where \(\mathbf{r}\) is the internal meshing force, and \(\mathbf{N}\) is the null-space basis of the holonomic constraint. This constraint ensures that internal forces do not generate net power when projected through the physically dissipative directions defined by \(\mathbf{E}\). Mathematically, it enforces passivity: no internal meshing force \(\mathbf{r}\) may violate the direction-dependent energy loss modeled by \(\boldsymbol{\eta}\). 
+
+\subsection{Reduced Dissipative Equation of Motion}
+
+Eliminating redundant coordinates yields the minimal dynamics in joint coordinates:
+\begin{equation}
+\mathbf{H}(\boldsymbol{\theta}) \ddot{\boldsymbol{\theta}} + \mathbf{b}(\boldsymbol{\theta},\dot{\boldsymbol{\theta}}) + \mathbf{g}(\boldsymbol{\theta}) = \boldsymbol{\tau} + \mathbf{J}^\top(\boldsymbol{\theta}) \mathbf{f},
+\end{equation}
+with the reduced terms defined as:
+\begin{align*}
+\mathbf{H}(\boldsymbol{\theta}) &= \mathbf{N}^\top \mathbf{E} \mathbf{H}_q \mathbf{N}, \\
+\mathbf{b}(\boldsymbol{\theta}, \dot{\boldsymbol{\theta}}) &= \mathbf{N}^\top \mathbf{E} \mathbf{b}_q, \\
+\mathbf{g}(\boldsymbol{\theta}) &= \mathbf{N}^\top \mathbf{E} \mathbf{g}_q, \\
+\boldsymbol{\tau} &= \mathbf{N}^\top \mathbf{E} \boldsymbol{\tau}_q, \\
+\mathbf{J}^\top(\boldsymbol{\theta}) &= \mathbf{N}^\top \mathbf{E} \mathbf{J}_q^\top
+\end{align*}
+This final expression captures joint-space dynamics under directional energy dissipation, generalizing standard rigid-body dynamics to include transmission asymmetries.
+
+\section{Hybrid Contact Mechanism}
+\subsection{Local Contact Models}
+The hybrid contact mechanism of the \emph{PLATO Hand} follows two
+distinct mechanics.  
+A rigid fingernail transmits force with negligible compliance, whereas a
+soft pad spreads the load and widens the admissible friction cone.
+Both contacts are described by their \textit{micro‑displacements}—the
+tiny compressions, slips, and twists that appear as forces build.
+
+\subsubsection*{Rigid nail $r_j$ (point contact with friction)}
+
+\[
+\delta\mathbf x_{r_j} =
+\begin{bmatrix}
+\delta n_{r_j}\\[2pt]
+\delta t_{r_j}
+\end{bmatrix},
+\qquad
+\delta\mathbf x_{r_j}\in\mathbb R^{2}.
+\]
+
+where $\delta n_{r_j}$ is normal compression and
+$\delta t_{r_j}$ is in‑plane slip.  
+These deflections are almost imperceptible, but are kept in the model to follow the linear spring law.
+
+\[
+\mathbf f_{r_j} =
+\operatorname{diag}\!\bigl(k^{\mathrm{rig}},\,k^{\mathrm{rig}}\bigr)\,
+\delta\mathbf x_{r_j},
+\qquad
+k^{\mathrm{rig}}\to\infty
+\]
+\begin{align*}
+f_n^{r_j}=k^{\mathrm{rig}}\delta n_{r_j}\\
+f_t^{r_j}=k^{\mathrm{rig}}\delta t_{r_j}
+\end{align*}
+
+
+These forces are bounded under the following friction cone constraints:
+
+\[
+|f_t^{r_j}| \;\le\; \mu_{r_j}\,f_n^{r_j},
+\qquad
+f_n^{r_j} \;\ge\; 0 .
+\]
+No torsional moment is transmitted with a rigid point contact
+($f_\tau^{r_j}=0$).
+
+
+The huge stiffness makes the nail \emph{sensitive}. However, it contributes
+little to grasp \emph{stability} without torsional support.  
+
+
+%-------------------------------------------------
+\subsubsection*{Soft pad $s_j$ (Hertz normal, linear shear/twist)}
+
+In contrast to rigid nails, the soft pad's micro-misplacement captures real and visible deformation in normal, tangential, and torsional deformation.
+
+\[
+\delta\mathbf x_{s_j} =
+\begin{bmatrix}
+\delta n_{s_j}\\[2pt]
+\delta t_{s_j}\\[2pt]
+\delta\beta_{s_j}
+\end{bmatrix},
+\qquad
+\delta\mathbf x_{s_j}\in\mathbb R^{3}.
+\]
+
+
+\[
+\begin{aligned}
+f_n^{s_j} &= K(1-s_j)\,\delta n_{s_j}^{3/2},
+& K &= \frac{4}{3}\,E^{*}\sqrt{a_{s_j}}, \\[4pt]
+f_t^{s_j} &= k_t(1-s_j)\,\delta t_{s_j}, \\[4pt]
+f_\tau^{s_j} &= k_\tau(1-s_j)\,\delta\beta_{s_j},
+\end{aligned}
+\]
+
+\[
+a_{s_j}=a_{0j}\bigl(1+\eta s_j\bigr).
+\]
+
+\[
+|f_t^{s_j}| \le \mu_{s_j}\,f_n^{s_j},
+\qquad
+f_n^{s_j} \ge 0,
+\qquad
+|f_\tau^{s_j}| \le \frac{a_{s_j}}{2}\,\mu_{s_j}\,f_n^{s_j}.
+\]
+
+The $3{:}2$ power law stiffens the pad as indentation grows, while the
+radius $a_{s_j}$ (inflating with softness~$s_j$) enlarges the Coulomb
+cone. Thus the pad delivers load‑adaptive \emph{stability} that
+complements the nail’s high \emph{sensitivity}.
+
+
+%=====================================================================
+% Global Grasp and Optimization
+%=====================================================================
+\subsection{Global Grasp Map and Optimization}
+\begin{align*}
+\mathbf G &= [\,\mathbf G_{r_1} \; \mathbf G_{s_1} \; \cdots \; \mathbf G_{r_N} \; \mathbf G_{s_N}\,] \\
+\bm{\mathcal F}_{\text{task}} &= \mathbf G \, \mathbf f_c
+\end{align*}
+
+\paragraph{Minimum-energy synthesis}
+\begin{align*}
+\min_{\mathbf f_c} &\quad \tfrac{1}{2} \mathbf f_c^\top \mathbf K(\mathbf s)^{-1} \mathbf f_c \\
+\text{s.t. } &\quad \mathbf G \mathbf f_c = \bm{\mathcal F}_{\text{task}} \\
+&\quad |f_t^{r_j}| \le \mu_{r_j} f_n^{r_j}, \quad f_n^{r_j} \ge 0 \\
+&\quad |f_t^{s_j}| \le \mu_{s_j} f_n^{s_j}, \quad f_n^{s_j} \ge 0 \\
+&\quad |f_\tau^{s_j}| \le \tfrac{a_{s_j}}{2} \mu_{s_j} f_n^{s_j}
+\end{align*}
+
+%=====================================================================
+% Metrics
+%=====================================================================
+\subsection{Performance Metrics}
+\paragraph{Sensitivity}
+\[
+\mathcal S(\mathbf s) = \big\| \mathbf G \mathbf K(\mathbf s) \big\|_F
+\]
+
+\paragraph{Stability}
+\[
+\Delta_{r_j} = \mu_{r_j} f_n^{r_j} - |f_t^{r_j}|, \qquad
+\Delta_{s_j} = \min\left\{
+\mu_{s_j} f_n^{s_j} - |f_t^{s_j}|,
+\; \tfrac{a_{s_j}}{2} \mu_{s_j} f_n^{s_j} - |f_\tau^{s_j}|
+\right\}
+\]
+\[
+\Delta_{\min} = \min_j \big\{ \Delta_{r_j}, \Delta_{s_j} \big\}, \qquad
+\mathcal B(\mathbf s) = \frac{\Delta_{\min}}{\Delta_{\min} + \varepsilon}
+\]
+
+\paragraph{Objective}
+\[
+\Phi(\mathbf s) = w_1 \mathcal S(\mathbf s) + w_2 \mathcal B(\mathbf s), \qquad
+\mathbf s^* = \arg\max_{\mathbf s \in [0,1]^N} \Phi(\mathbf s)
+\]
+
+
+%-------------------------------------------------
+\paragraph{Combined optimisation objective}
+\begin{equation}
+  \boxed{\;
+  \mathcal Q(\mathbf s)=
+    w_1\,\mathcal S(\mathbf s)
+   +w_2\,\mathcal B(\mathbf s)}
+  \qquad
+  (w_1,w_2>0),
+  \label{eq:objective_Q}
+\end{equation}
+
+\noindent
+and the optimal softness vector is obtained from
+\[
+  \mathbf s^{*} \;=\;
+  \arg\max_{\;\mathbf s\in[0,1]^N}\,
+  \mathcal Q(\mathbf s).
+\] -->
