@@ -15,6 +15,8 @@ Robotics research requires multidisciplinary knowledge in mathematics, mechanica
 
 ## Fundamental Robotics Knowledge
 
+Short videos that explain the basic concepts of robotics.
+
 ### Robot Configuration
 - [Quaternions and Rotation in 3D Space, explained interactively](https://www.youtube.com/watch?v=zjMuIxRvygQ&t=33s)
 - [Visualizing quaternions (4d numbers) with stereographic projection](https://www.youtube.com/watch?v=d4EgbgTm0Bg&t=469s)
@@ -39,17 +41,55 @@ Robotics research requires multidisciplinary knowledge in mathematics, mechanica
 - [Numerical Inverse Kinematics (2)](https://www.youtube.com/watch?v=24cXvgQl-nk)
 - [Odometery](https://www.youtube.com/watch?v=eQ9E0Zvp9jw&t=198s )
 
+
+### Robot Dynamics and Control
+- [ETH Zurich Robot Dynamics Lecture Notes](https://ethz.ch/content/dam/ethz/special-interest/mavt/robotics-n-intelligent-systems/rsl-dam/documents/RobotDynamics2017/RD_HS2017script.pdf)
+- [Introduction to Lagrangian Mechanics](https://www.youtube.com/watch?v=8UtnDaGHpq0)
+- [Simple Pendulum via Lagrangian Mechanics](http://www.aoengr.com/Dynamics/LagrangianMechanicsPendulum.pdf)
+- [Lagrangian Formulation of Robot Dynamics](https://www.youtube.com/watch?v=1U6y_68CjeY)
+- [Inverse Dynamics](https://www.youtube.com/watch?v=ZASVKAlegfQ)
+- [Largangian Multipliers](https://www.youtube.com/watch?v=5A39Ht9Wcu0)
+- [Constrained Lagrangian Mechanics](https://www.youtube.com/watch?v=keMzpa_iWjs)
+- [PID Control Explained with Robotics](https://www.youtube.com/watch?v=_bWvXn4ilrY)
+- [Imedpance and Admittance Control](https://www.youtube.com/watch?v=IolG5V_skv8)
+- [Task Space Dynamics](https://www.youtube.com/watch?v=iQa01aFgf8U) 
+- [Redundant Manipulator Control with Nullspace Projection](https://www.youtube.com/watch?v=GMnO6qntsYc)
+- [Hybrid Position/Force Control](https://www.youtube.com/watch?v=UR0GpaaBVKk)
+- [Model Predictive Control](https://www.youtube.com/watch?v=YwodGM2eoy4)
+- [Anatomy of a Dynamical System](https://www.youtube.com/watch?v=-FvrON0OmYc)
+
 ### Motion Planning
 - [RRT](https://www.youtube.com/watch?v=Ob3BIJkQJEw)
 - [Motion Planning in C-Space](https://www.youtube.com/watch?v=s2qrMwqm4D0&list=PLggLP4f-rq02vX0OQQ5vrCxbJrzamYDfx&index=51)
 - [Motion Planning Tutorial](https://msl.cs.illinois.edu/~lavalle/papers/Lav11b.pdf)
 
-### Euler-Lagrangian Mechanics
-- [Introduction to Lagrangian Mechanics](https://www.youtube.com/watch?v=8UtnDaGHpq0)
-- [Simple Pendulum via Lagrangian Mechanics](http://www.aoengr.com/Dynamics/LagrangianMechanicsPendulum.pdf)
-- [Lagrangian Formulation of Robot Dynamics](https://www.youtube.com/watch?v=1U6y_68CjeY)
-- [Inverse Dynamics](https://www.youtube.com/watch?v=ZASVKAlegfQ)
-- [Constrained Lagrangian Mechanics](https://www.youtube.com/watch?v=keMzpa_iWjs)
+### Robot Electronics and Embedded System
+- [BLDC Motors](https://www.youtube.com/watch?v=bCEiOnuODac)
+- [DC Motor Speed-Torque Plane](https://www.youtube.com/watch?v=KmnztbTCvxM)
+- [DC Motor Speed-Torque Curve](https://www.youtube.com/watch?v=pxtRlKs0pAg)
+- [Field Oriented Control](https://www.youtube.com/watch?v=YPD1_rcXBIE)
+- [Back EMF](https://www.youtube.com/watch?v=JgnPSOUoVJI)
+- [Encoder](https://www.youtube.com/watch?v=k2GQVJ4z0kM)
+- [Serial Communication](https://www.youtube.com/watch?v=IyGwvGzrqp8)
+- [Control Area Network (CAN)](https://www.youtube.com/watch?v=WikQ5n1QXQs)
+- [EtherCAT](https://www.youtube.com/watch?v=tYAl2jkaB8Q)
+
+### Robot Mechanism
+- [Reflection of a Motor](https://www.youtube.com/watch?v=VvYSrsqALKc)
+- [Degrees of Freedom of a Robot](https://www.youtube.com/watch?v=zI64DyaRUvQ)
+- [Underactuated Systems](https://underactuated.mit.edu/intro.html)
+- [Bearing](https://www.youtube.com/watch?v=8q25EUszBSI)
+- [Gears](https://www.youtube.com/watch?v=ZhDO16FDmxA&t=55s)
+- [Backlash](https://khkgears.net/new/gear_knowledge/gear_technical_reference/gear_backlash.html)
+- [Planetary Gears](https://www.youtube.com/watch?v=TzJkD87eQNI)
+- [Timing Belts and Pulleys](https://www.youtube.com/watch?v=C_khtPviVPg)
+- [Cable-Driven Transmission](https://www.youtube.com/watch?v=uJiauHFUbn8)
+- [Series Elastic Actuators](https://www.youtube.com/watch?v=gZLO2Am0Zk8)
+- [MIT Mini Cheetah Actuator Teardown](https://www.youtube.com/watch?v=Mhxz2Bj2RXA)
+- [Stiffness and Damping Identification](https://www.youtube.com/watch?v=VZKsla53FAw)
+- [Rolling Contact Joint](https://www.youtube.com/watch?v=TQiLLcumqDw)
+
+
 
 ### Machine Learning
 - [Residual and Least Squares Regression](https://www.youtube.com/watch?v=yMgFHbjbAW8)
@@ -67,23 +107,17 @@ Robotics research requires multidisciplinary knowledge in mathematics, mechanica
 -----
 ##  Robot Operating System (ROS)
 
-### Basics of ROS 2
 - [ROS 2 Documentation](https://docs.ros.org/en/iron/index.html)
 - [Official ROS 2 Tutorials](https://docs.ros.org/en/iron/Tutorials.html)
 - [ROS 2 Tutorials](https://articulatedrobotics.xyz/page4/) by [Articulated Robotics](https://www.youtube.com/@ArticulatedRobotics)
 - [URDF](https://industrial-training-master.readthedocs.io/en/melodic/_source/session3/Intro-to-URDF.html)
 
-### Navigation
-- [Nav2 ROS 2 Package](https://navigation.ros.org/)
-- [TurtleBot 3 Navigation](https://emanual.robotis.com/docs/en/platform/turtlebot3/navigation/)
-
-### Motion Planning
-- [Moveit 2](https://moveit.picknik.ai/main/index.html)
-
 
 -----
 
 Online Courses
+
+Online lecture series and courses on robotics.
 
 ##  Mathematics
 
@@ -111,17 +145,11 @@ Online Courses
 - [Applied Robot Design](https://www.youtube.com/@StanfordCS235/videos)by Reuben Brewer at Stanford University
 
 
-### Optimal Control
+### Robot Control
 - [Underacutated Robotics](https://underactuated.mit.edu/index.html) by Russ Tedrake at MIT
 - [Convex Optimization](https://web.stanford.edu/class/ee364a/) by Stephen Boyd at Stanford University
 - [Optimal Control](https://www.youtube.com/watch?v=Kj88Nory8ec&list=PLZnJoM76RM6Jv4f7E7RnzW4rijTUTPI4u) by Zachery Manchester at CMU
-
-
-### Dynamic 
-
------
-
-
+- [Control Bootcamp](https://www.youtube.com/watch?v=Pi7l8mMjYVE&list=PLMrJAkhIeNNR20Mz-VpzgfQs5zrYi085m) by Steven Brunton at University of Washington
 
 
 ## Robot Perception and Navigation
@@ -131,7 +159,6 @@ Online Courses
 ### SLAM
 - [Robot Mapping](https://www.youtube.com/watch?v=U6vr3iNrwRA&list=PLgnQpQtFTOGQrZ4O5QzbIHgl3b1JHimN_&index=1) by Cyrill Stachniss at University of Bonn
 
------
 
 ## Embedded System
 - [Intro to Embedded Systems](https://users.ece.utexas.edu/~valvano/Volume1/) by Jonathan Valvano at UT Austin
