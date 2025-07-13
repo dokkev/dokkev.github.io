@@ -151,7 +151,7 @@ Online lecture series and courses on robotics.
 - [Optimal Control](https://www.youtube.com/watch?v=Kj88Nory8ec&list=PLZnJoM76RM6Jv4f7E7RnzW4rijTUTPI4u) by Zachery Manchester at CMU
 - [Control Bootcamp](https://www.youtube.com/watch?v=Pi7l8mMjYVE&list=PLMrJAkhIeNNR20Mz-VpzgfQs5zrYi085m) by Steven Brunton at University of Washington
 
-
+https://people.eecs.berkeley.edu/~pabbeel/cs287-fa19/
 ## Robot Perception and Navigation
 
 ### Computer Vision
