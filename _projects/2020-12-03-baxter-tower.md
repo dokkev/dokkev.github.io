@@ -52,16 +52,38 @@ My role in this project was image processing using AprilTags. I implemented Apri
 
 
 ### 6 Cups Tower
-[![Video](http://img.youtube.com/vi/H2U9Fk785CE/0.jpg)](http://www.youtube.com/watch?v=H2U9Fk785CE)
-<div class="caption">
-   *6 Cups Tower Demonstration*
-</div>
+
+<figure>
+  <iframe
+    width="720"
+    height="405"
+    src="https://www.youtube.com/embed/H2U9Fk785CE"
+    title="6 Cups Tower Demonstration"
+    frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowfullscreen>
+  </iframe>
+  <figcaption>
+    <em>6 Cups Tower Demonstration</em>
+  </figcaption>
+</figure>
 
 ### 6 Cups Sorting
-[![Video](http://img.youtube.com/vi/yFVovQYhw8g/0.jpg)](http://www.youtube.com/watch?v=yFVovQYhw8g)
-<div class="caption">
-   *6 Cups Sorting Demonstration*
-</div>
+
+<figure>
+  <iframe
+    width="720"
+    height="405"
+    src="https://www.youtube.com/embed/yFVovQYhw8g"
+    title="6 Cups Sorting Demonstration"
+    frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowfullscreen>
+  </iframe>
+  <figcaption>
+    <em>6 Cups Sorting Demonstration</em>
+  </figcaption>
+</figure>
 
 # Project Details
 

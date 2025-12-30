@@ -132,10 +132,20 @@ Taking advantage of other types of data we obtained from the simulation, we expa
 </div>
 
 
-[![IMAGE_ALT](https://img.youtube.com/vi/_m3zXwX3_xM/0.jpg)](https://youtu.be/_m3zXwX3_xM)
-
-
-*Video 1: Real-time Classification with Peak Moment*
+<figure>
+  <iframe
+    width="720"
+    height="405"
+    src="https://www.youtube.com/embed/_m3zXwX3_xM"
+    title="Real-time Classification with Peak Moment"
+    frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowfullscreen>
+  </iframe>
+  <figcaption>
+    <em>Video 1: Real-time Classification with Peak Moment</em>
+  </figcaption>
+</figure>
 
 
 While training input only contained simulation output with a fixed rat head orientation, we investigated how changing the pitch (looking up and down motion) affected classification accuracy. Video 1 shows the real-time classification with a pre-trained model (refer to Figure 7 for detailed information for the model). Gradually increasing the pitch, the classification failed around 26 degrees incrementation. The classification accuracy dropped significantly when the C0 whisker did not make contact. Since the model only takes inputs from four whiskers, each whisker takes a large proportion of classification accuracy. Hence, we proceeded with a different simulation setup to utilize all whiskers.
@@ -173,10 +183,20 @@ One cycle of whisking takes 125 ms in the simulation time, and contact duration 
 </div>
 
 
-[![IMAGE_ALT](https://img.youtube.com/vi/QAoV4th5TsM/0.jpg)](https://youtu.be/QAoV4th5TsM)
-
-
-*Video 2: All Whisker Real-time Classification*
+<figure>
+  <iframe
+    width="720"
+    height="405"
+    src="https://www.youtube.com/embed/QAoV4th5TsM"
+    title="All Whisker Real-time Classification"
+    frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowfullscreen>
+  </iframe>
+  <figcaption>
+    <em>Video 2: All Whisker Real-time Classification</em>
+  </figcaption>
+</figure>
 
 
 ###  Reinforcement Learning and Coordinate Transformation
@@ -196,10 +216,20 @@ We have witnessed how the orientation of a rat’s head during active whisking a
 During simulation, the q-function is updated upon every action the rat takes. The rat has five actions which are: [turn right, turn left, look up, look down, stay]. Gamma decides which rat should take its next action based on the q-function or completely random action. The rat takes random actions due to limited information in the q-function. As the training progresses, the gamma value is adjusted to encourage the rat to take action based on q-function. Alpha is a learning rate that affects how much the neural network will embrace the new value replacing the existing value. The learning rate in the training depends on the protraction status of the whiskers. The learning rate is proportional to the angle of whiskers to weight information received during peak protraction. 
 
 
-[![IMAGE_ALT](https://img.youtube.com/vi/5qes33DmmsY/0.jpg)](https://youtu.be/5qes33DmmsY)
-
-
-*Video 3: Early State Training*
+<figure>
+  <iframe
+    width="720"
+    height="405"
+    src="https://www.youtube.com/embed/5qes33DmmsY"
+    title="Early State Training"
+    frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowfullscreen>
+  </iframe>
+  <figcaption>
+    <em>Video 3: Early State Training</em>
+  </figcaption>
+</figure>
 
 
 The symmetrical contact of whiskers and contact number decide the reward value. Contact symmetry is weighted more heavily than a contact number to replicate a real rat’s behavior. When the sum of rewards of one cycle of whisking does not reach the given threshold, the rat head orientation is set to the default position and receives a negative reward. 
