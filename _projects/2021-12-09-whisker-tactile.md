@@ -142,7 +142,7 @@ Taking advantage of other types of data we obtained from the simulation, we expa
     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
     allowfullscreen>
   </iframe>
-  <figcaption>
+  <figcaption style="text-align: center;">
     <em>Video 1: Real-time Classification with Peak Moment</em>
   </figcaption>
 </figure>
@@ -193,7 +193,7 @@ One cycle of whisking takes 125 ms in the simulation time, and contact duration 
     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
     allowfullscreen>
   </iframe>
-  <figcaption>
+  <figcaption style="text-align: center;">
     <em>Video 2: All Whisker Real-time Classification</em>
   </figcaption>
 </figure>
@@ -226,7 +226,7 @@ During simulation, the q-function is updated upon every action the rat takes. Th
     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
     allowfullscreen>
   </iframe>
-  <figcaption>
+  <figcaption style="text-align: center;">
     <em>Video 3: Early State Training</em>
   </figcaption>
 </figure>

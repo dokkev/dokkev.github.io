@@ -43,7 +43,7 @@ My role in this project was image processing using AprilTags. I implemented Apri
     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
     allowfullscreen>
   </iframe>
-  <figcaption>
+  <figcaption style="text-align: center;">
     <em>10 Cups Tower Demonstration</em>
   </figcaption>
 </figure>
@@ -63,7 +63,7 @@ My role in this project was image processing using AprilTags. I implemented Apri
     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
     allowfullscreen>
   </iframe>
-  <figcaption>
+  <figcaption style="text-align: center;">
     <em>6 Cups Tower Demonstration</em>
   </figcaption>
 </figure>
@@ -80,7 +80,7 @@ My role in this project was image processing using AprilTags. I implemented Apri
     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
     allowfullscreen>
   </iframe>
-  <figcaption>
+  <figcaption style="text-align: center;">
     <em>6 Cups Sorting Demonstration</em>
   </figcaption>
 </figure>
