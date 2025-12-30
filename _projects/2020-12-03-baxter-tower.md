@@ -33,10 +33,21 @@ My role in this project was image processing using AprilTags. I implemented Apri
 
 ### 10 Cups Tower
 
-[![Video](http://img.youtube.com/vi/YzLpgf8ozkA/0.jpg)](http://www.youtube.com/watch?v=YzLpgf8ozkA)
-<div class="caption">
-   *10 Cups Tower Demonstration*
-</div>
+<figure>
+  <iframe
+    width="720"
+    height="405"
+    src="https://www.youtube.com/embed/YzLpgf8ozkA"
+    title="10 Cups Tower Demonstration"
+    frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowfullscreen>
+  </iframe>
+  <figcaption>
+    <em>10 Cups Tower Demonstration</em>
+  </figcaption>
+</figure>
+
 
 
 
