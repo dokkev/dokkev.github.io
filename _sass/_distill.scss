@@ -20,6 +20,9 @@ d-article d-byline a {
 
 d-article {
   border-top-color: var(--global-divider-color) !important;
+  h1 {
+    font-size: 1.7rem !important;
+  }
   p,
   h1,
   h2,
