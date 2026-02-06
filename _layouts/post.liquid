@@ -23,6 +23,7 @@ layout: default
       {% if page.last_updated %}, last updated in {{ page.last_updated | date: '%B %d, %Y' }}{% endif %}
       {% if page.meta %}• {{ page.meta }}{% endif %}
     </p>
+    {% include post_language_switcher.liquid %}
     <p class="post-tags">
       {% if url_beginning == '/blog/' %}
         <a href="{{ year | prepend: '/blog/' | prepend: site.baseurl}}"> <i class="fa-solid fa-calendar fa-sm"></i> {{ year }} </a>

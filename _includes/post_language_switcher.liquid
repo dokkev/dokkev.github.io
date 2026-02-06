@@ -1,0 +1,46 @@
+{% assign translations = page.translations %}
+{% if translations %}
+  {% assign current_lang = page.lang | default: site.lang | downcase %}
+  {% assign is_list = false %}
+  {% if translations.first.lang or translations.first["lang"] %}
+    {% assign is_list = true %}
+  {% endif %}
+
+  <div class="post-language-switcher" aria-label="Language selector">
+    {% if is_list %}
+      {% for t in translations %}
+        {% assign lang_code = t.lang | default: t["lang"] | downcase %}
+        {% assign label = t.label | default: t["label"] | default: lang_code | upcase %}
+        {% assign url = t.url | default: t["url"] %}
+        {% if lang_code and url %}
+          {% assign resolved_url = url %}
+          {% unless url contains '://' %}
+            {% assign resolved_url = url | relative_url %}
+          {% endunless %}
+          {% if lang_code == current_lang %}
+            <span class="lang-option active" aria-current="page">{{ label }}</span>
+          {% else %}
+            <a class="lang-option" href="{{ resolved_url }}" hreflang="{{ lang_code }}">{{ label }}</a>
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+    {% else %}
+      {% for t in translations %}
+        {% assign lang_code = t[0] | downcase %}
+        {% assign label = lang_code | upcase %}
+        {% assign url = t[1] %}
+        {% if lang_code and url %}
+          {% assign resolved_url = url %}
+          {% unless url contains '://' %}
+            {% assign resolved_url = url | relative_url %}
+          {% endunless %}
+          {% if lang_code == current_lang %}
+            <span class="lang-option active" aria-current="page">{{ label }}</span>
+          {% else %}
+            <a class="lang-option" href="{{ resolved_url }}" hreflang="{{ lang_code }}">{{ label }}</a>
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  </div>
+{% endif %}
