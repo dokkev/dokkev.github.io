@@ -17,7 +17,5 @@ selected_papers: true # includes a list of papers marked as "selected={true}"
 social: true # includes social icons at the bottom of the page
 ---
 
-My name is Dong Ho Kang (DK), and I am a PhD student investiages design and control of humanoid robots at [Human Centered Robotics Lab](https://sites.utexas.edu/hcrl/) in the University of Texas at Austin.
-
-My research aims designing a contact/impact resilient force-transparent robotic hand and developing whole body controllers to achieve seamless motion for versatile whole body manipulation tasks for humanoid robots.
+My name is Dong Ho Kang (DK), and I am a PhD student investiages design optimization of humanoid robots at [Human Centered Robotics Lab](https://sites.utexas.edu/hcrl/) in the University of Texas at Austin. I focus on bridging the gap between skill-level manipulation and robot hardware by integrating robot morphology, mechanism, and control as a single, coupled design problem.  
 
