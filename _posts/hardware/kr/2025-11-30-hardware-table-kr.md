@@ -1,3 +1,24 @@
+---
+title: "[로봇 하드웨어 01] - 로봇 하드웨어란?"
+description: Physical AI 관점에서 본 다관절 로봇 하드웨어  - 서론
+layout: distill
+published: false
+hidden : true
+date: 2025-12-01 00:00:00
+img: /assets/img/can/p1_optimo.jpg
+permalink: /hardware01-kr/
+lang: ko
+translations:
+  - lang: en
+    label: EN
+    url: /hardware01/
+  - lang: ko
+    label: KR
+    url: /hardware01-kr/
+tags: [Hardware Development]
+# categories: robotics101
+---
+
 <!-- 01 - 로봇 하드웨어란?
 02 - 엑추에이터 (1): 모터
 03 - 엑추에이터 (2): 하모닉 드라이브 감속기
