@@ -56,7 +56,7 @@ pagination:
   </div>
   {% endif %}
 
-{% assign featured_posts = site.posts | where: "featured", "true" | where_exp: "post", "post.lang != 'ko'" %}
+{% assign featured_posts = site.posts | where: "featured", "true" | where_exp: "post", "post.lang != 'ko'" | where_exp: "post", "post.hidden != true" %}
 {% if featured_posts.size > 0 %}
 <br>
 
@@ -111,6 +111,9 @@ pagination:
 
     {% for post in postlist %}
     {% if post.lang == "ko" %}
+      {% continue %}
+    {% endif %}
+    {% if post.hidden == true %}
       {% continue %}
     {% endif %}
 
