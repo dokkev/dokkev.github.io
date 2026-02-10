@@ -5,7 +5,6 @@ layout: distill
 published: false
 hidden : true
 date: 2025-12-01 00:00:00
-img: /assets/img/can/p1_optimo.jpg
 permalink: /hardware01-kr/
 lang: ko
 translations:
@@ -24,20 +23,21 @@ tags: [Hardware Development]
 03 - 엑추에이터 (2): 하모닉 드라이브 감속기
 04 - 엑추에이어 (3): 유성기어 감속기
 05 - 엑추에이터 (4): 사이클로이드 감속기
-06 - 엑추에이터 (5): 캡스탄 드라이브 감속기
-07 - 엑추에이터 (5): 리니어 액추에이터
-07 - 엑추에이터 (6): Self-Locking 감속기
-08 - 엑추에이터 (7): 모터 드라이버
-09 - 엑추에이터 (8): 서보 모터
+06 - 엑추에이터 (6): QDD 엑추에이터
+07 - 엑추에이터 (7): 캡스탄 드라이브 감속기
+08 - 엑추에이터 (8): 리니어 액추에이터
+09 - 엑추에이터 (9): Self-Locking 감속기
+10 - 엑추에이터 (10): 모터 드라이버
+09 - 엑추에이터 (11): 서보 모터
 10 - 전달 메카니즘(1) - Linkage
 11 - 전달 메카니즘(2) - Belt
 12 - 전달 메카니즘(3) - Cable / Tendon
-13 - 전달 메카니즘(4) - Differential Mechanism
+13 - 전달 메카니즘(4) - Differential (Cooperative) Mechanism
 14 - 전달 메카니즘(5) - CVT
 15 - 탄성 기반 메카니즘 (1) - Series Elastic Actuator
 16 - 탄성 기반 메카니즘 (2) - Parallel Elastic Actuator
 17 - 탄성 기반 메카니즘 (3) - Variable Stiffness Actuator
-18 - 설계 전략 (2) - Proprioceptive Actuation
+18 - 설계/제어 전략 (2) - Proprioceptive Actuation
 19 - 설계 전략 (3) - Underactuation
 20 - 설계 전략 (4) - Adaptive/Compliant Mechanism
 21 - 설계 전략 (5) - ICR Joint
