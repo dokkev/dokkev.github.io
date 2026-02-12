@@ -1,8 +1,8 @@
 ---
 layout: distill
-title: Proprioceptive Sensing via Hybrid Contact Mechanism for Versatile Interaction
-description: Bidirectional Transmission and Hybrid Contact Mechanism
-img: assets/img/plato/hybrid.png
+title: CAN-based Robot Hardware
+description: CAN based robot hardware design with SocketCAN, PCAN, and ROS2
+img: assets/img/can/can.png
 importance: 8
 category: robotics
 related_publications: false
