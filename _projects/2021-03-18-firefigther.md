@@ -1,7 +1,7 @@
 ---
 layout: distill
-title: Autonomous Fire Fighting Robot 
-description: Sensing and Localization of Fire, Grasping, and Operating Fire Extinguisher
+title: Autonomous Fire Fighting Robot Arm
+description: Sensing and Localization of Fire & Manipulation of Fire Extinguisher 
 img: assets/img/adroit/fire.jpg
 importance: 11
 category: robotics
@@ -12,7 +12,7 @@ HDT Adroit 6DOF A24 Pincer Manipulation of a fire extinguisher using a thermal c
 
 This is a Winter Project of MSR Program at Northwestern University. 
 
-**Code: [[GitHub](https://github.com/rubberdk/Firefighting_Robot_Arm)]**
+**Code: [[GitHub](https://github.com/dokkev/Firefighting_Robot_Arm)]**
 
 # Background
 The idea of a firefighting robot is not a new concept, and there have been a lot of propositions of using firefighter robots. In fact, a robot called Colossus helped save much of the historic structure by braving conditions deemed too dangerous for human firefighters after Notre Dame Cathedral in Paris caught fire in 2019 [1], and LA Fire Department tested autonomous fire fighting robots in the major Downtown blaze in 2020 [2].
