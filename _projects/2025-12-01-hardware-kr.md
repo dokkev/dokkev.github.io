@@ -1,9 +1,9 @@
 ---
 layout: distill
-title: [KR] 로봇 하드웨어 시리즈 
+title: 로봇 하드웨어 시리즈 [KR] 
 description: Physical AI 관점에서 본 로봇 하드웨어에 대한 고찰 (EN version coming soon)
 img: assets/img/hardware/draco_writing.jpg
-importance: 8
+importance: 7
 category: robotics
 related_publications: false
 published: true
