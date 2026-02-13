@@ -17,7 +17,7 @@ published: true
 
 [로봇 하드웨어 04 - 엑추에이터 (3): QDD 엑추에이터](/hardware04-kr/)
 
-앞으로 다룰 주제들은 다음과 같습니다.
+앞으로 다룰 주제들은 다음과 같습니다 (COMING SOON):
 
 05 - 엑추에이터 (4): 캡스탄 드라이브
 
@@ -37,7 +37,7 @@ published: true
 
 13 - 메카니즘 (7) - Compliant/Adaptive Mechanism
 
-14 - 메카니즘 (8) - ICR Joint
+14 - 메카니즘 (8) - Polycentric Joint
 
 15 - 탄성 기반 메카니즘 (1) - Series Elastic Actuator
 
