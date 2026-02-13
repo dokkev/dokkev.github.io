@@ -18,30 +18,42 @@ tags: [Hardware Development]
 # categories: robotics101
 ---
 
-<!-- 01 - 로봇 하드웨어란?
+01 - 로봇 하드웨어란?
 02 - 엑추에이터 (1): 모터
-03 - 엑추에이터 (2): 하모닉 드라이브 감속기
-04 - 엑추에이어 (3): 유성기어 감속기
-05 - 엑추에이터 (4): 사이클로이드 감속기
-06 - 엑추에이터 (6): QDD 엑추에이터
-07 - 엑추에이터 (7): 캡스탄 드라이브 감속기
-08 - 엑추에이터 (8): 리니어 액추에이터
-09 - 엑추에이터 (9): Self-Locking 감속기
-10 - 엑추에이터 (10): 모터 드라이버
-09 - 엑추에이터 (11): 서보 모터
-10 - 전달 메카니즘(1) - Linkage
-11 - 전달 메카니즘(2) - Belt
-12 - 전달 메카니즘(3) - Cable / Tendon
-13 - 전달 메카니즘(4) - Differential (Cooperative) Mechanism
-14 - 전달 메카니즘(5) - CVT
+03 - 엑추에이터 (2): 감속기
+  03-01 - 하모닉 드라이브 감속기
+  03-02 - 유성기어 감속기
+  03-03 - 사이클로이드 감속기
+04 - 엑추에이터 (3): QDD 엑추에이터
+05 - 엑추에이터 (4): 캡스탄 드라이브
+06 - 엑추에이터 (5): 리니어 액추에이터
+07 - 엑추에이터 (6): 모터 드라이버/서보 모터
+08 - 엑추에이터 (7): Continuously Variable Transmission
+09 - 메카니즘 (1): Proximal Actuation (Linkage, Belt, Cable)
+  09-01 - Linkage
+  09-02 - Belt
+  09-03 - Cable / Tendon
+10 - 메카니즘 (4) - Differential (Cooperative) Mechanism
+11 - 메카니즘 (5) - Parallel Mechanism
+12 - 메카니즘 (6) - Underactuated Mechanism
+13 - 메카니즘 (7) - Compliant/Adaptive Mechanism
+14 - 메카니즘 (8) - ICR Joint
 15 - 탄성 기반 메카니즘 (1) - Series Elastic Actuator
 16 - 탄성 기반 메카니즘 (2) - Parallel Elastic Actuator
 17 - 탄성 기반 메카니즘 (3) - Variable Stiffness Actuator
-18 - 설계/제어 전략 (2) - Proprioceptive Actuation
-19 - 설계 전략 (3) - Underactuation
-20 - 설계 전략 (4) - Adaptive/Compliant Mechanism
-21 - 설계 전략 (5) - ICR Joint
+18 - 동역학 제어 (1) - Largrangian Mechanics and Equations of Motion
+19 - 동역학 제어 (2) - Floating Base (Underactuated) System
+20 - 동역학 제어 (3) - Impedance/Admittance Control
+21 - 동역학 제어 (4) - Operational Space / Whole Body Controller
 22 - 센서 (1) - Position Encoder
+23 - 센서 (2) - Force Torque Sensor
+24 - 센서 (3) - Tactile Sensor
+25 - 센서 (4) - IMU
+26 - 통신 (1) - I2C/SPI/SSI/UART 
+27 - 통신 (2) - CAN/RS485/EtherCAT
+28 - 제어 시스템 아키텍처 (1) - Real-Time Control
+
+<!-- 22 - 센서 (1) - Position Encoder
 23 - 센서 (2) - Force Torque Sensor
 24 - 센서 (3) - Tactile Sensor
 25 - 센서 (4) - IMU
