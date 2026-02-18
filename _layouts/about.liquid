@@ -20,10 +20,9 @@ layout: default
         {% if page.profile.image %}
           {% assign profile_image_path = page.profile.image | prepend: 'assets/img/' %}
           {% if page.profile.image_circular %}
-            {% assign profile_image_class = 'img-fluid z-depth-1 rounded-circle' %}
+            {% assign profile_image_class = 'img-fluid z-depth-1 rounded-circle prof-pic-easter-egg' %}
           {% else %}
-            {% assign profile_image_class = 'img-fluid z-depth-1
-      rounded' %}
+            {% assign profile_image_class = 'img-fluid z-depth-1 rounded prof-pic-easter-egg' %}
           {% endif %}
           {% capture sizes %}(min-width: {{ site.max_width }}) {{ site.max_width | minus: 30 | times: 0.3}}px, (min-width: 576px)
       30vw, 95vw"{% endcapture %}
@@ -78,3 +77,31 @@ layout: default
     {% endif %}
   </article>
 </div>
+
+<!-- Easter Egg Script -->
+<script>
+  let easterEggClicks = 0;
+  let easterEggLastClickTime = 0;
+  const easterEggImage = document.querySelector('.prof-pic-easter-egg');
+  if (easterEggImage) {
+    easterEggImage.addEventListener('click', (e) => {
+      const currentTime = new Date().getTime();
+      
+      // Reset if more than 1 second passed since last click
+      if (currentTime - easterEggLastClickTime > 1000) {
+        easterEggClicks = 0;
+      }
+      
+      easterEggClicks++;
+      easterEggLastClickTime = currentTime;
+      
+      if (easterEggClicks >= 5) {
+        easterEggClicks = 0;
+        // Redirect to a specific page
+        window.location.href = "{{ '/projects/' | relative_url }}"; 
+      }
+    });
+    // Optional: indicate clickable
+    easterEggImage.style.cursor = "pointer";
+  }
+</script>
