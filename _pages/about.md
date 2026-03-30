@@ -17,5 +17,6 @@ selected_papers: true # includes a list of papers marked as "selected={true}"
 social: true # includes social icons at the bottom of the page
 ---
 
-My name is Dong Ho Kang (DK), and I am a PhD student investiages design optimization of humanoid robots at [Human Centered Robotics Lab](https://sites.utexas.edu/hcrl/) in the University of Texas at Austin. I focus on bridging the gap between skill-level manipulation and robot hardware by integrating robot morphology, mechanism, and control as a single, coupled design problem.  
 
+
+I am a Ph.D. student at UT Austin, advised by Dr. Luis Sentis in [Human Centered Robotics Lab](https://sites.utexas.edu/hcrl/). My research studies how robot morphology, mechanism design, and control interact in manipulation, especially in contact-rich settings. I am particularly interested in fingertip mechanics, robot hands, and whole-body manipulation systems, with the goal of designing hardware that improves interaction through physically meaningful behavior.
