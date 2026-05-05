@@ -11,33 +11,33 @@ published: true
 
 [로봇 하드웨어 01 - 로봇 하드웨어란?](/hardware01-kr/)
 
-[로봇 하드웨어 02 - 엑추에이터 (1): BLDC 모터](/hardware02-kr/)
+[로봇 하드웨어 02 - 액추에이터 (1): BLDC 모터](/hardware02-kr/)
 
-[로봇 하드웨어 03 - 엑추에이터 (2): 감속기](/hardware03-kr/)
+[로봇 하드웨어 03 - 액추에이터 (2): 감속기](/hardware03-kr/)
 
-[로봇 하드웨어 04 - 엑추에이터 (3): QDD 엑추에이터](/hardware04-kr/)
+[로봇 하드웨어 04 - 액추에이터 (3): QDD 액추에이터](/hardware04-kr/)
 
 앞으로 다룰 주제들은 다음과 같습니다 (COMING SOON):
 
-05 - 엑추에이터 (4): 캡스탄 드라이브
+05 - 액추에이터 (4): 캡스탄 드라이브
 
-06 - 엑추에이터 (5): 리니어 액추에이터
+06 - 액추에이터 (5): 리니어 액추에이터
 
-07 - 엑추에이터 (6): 모터 드라이버/서보 모터
+07 - 액추에이터 (6): 모터 드라이버/서보 모터
 
-08 - 엑추에이터 (7): Continuously Variable Transmission
+08 - 액추에이터 (7): Continuously Variable Transmission
 
 09 - 메카니즘 (1): Proximal Actuation (Linkage, Belt, Cable)
 
-10 - 메카니즘 (4) - Differential (Cooperative) Mechanism
+10 - 메카니즘 (2) - Differential (Cooperative) Mechanism
 
-11 - 메카니즘 (5) - Parallel Mechanism
+11 - 메카니즘 (3) - Parallel Mechanism
 
-12 - 메카니즘 (6) - Underactuated Mechanism
+12 - 메카니즘 (4) - Underactuated Mechanism
 
-13 - 메카니즘 (7) - Compliant/Adaptive Mechanism
+13 - 메카니즘 (5) - Compliant/Adaptive Mechanism
 
-14 - 메카니즘 (8) - Polycentric Joint
+14 - 메카니즘 (6) - Polycentric Joint
 
 15 - 탄성 기반 메카니즘 (1) - Series Elastic Actuator
 
@@ -45,7 +45,7 @@ published: true
 
 17 - 탄성 기반 메카니즘 (3) - Variable Stiffness Actuator
 
-18 - 동역학 제어 (1) - Largrangian Mechanics and Equations of Motion
+18 - 동역학 제어 (1) - Lagrangian Mechanics and Equations of Motion
 
 19 - 동역학 제어 (2) - Floating Base (Underactuated) System
 

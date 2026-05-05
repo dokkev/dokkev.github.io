@@ -2,6 +2,7 @@
 layout: distill
 title: Autonomous Fire Fighting Robot Arm
 description: Sensing and Localization of Fire & Manipulation of Fire Extinguisher 
+permalink: /projects/firefighter/
 img: assets/img/adroit/fire.jpg
 importance: 11
 category: robotics
@@ -15,7 +16,7 @@ This is a Winter Project of MSR Program at Northwestern University.
 **Code: [[GitHub](https://github.com/dokkev/Firefighting_Robot_Arm)]**
 
 # Background
-The idea of a firefighting robot is not a new concept, and there have been a lot of propositions of using firefighter robots. In fact, a robot called Colossus helped save much of the historic structure by braving conditions deemed too dangerous for human firefighters after Notre Dame Cathedral in Paris caught fire in 2019 [1], and LA Fire Department tested autonomous fire fighting robots in the major Downtown blaze in 2020 [2].
+The idea of a firefighting robot is not a new concept, and there have been many proposals for using firefighting robots. In fact, a robot called Colossus helped save much of the historic structure by braving conditions deemed too dangerous for human firefighters after Notre Dame Cathedral in Paris caught fire in 2019 [1], and the LA Fire Department tested autonomous firefighting robots in a major downtown blaze in 2020 [2].
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
@@ -26,11 +27,11 @@ The idea of a firefighting robot is not a new concept, and there have been a lot
    Firefighting Robot "Colossus"
 </div>
 
-The problems with currently existing firefighting robots are that they are not suitable for domestic or commercial usages because they are big and built specifically to operate in firefighting missions. I believe that manipulating a robot arm to detect a fire and use a fire extinguisher can be beneficial in industrial settings such as warehouses that have already adapted using robot arms. Especially, maintenance costs of fire sprinkles due to frozen pipes can be deducted in warehouses. Additionally, implementing a fire safety feature to domestic service robot arms can appeal to the general crowd.
+The problems with currently existing firefighting robots are that they are not suitable for domestic or commercial use because they are large and built specifically to operate in firefighting missions. I believe that manipulating a robot arm to detect a fire and use a fire extinguisher can be beneficial in industrial settings such as warehouses that have already adopted robot arms. In particular, maintenance costs associated with fire sprinklers and frozen pipes can be reduced in warehouses. Additionally, implementing a fire safety feature in domestic service robot arms can appeal to a broader audience.
 
 Therefore, I implemented a firefighting mechanism using HDT Adroit 6 DOF A24 Pincer robot arm (I will refer it as an Adroit throughout this post) and FLIR Lepton 2.5 thermal camera for this project. The goal of this project is to detect a heat source (fire), grab the fire extinguisher, and operate it.
 
-# Hardwares
+# Hardware
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
@@ -66,7 +67,7 @@ The Adroit operates on ROS. I used `ROS-noetic` version for this project.
 # ROS Packages Overview
 
 ## Package: `thermal_image_processing`
-This package takes care of detecting a highest spot in the camera view and reading its temperature from the thermal camera. I implemented the package from PureThermal 1 / PureThermal 2 FLIR Lepton Dev Kit (https://github.com/groupgets/purethermal1-uvc-capture).
+This package takes care of detecting the hottest spot in the camera view and reading its temperature from the thermal camera. I implemented the package from the PureThermal 1 / PureThermal 2 FLIR Lepton Dev Kit (https://github.com/groupgets/purethermal1-uvc-capture).
 
 ### Thermal Image Processing
 
@@ -83,7 +84,7 @@ FLIR Lepton 2.5 thermal camera can detect the temperature using its radiometry i
 
 ### Contour Detection From Thermal Image
 
-The previous method of detecting the heat source was getting the pixel of highest value from the radiometric image. This method was rather unstable due to often bounce of target pixel. Therefore, I calculated the contour from the radiometric image and its centroid to get a target pixel of the heat source.
+The previous method of detecting the heat source was to get the highest-value pixel from the radiometric image. This method was rather unstable because the target pixel often fluctuated. Therefore, I calculated the contour from the radiometric image and its centroid to get a target pixel of the heat source.
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
@@ -134,9 +135,9 @@ Getting the pixel coordinate (u,v) from the centroid of thermal image's contour,
    Combined Thermal and Depth Image
 </div>
 
-The evaluate depth sensing, the result was compared to measurement with a ruler. The error range was about ±100 mm at maximum when measuring distance from 1.2 m to 0.3 m. The error got greater as the depth camera was more far away from the target object.
+To evaluate depth sensing, the result was compared to measurements with a ruler. The error range was about ±100 mm at maximum when measuring distances from 1.2 m to 0.3 m. The error became larger as the depth camera moved farther away from the target object.
 
-When it comes to combining two cameras, thermal image and depth image are deviated from each other. Therefore it's important to align two cameras properly. `rostopic` `combined_image2` provides combined images of color image and thermal image to provide how well two cameras are aligned while `combined_image` provides combined images of aligned color to depth image and thermal image. Thermal camera and Realsense camera should be calibrated to avoid error due to cameras deviation.
+When it comes to combining two cameras, the thermal image and depth image are offset from each other. Therefore, it is important to align the two cameras properly. `rostopic` `combined_image2` provides combined images of the color image and thermal image to show how well the two cameras are aligned while `combined_image` provides combined images of color aligned to the depth image and the thermal image. The thermal camera and Realsense camera should be calibrated to avoid errors due to camera misalignment.
 
 ### Testing with Electric Heater
 <div class="row">
@@ -324,7 +325,7 @@ I installed a laser pointer to accurately evaluate the Adroit's aim to the heat 
    *Pressing the Lever*
 </div>
 
-`arm_control` publishes `std_msgs/Float64` to `pincer_position_controller` to control the pincers. When the Adroit presses the lever, the fire extinguisher's aim goes down a little bit. Besides, this project achieved its goal.
+`arm_control` publishes `std_msgs/Float64` to `pincer_position_controller` to control the pincers. When the Adroit presses the lever, the fire extinguisher's aim goes down a little bit. Overall, this project achieved its goal.
 
 # Future Improvements
 

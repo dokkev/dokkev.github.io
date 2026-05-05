@@ -1,7 +1,7 @@
 ---
 layout: distill
 title: Cup Tower Stacking with Baxter
-description: Baxter stacks tower of cups with Moveit, Apriltag, and OpenCV
+description: Baxter stacks tower of cups with MoveIt, AprilTag, and OpenCV
 img: assets/img/baxter/fasttower.gif
 importance: 13
 category: robotics

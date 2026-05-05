@@ -1,7 +1,7 @@
 ---
 layout: distill
 title: Whisker-based Tactile Sensing and Shape Classification
-description: active vibrissal sensing to classify concave and convex objects using ANN and invtestigation in the transformation from the whisker base frame to the head frame using RL 
+description: active vibrissal sensing to classify concave and convex objects using ANN and investigation of the transformation from the whisker base frame to the head frame using RL
 img: assets/img/whisker/thumbnail.gif
 importance: 10
 category: other
@@ -51,7 +51,7 @@ In this project, we are particularly interested in a rat's ability to navigate i
 
 Studying real rats as a model is time-consuming and complex. Primarily, researchers have been unable to quantify the mechanosensory input at the base of each whisker. However, [Nadina Zweifel](https://nadinazweifel.com/) has implemented [WHISKiT Physics Simulator](https://github.com/SeNSE-lab/whiskitphysics), and it allows us to investigate three-dimensional dynamic information of individual whisker.
 
-When a whisker makes contact with a 3D polygon mesh object in the simulation, the simulator calculates three-dimensional forces and moments at the whisker’s base using the [Bullet Physics library](https://github.com/bulletphysics/bullet3). Whiskers on a rat’s face exist in the form of matrices with their inherent names and functionality. This project will primarily investigate the  transformation from the whisker base frame to the head frame using neural networcoordinateks to replicate a rat’s behavior during active whisking.
+When a whisker makes contact with a 3D polygon mesh object in the simulation, the simulator calculates three-dimensional forces and moments at the whisker’s base using the [Bullet Physics library](https://github.com/bulletphysics/bullet3). Whiskers on a rat’s face exist in the form of matrices with their inherent names and functionality. This project will primarily investigate the transformation from the whisker base frame to the head frame using neural networks to replicate a rat’s behavior during active whisking.
 
 ## Objectives
 While the contents of this project are wildly divergent, we have main objectives, which are the following two.
@@ -254,7 +254,7 @@ The rat successfully classified concave and convex objects with 54 whiskers whil
    Figure 11: Contact Duration (left) vs Contact Number (right)
 </div>
 
-Besides contact duration classifiers, other types of classifiers use more high-level dynamic data input such as the averages of moments, derivatives of moments, averages of forces, and derivatives of forces of each whisker. They all successfully converged to 0.99 accuracies and outperformed in real-time classification. On the other hand, the contact number and peak moment classifier lacked the capabilities to process simulation output from various yaw angles of the rat head since they underperformed with around 0.85 accuracies.  We concluded that data such as contact duration involves time-dependent information, and it allows successful classification with non-fixed head orientation. 
+Besides contact duration classifiers, other types of classifiers use higher-level dynamic data input such as the averages of moments, derivatives of moments, averages of forces, and derivatives of forces of each whisker. They all successfully converged to 0.99 accuracies and outperformed in real-time classification. On the other hand, the contact number and peak moment classifier lacked the capabilities to process simulation output from various yaw angles of the rat head since they underperformed with around 0.85 accuracies. We concluded that data such as contact duration involves time-dependent information, and it allows successful classification with non-fixed head orientation.
 
 
 ### Contact Data Conversion to Gray Image
