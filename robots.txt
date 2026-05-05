@@ -1,4 +1,4 @@
 User-agent: *
 Disallow:
 
-Sitemap: https://dokkev.github.io/sitemap.xml
+Sitemap: https://dongho.dev/sitemap.xml
