@@ -259,14 +259,14 @@
           aria-expanded="false"
           aria-controls="contribution-{{ entry.key }}"
         >
-          My role
+          My contribution
         </a>
       {% endif %}
     </div>
 
     {% if entry.contribution %}
       <div class="collapse mt-1" id="contribution-{{ entry.key }}">
-        <div class="small text-muted"><strong>My role:</strong> {{ entry.contribution }}</div>
+        <div class="small text-muted"><strong>My contribution:</strong> {{ entry.contribution }}</div>
       </div>
     {% endif %}
 

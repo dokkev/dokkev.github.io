@@ -19,4 +19,4 @@ social: true # includes social icons at the bottom of the page
 
 
 
-I am a Ph.D. student at UT Austin, advised by Dr. Luis Sentis in [Human Centered Robotics Lab](https://sites.utexas.edu/hcrl/). My research studies how robot morphology, mechanism design, and control interact in manipulation, especially in contact-rich settings. I am particularly interested in fingertip mechanics, robot hands, and whole-body manipulation systems, with the goal of designing hardware that improves interaction through physically meaningful behavior.
+I am a Ph.D. student at UT Austin, advised by Dr. Luis Sentis in the [Human Centered Robotics Lab](https://sites.utexas.edu/hcrl/). My research focuses on **contact morphology design** for robotic manipulation: designing the geometry, compliance, transmission, and sensing structures that shape how robot bodies make, bear, adapt to, and reveal contact. I study these ideas through robot hands, fingertip mechanics, and whole-body manipulation systems, with the goal of building hardware whose behavior is both effective and mechanically interpretable.
