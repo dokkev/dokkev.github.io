@@ -13,10 +13,9 @@ This project covers the development of CAN-based hardware for robotic applicatio
 
 ## Blog Posts
 
-- [[CAN 01] - What is CAN?](/aboutcan/)
-- [[CAN 02] - Setting up SocketCAN on Linux](/socketcan/)
-- [[CAN 03] - Communicating to ESP32 with SocketCAN](/esp32can/)
-- [[CAN 04] - Gripper Motor Control with CAN Bus](/motorcan/)
-- [[CAN 05] - PCAN Device Driver Installation on Linux](/pcan/)
-
+- [[CAN 01] - What is CAN?](/can01/)
+- [[CAN 02] - Setting up SocketCAN on Linux](/can02/)
+- [[CAN 03] - Communicating to ESP32 with SocketCAN](/can03/)
+- [[CAN 04] - Gripper Motor Control with CAN Bus](/can04/)
+- [[CAN 05] - PCAN Device Driver Installation on Linux](/can05/)
 

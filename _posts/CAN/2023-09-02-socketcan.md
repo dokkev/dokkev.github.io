@@ -5,7 +5,7 @@ layout: distill
 published: true
 date: 2023-09-02 00:00:00
 img: /assets/img/can/socketcan.jpg
-permalink: /socketcan/
+permalink: /can02/
 series: "CAN Bus for Robotic Hardware"
 series_order: 2
 tags: [Hardware Development]
@@ -14,7 +14,7 @@ tags: [Hardware Development]
 ---
 
 Previous Post:
-- [What is CAN?](/aboutcan/)
+- [What is CAN?](/can01/)
 
 In the previous post, we discussed the basics of CAN bus and its applications in robotics. In this post, we will learn how to set up SocketCAN on Ubuntu computers to set up CAN communication.
 
@@ -186,4 +186,4 @@ sudo ip link set up can0 type can
 
 
 
-Netx Post: [Communicating to ESP32 with SocketCAN](/esp32can/)
+Netx Post: [Communicating to ESP32 with SocketCAN](/can03/)

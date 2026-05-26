@@ -513,6 +513,10 @@ footer.sticky-bottom {
   margin-top: 2rem;
 }
 
+.blog-container {
+  max-width: 1120px;
+}
+
 .blog-sidebar {
   border-left: 1px solid var(--global-divider-color);
   font-size: 0.9rem;

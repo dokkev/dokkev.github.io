@@ -31,19 +31,45 @@ pagination:
   </div>
   {% endif %}
 
-{% if site.display_tags and site.display_tags.size > 0 or site.display_categories and site.display_categories.size > 0 %}
+{% assign sorted_tags = site.tags | sort %}
+{% assign visible_tag_count = 0 %}
+{% for tag in sorted_tags %}
+  {% assign show_tag = false %}
+  {% for post in tag[1] %}
+    {% if post.lang == "ko" %}
+      {% continue %}
+    {% endif %}
+    {% assign show_tag = true %}
+  {% endfor %}
+  {% if show_tag %}
+    {% assign visible_tag_count = visible_tag_count | plus: 1 %}
+  {% endif %}
+{% endfor %}
+
+{% if visible_tag_count > 0 or site.display_categories and site.display_categories.size > 0 %}
 
   <div class="tag-category-list">
     <ul class="p-0 m-0">
-      {% for tag in site.display_tags %}
-        <li>
-          <i class="fa-solid fa-hashtag fa-sm"></i> <a href="{{ tag | slugify | prepend: '/blog/tag/' | relative_url }}">{{ tag }}</a>
-        </li>
-        {% unless forloop.last %}
-          <p>&bull;</p>
-        {% endunless %}
+      {% assign rendered_tag_count = 0 %}
+      {% for tag in sorted_tags %}
+        {% assign show_tag = false %}
+        {% for post in tag[1] %}
+          {% if post.lang == "ko" %}
+            {% continue %}
+          {% endif %}
+          {% assign show_tag = true %}
+        {% endfor %}
+        {% if show_tag %}
+          {% assign rendered_tag_count = rendered_tag_count | plus: 1 %}
+          <li>
+            <i class="fa-solid fa-hashtag fa-sm"></i> <a href="{{ tag[0] | slugify | prepend: '/blog/tag/' | relative_url }}">{{ tag[0] }}</a>
+          </li>
+          {% if rendered_tag_count < visible_tag_count %}
+            <p>&bull;</p>
+          {% endif %}
+        {% endif %}
       {% endfor %}
-      {% if site.display_categories.size > 0 and site.display_tags.size > 0 %}
+      {% if site.display_categories.size > 0 and visible_tag_count > 0 %}
         <p>&bull;</p>
       {% endif %}
       {% for category in site.display_categories %}
