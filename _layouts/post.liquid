@@ -4,6 +4,10 @@ layout: default
 {% assign year = page.date | date: '%Y' %}
 {% assign tags = page.tags | join: '' %}
 {% assign categories = page.categories | join: '' %}
+{% assign show_blog_sidebar = false %}
+{% if page.collection == 'posts' %}
+  {% assign show_blog_sidebar = true %}
+{% endif %}
 
 {% if page._styles %}
   <!-- Page/Post style -->
@@ -13,6 +17,11 @@ layout: default
 {% endif %}
 
 {% assign url_beginning = page.url | slice: 0, 6 %}
+
+{% if show_blog_sidebar %}
+  <div class="row blog-layout">
+    <div class="col-lg-8 blog-main">
+{% endif %}
 
 <div class="post">
   <header class="post-header">
@@ -98,3 +107,11 @@ layout: default
     {% include giscus.liquid %}
   {% endif %}
 </div>
+
+{% if show_blog_sidebar %}
+    </div>
+    <aside class="col-lg-4 col-xl-3 offset-xl-1 blog-sidebar-column">
+      {% include blog_sidebar.liquid %}
+    </aside>
+  </div>
+{% endif %}

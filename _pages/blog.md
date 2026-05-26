@@ -16,6 +16,8 @@ pagination:
     after: 3 # The number of links after the current page
 ---
 
+<div class="row blog-layout">
+  <div class="col-lg-8 blog-main">
 <div class="post">
 
 {% assign blog_name_size = site.blog_name | size %}
@@ -199,4 +201,9 @@ pagination:
 {% include pagination.liquid %}
 {% endif %}
 
+</div>
+  </div>
+  <aside class="col-lg-4 col-xl-3 offset-xl-1 blog-sidebar-column">
+    {% include blog_sidebar.liquid %}
+  </aside>
 </div>

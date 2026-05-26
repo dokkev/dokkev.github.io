@@ -509,6 +509,141 @@ footer.sticky-bottom {
 
 // Blog
 
+.blog-sidebar-column {
+  margin-top: 2rem;
+}
+
+.blog-sidebar {
+  border-left: 1px solid var(--global-divider-color);
+  font-size: 0.9rem;
+  padding-left: 1.25rem;
+  top: 5rem;
+}
+
+.blog-sidebar-section {
+  border-bottom: 1px solid var(--global-divider-color);
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+
+  &:last-child {
+    border-bottom: 0;
+    margin-bottom: 0;
+  }
+}
+
+.blog-sidebar-heading {
+  color: var(--global-text-color-light);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+}
+
+.blog-sidebar-about,
+.blog-sidebar-series-description,
+.blog-sidebar-date {
+  color: var(--global-text-color-light);
+}
+
+.blog-sidebar-about,
+.blog-sidebar-series-description {
+  line-height: 1.5;
+  margin-bottom: 0;
+}
+
+.blog-sidebar-series + .blog-sidebar-series {
+  margin-top: 1rem;
+}
+
+.blog-sidebar-series-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.blog-sidebar-list {
+  margin-bottom: 0;
+
+  li + li {
+    margin-top: 0.25rem;
+  }
+}
+
+.blog-sidebar-link,
+.blog-sidebar-text {
+  border-left: 2px solid transparent;
+  display: block;
+  line-height: 1.4;
+  padding: 0.15rem 0 0.15rem 0.5rem;
+}
+
+.blog-sidebar-link {
+  color: var(--global-text-color);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--global-theme-color);
+    text-decoration: none;
+  }
+
+  &.active {
+    border-left-color: var(--global-theme-color);
+    color: var(--global-theme-color);
+    font-weight: 600;
+  }
+}
+
+.blog-sidebar-text {
+  color: var(--global-text-color-light);
+}
+
+.blog-sidebar-date {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 400;
+  margin-top: 0.1rem;
+}
+
+.blog-main-distill {
+  d-title,
+  d-article,
+  d-appendix,
+  d-byline,
+  d-footnote-list,
+  d-citation-list {
+    grid-template-columns:
+      [screen-start page-start kicker-start text-start gutter-start middle-start]
+      minmax(0, 1fr)
+      [text-end page-end gutter-end kicker-end middle-end screen-end];
+  }
+
+  d-title h1,
+  d-title p,
+  d-article > *,
+  d-appendix > * {
+    grid-column: text;
+  }
+
+  d-article hr {
+    grid-column: text;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .blog-sidebar-column {
+    margin-top: 2.5rem;
+  }
+
+  .blog-sidebar {
+    border-left: 0;
+    border-top: 1px solid var(--global-divider-color);
+    padding-left: 0;
+    padding-top: 1.5rem;
+    position: static !important;
+  }
+}
+
 .header-bar {
   border-bottom: 1px solid var(--global-divider-color);
   text-align: center;

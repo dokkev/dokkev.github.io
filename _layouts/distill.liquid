@@ -1,5 +1,10 @@
 <!doctype html>
 <html>
+  {% assign show_blog_sidebar = false %}
+  {% if page.collection == 'posts' %}
+    {% assign show_blog_sidebar = true %}
+  {% endif %}
+
   <head>
     {% include head.liquid %}
     {% if site.enable_medium_zoom %}
@@ -69,6 +74,11 @@
     {% include header.liquid %}
 
     <!-- Content -->
+    {% if show_blog_sidebar %}
+      <div class="container mt-5" role="main">
+        <div class="row blog-layout">
+          <div class="col-lg-8 blog-main blog-main-distill">
+    {% endif %}
     <div class="post distill">
       <d-title>
         <h1>{{ page.title }}</h1>
@@ -116,6 +126,14 @@
         {% include giscus.liquid %}
       {% endif %}
     </div>
+    {% if show_blog_sidebar %}
+          </div>
+          <aside class="col-lg-4 col-xl-3 offset-xl-1 blog-sidebar-column">
+            {% include blog_sidebar.liquid %}
+          </aside>
+        </div>
+      </div>
+    {% endif %}
 
     <!-- Footer -->
     {% include footer.liquid %}
