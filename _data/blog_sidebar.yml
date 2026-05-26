@@ -1,6 +1,7 @@
 major_series:
-  - title: "Robot Hardware KR"
-    url: /projects/hardware-kr/
+  - title: "[KR/EN] Robot Hardware"
+    url: /hardware01/
+    series: "[KR/EN] Robot Hardware"
 
   - title: "CAN Bus for Robotic Hardware"
     series: "CAN Bus for Robotic Hardware"

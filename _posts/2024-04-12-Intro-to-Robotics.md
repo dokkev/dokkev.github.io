@@ -6,7 +6,7 @@ published: true
 date: 2024-04-12 00:00:00
 img: /assets/img/learning_robotics/darwinop.jpg
 permalink: /Intro-to-Robotics/
-tags: [robotics]
+tags: [robotics101]
 # categories: robotics101
 
 ---

@@ -5,7 +5,11 @@
   <nav class="blog-sidebar sticky-top" aria-label="Blog navigation">
     {% if page.collection == 'posts' %}
       {% if page.series %}
-        {% assign current_series_posts = site.posts | where: 'series', page.series | sort: 'series_order' %}
+        {% assign current_series_posts = site.posts | where: 'series', page.series %}
+        {% if page.lang %}
+          {% assign current_series_posts = current_series_posts | where: 'lang', page.lang %}
+        {% endif %}
+        {% assign current_series_posts = current_series_posts | sort: 'series_order' %}
         {% if current_series_posts.size > 0 %}
           <section class="blog-sidebar-section">
             <h2 class="blog-sidebar-heading">In This Series</h2>
@@ -15,8 +19,12 @@
                 {% assign post_href = post.url | relative_url %}
                 <li>
                   <a class="blog-sidebar-link{% if post_href == current_url %} active{% endif %}" href="{{ post_href }}" {% if post_href == current_url %}aria-current="page"{% endif %}>
-                    {% if post.series_order %}
-                      <span class="blog-sidebar-order">{{ post.series_order | prepend: '0' | slice: -2, 2 }}.</span>
+                    {% assign order_label = post.series_label | default: '' %}
+                    {% if order_label == '' and post.series_order %}
+                      {% assign order_label = post.series_order | prepend: '0' | slice: -2, 2 %}
+                    {% endif %}
+                    {% if order_label != '' %}
+                      <span class="blog-sidebar-order">{{ order_label }}.</span>
                     {% endif %}
                     {{ post.title }}
                   </a>
@@ -63,18 +71,14 @@
         <h2 class="blog-sidebar-heading">Major Series</h2>
         <ul class="blog-sidebar-list list-unstyled">
           {% for item in sidebar.major_series %}
+            {% if page.series and item.series == page.series %}
+              {% continue %}
+            {% endif %}
             {% assign item_url = item.url | default: '' %}
             {% assign item_href = '' %}
             {% assign series_posts = '' | split: '' %}
-            {% assign series_is_current = false %}
             {% if item.series %}
               {% assign series_posts = site.posts | where: 'series', item.series | sort: 'series_order' %}
-              {% for post in series_posts %}
-                {% assign post_href = post.url | relative_url %}
-                {% if post_href == current_url %}
-                  {% assign series_is_current = true %}
-                {% endif %}
-              {% endfor %}
             {% endif %}
             {% if item_url != '' %}
               {% if item_url contains '://' %}
@@ -82,31 +86,17 @@
               {% else %}
                 {% assign item_href = item_url | relative_url %}
               {% endif %}
+            {% elsif series_posts.size > 0 %}
+              {% assign first_series_post = series_posts | first %}
+              {% assign item_href = first_series_post.url | relative_url %}
             {% endif %}
             <li class="blog-sidebar-major-series">
-              {% if series_posts.size > 0 %}
-                <details class="blog-sidebar-dropdown" {% if series_is_current %}open{% endif %}>
-                  <summary class="blog-sidebar-dropdown-summary">
-                    <span>{{ item.title }}</span>
-                    <span class="blog-sidebar-count">{{ series_posts.size }}</span>
-                  </summary>
-                  <ol class="blog-sidebar-list blog-sidebar-dropdown-list list-unstyled">
-                    {% for post in series_posts %}
-                      {% assign post_href = post.url | relative_url %}
-                      <li>
-                        <a class="blog-sidebar-link{% if post_href == current_url %} active{% endif %}" href="{{ post_href }}" {% if post_href == current_url %}aria-current="page"{% endif %}>
-                          {% if post.series_order %}
-                            <span class="blog-sidebar-order">{{ post.series_order | prepend: '0' | slice: -2, 2 }}.</span>
-                          {% endif %}
-                          {{ post.title }}
-                        </a>
-                      </li>
-                    {% endfor %}
-                  </ol>
-                </details>
-              {% elsif item_href != '' %}
+              {% if item_href != '' %}
                 <a class="blog-sidebar-link{% if item_href == current_url %} active{% endif %}" href="{{ item_href }}" {% if item_href == current_url %}aria-current="page"{% endif %}>
                   {{ item.title }}
+                  {% if series_posts.size > 0 %}
+                    <span class="blog-sidebar-count">{{ series_posts.size }} notes</span>
+                  {% endif %}
                 </a>
               {% else %}
                 <span class="blog-sidebar-text">{{ item.title }}</span>
