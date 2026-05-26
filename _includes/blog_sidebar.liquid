@@ -71,9 +71,6 @@
         <h2 class="blog-sidebar-heading">Major Series</h2>
         <ul class="blog-sidebar-list list-unstyled">
           {% for item in sidebar.major_series %}
-            {% if page.series and item.series == page.series %}
-              {% continue %}
-            {% endif %}
             {% assign item_url = item.url | default: '' %}
             {% assign item_href = '' %}
             {% assign series_posts = '' | split: '' %}
@@ -100,33 +97,6 @@
                 </a>
               {% else %}
                 <span class="blog-sidebar-text">{{ item.title }}</span>
-              {% endif %}
-            </li>
-          {% endfor %}
-        </ul>
-      </section>
-    {% endif %}
-
-    {% if sidebar.topics and sidebar.topics.size > 0 %}
-      <section class="blog-sidebar-section">
-        <h2 class="blog-sidebar-heading">Topics</h2>
-        <ul class="blog-sidebar-topic-list list-unstyled">
-          {% for topic in sidebar.topics %}
-            {% assign topic_href = '' %}
-            {% if topic.url %}
-              {% if topic.url contains '://' %}
-                {% assign topic_href = topic.url %}
-              {% else %}
-                {% assign topic_href = topic.url | relative_url %}
-              {% endif %}
-            {% endif %}
-            <li>
-              {% if topic_href != '' %}
-                <a class="blog-sidebar-topic{% if topic_href == current_url %} active{% endif %}" href="{{ topic_href }}" {% if topic_href == current_url %}aria-current="page"{% endif %}>
-                  {{ topic.name }}
-                </a>
-              {% else %}
-                <span class="blog-sidebar-topic">{{ topic.name }}</span>
               {% endif %}
             </li>
           {% endfor %}

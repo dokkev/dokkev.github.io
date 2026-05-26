@@ -514,7 +514,99 @@ footer.sticky-bottom {
 }
 
 .blog-container {
-  max-width: 1120px;
+  max-width: 1240px;
+}
+
+.blog-index-container {
+  max-width: 1320px;
+}
+
+.blog-index-layout {
+  column-gap: 0;
+}
+
+.blog-index-main {
+  .header-bar {
+    padding-top: 1.25rem;
+    padding-bottom: 2rem;
+
+    h1 {
+      font-size: 3.5rem;
+    }
+
+    h2 {
+      font-size: 1rem;
+    }
+  }
+
+  .tag-category-list {
+    padding-top: 0.5rem;
+
+    ul {
+      p,
+      li {
+        font-size: 0.82rem;
+        padding: 0.55rem 0.35rem;
+      }
+    }
+  }
+
+  .featured-posts {
+    .card-body {
+      padding: 0.85rem;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      line-height: 1.3;
+      margin-bottom: 0.35rem;
+    }
+
+    .card-text {
+      font-size: 0.84rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .post-meta {
+      font-size: 0.75rem;
+      padding-top: 0.25rem;
+    }
+  }
+
+  .post-list {
+    li {
+      padding-top: 1.2rem;
+      padding-bottom: 1.2rem;
+
+      h3 {
+        font-size: 1.1rem;
+        line-height: 1.35;
+        margin-bottom: 0.3rem;
+      }
+
+      p {
+        font-size: 0.88rem;
+        line-height: 1.45;
+        margin-bottom: 0.35rem;
+      }
+
+      .post-meta,
+      .post-tags {
+        font-size: 0.76rem;
+      }
+    }
+  }
+}
+
+.blog-index-sidebar {
+  .blog-sidebar {
+    font-size: 0.84rem;
+    padding-left: 1rem;
+  }
+
+  .blog-sidebar-heading {
+    font-size: 0.7rem;
+  }
 }
 
 .blog-sidebar {
@@ -622,31 +714,6 @@ footer.sticky-bottom {
   font-size: 0.75rem;
   font-weight: 400;
   margin-top: 0.1rem;
-}
-
-.blog-sidebar-topic-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-bottom: 0;
-}
-
-.blog-sidebar-topic {
-  border: 1px solid var(--global-divider-color);
-  border-radius: 999px;
-  color: var(--global-text-color);
-  display: inline-block;
-  font-size: 0.78rem;
-  line-height: 1.2;
-  padding: 0.25rem 0.55rem;
-  text-decoration: none;
-
-  &:hover,
-  &.active {
-    border-color: var(--global-theme-color);
-    color: var(--global-theme-color);
-    text-decoration: none;
-  }
 }
 
 .blog-main-distill {

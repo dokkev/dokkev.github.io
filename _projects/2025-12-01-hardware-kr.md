@@ -1,13 +1,16 @@
 ---
 layout: distill
-title: 로봇 하드웨어  시리즈 [KR] 
-description: Physical AI 관점에서 본 로봇 하드웨어에 대한 고찰 (EN version coming soon)
+title: Robot Hardware Series [EN/KR]
+description: Robot hardware notes from a Physical AI perspective
 img: assets/img/hardware/draco_writing.jpg
 importance: 7
 category: robotics
 related_publications: false
 published: true
+redirect: /hardware01/
 ---
+
+[Robot Hardware 01 - What Is Robot Hardware?](/hardware01/)
 
 [로봇 하드웨어 01 - 로봇 하드웨어란?](/hardware01-kr/)
 
@@ -66,5 +69,4 @@ published: true
 27 - 통신 (2) - CAN/RS485/EtherCAT
 
 28 - 제어 시스템 아키텍처 (1) - Real-Time Control
-
 

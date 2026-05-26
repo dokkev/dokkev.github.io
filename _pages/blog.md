@@ -8,7 +8,7 @@ pagination:
   enabled: true
   collection: posts
   permalink: /page/:num/
-  per_page: 5
+  per_page: 10
   sort_field: date
   sort_reverse: true
   trail:
@@ -16,8 +16,8 @@ pagination:
     after: 3 # The number of links after the current page
 ---
 
-<div class="row blog-layout">
-  <div class="col-lg-8 blog-main">
+<div class="row blog-layout blog-index-layout">
+  <div class="col-lg-9 blog-main blog-index-main">
 <div class="post">
 
 {% assign blog_name_size = site.blog_name | size %}
@@ -229,7 +229,7 @@ pagination:
 
 </div>
   </div>
-  <aside class="col-lg-4 col-xl-3 offset-xl-1 blog-sidebar-column">
+  <aside class="col-lg-3 blog-sidebar-column blog-index-sidebar">
     {% include blog_sidebar.liquid %}
   </aside>
 </div>
