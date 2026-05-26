@@ -1,34 +1,31 @@
-"adams":
-  - firstname: ["Edwin", "E.", "E. P.", "Edwin Plimpton"]
-    url: https://en.wikipedia.org/wiki/Edwin_Plimpton_Adams
+"bang":
+  - firstname: ["Seung Hyeon", "Seung Hyeon (Sean)", "Sean", "S. H."]
+    url: https://shbang91.github.io/
 
-"podolsky":
-  - firstname: ["Boris", "B.", "B. Y.", "Boris Yakovlevich"]
-    url: https://en.wikipedia.org/wiki/Boris_Podolsky
+"fey":
+  - firstname: ["Ann Majewicz", "Ann M.", "Ann", "A. M."]
+    url: https://www.me.utexas.edu/people/faculty-directory/amfey/1000
 
-"rosen":
-  - firstname: ["Nathan", "N."]
-    url: https://en.wikipedia.org/wiki/Nathan_Rosen
+"jaiswal":
+  - firstname: ["Mehar", "M."]
+    url: https://meharjaiswal.wordpress.com/
 
-"bach":
-  - firstname: ["Johann Sebastian", "J. S."]
-    url: https://en.wikipedia.org/wiki/Johann_Sebastian_Bach
+"jiao":
+  - firstname: ["Junfeng", "J."]
+    url: https://experts.utexas.edu/junfeng_jiao
 
-  - firstname: ["Carl Philipp Emanuel", "C. P. E."]
-    url: https://en.wikipedia.org/wiki/Carl_Philipp_Emanuel_Bach
+"kim":
+  - firstname: ["Aaron", "A."]
+    url: https://www.aaronjkim.com/
 
-"przibram":
-  - firstname: ["Karl"]
-    url: https://link.springer.com/article/10.1007/s00016-019-00242-z
+"mykhailyshyn":
+  - firstname: ["Roman", "R."]
+    url: https://romanmykhailyshyn.github.io/
 
-"schrodinger":
-  - firstname: ["Erwin"]
-    url: https://en.wikipedia.org/wiki/Erwin_Schr%C3%B6dinger
+"sentis":
+  - firstname: ["Luis", "L."]
+    url: https://www.ae.utexas.edu/people/faculty/faculty-directory/sentis
 
-"lorentz":
-  - firstname: ["Hendrik Antoon"]
-    url: https://en.wikipedia.org/wiki/Hendrik_Lorentz
-
-"planck":
-  - firstname: ["Max"]
-    url: https://en.wikipedia.org/wiki/Max_Planck
+"seo":
+  - firstname: ["Mingyo", "M."]
+    url: https://mingyoseo.com/
