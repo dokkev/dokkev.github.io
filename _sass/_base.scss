@@ -542,7 +542,6 @@ footer.sticky-bottom {
 
 .blog-sidebar-about,
 .blog-sidebar-series-description,
-.blog-sidebar-description,
 .blog-sidebar-count,
 .blog-sidebar-date {
   color: var(--global-text-color-light);
@@ -597,13 +596,36 @@ footer.sticky-bottom {
 }
 
 .blog-sidebar-major-series {
-  .blog-sidebar-description,
   .blog-sidebar-count {
-    display: block;
     font-size: 0.75rem;
-    line-height: 1.35;
-    padding-left: 0.65rem;
   }
+}
+
+.blog-sidebar-dropdown {
+  border-left: 2px solid transparent;
+}
+
+.blog-sidebar-dropdown[open] {
+  border-left-color: var(--global-divider-color);
+}
+
+.blog-sidebar-dropdown-summary {
+  color: var(--global-text-color);
+  cursor: pointer;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
+  line-height: 1.4;
+  list-style-position: outside;
+  padding: 0.15rem 0 0.15rem 0.5rem;
+
+  &:hover {
+    color: var(--global-theme-color);
+  }
+}
+
+.blog-sidebar-dropdown-list {
+  margin-top: 0.25rem;
 }
 
 .blog-sidebar-order {

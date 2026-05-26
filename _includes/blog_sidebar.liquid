@@ -58,13 +58,6 @@
       {% endif %}
     {% endif %}
 
-    {% if sidebar.about and sidebar.about.text %}
-      <section class="blog-sidebar-section">
-        <h2 class="blog-sidebar-heading">About This Blog</h2>
-        <p class="blog-sidebar-about">{{ sidebar.about.text }}</p>
-      </section>
-    {% endif %}
-
     {% if sidebar.major_series and sidebar.major_series.size > 0 %}
       <section class="blog-sidebar-section">
         <h2 class="blog-sidebar-heading">Major Series</h2>
@@ -73,8 +66,15 @@
             {% assign item_url = item.url | default: '' %}
             {% assign item_href = '' %}
             {% assign series_posts = '' | split: '' %}
+            {% assign series_is_current = false %}
             {% if item.series %}
               {% assign series_posts = site.posts | where: 'series', item.series | sort: 'series_order' %}
+              {% for post in series_posts %}
+                {% assign post_href = post.url | relative_url %}
+                {% if post_href == current_url %}
+                  {% assign series_is_current = true %}
+                {% endif %}
+              {% endfor %}
             {% endif %}
             {% if item_url != '' %}
               {% if item_url contains '://' %}
@@ -82,23 +82,34 @@
               {% else %}
                 {% assign item_href = item_url | relative_url %}
               {% endif %}
-            {% elsif series_posts.size > 0 %}
-              {% assign first_series_post = series_posts | first %}
-              {% assign item_href = first_series_post.url | relative_url %}
             {% endif %}
             <li class="blog-sidebar-major-series">
-              {% if item_href != '' %}
+              {% if series_posts.size > 0 %}
+                <details class="blog-sidebar-dropdown" {% if series_is_current %}open{% endif %}>
+                  <summary class="blog-sidebar-dropdown-summary">
+                    <span>{{ item.title }}</span>
+                    <span class="blog-sidebar-count">{{ series_posts.size }}</span>
+                  </summary>
+                  <ol class="blog-sidebar-list blog-sidebar-dropdown-list list-unstyled">
+                    {% for post in series_posts %}
+                      {% assign post_href = post.url | relative_url %}
+                      <li>
+                        <a class="blog-sidebar-link{% if post_href == current_url %} active{% endif %}" href="{{ post_href }}" {% if post_href == current_url %}aria-current="page"{% endif %}>
+                          {% if post.series_order %}
+                            <span class="blog-sidebar-order">{{ post.series_order | prepend: '0' | slice: -2, 2 }}.</span>
+                          {% endif %}
+                          {{ post.title }}
+                        </a>
+                      </li>
+                    {% endfor %}
+                  </ol>
+                </details>
+              {% elsif item_href != '' %}
                 <a class="blog-sidebar-link{% if item_href == current_url %} active{% endif %}" href="{{ item_href }}" {% if item_href == current_url %}aria-current="page"{% endif %}>
                   {{ item.title }}
                 </a>
               {% else %}
                 <span class="blog-sidebar-text">{{ item.title }}</span>
-              {% endif %}
-              {% if item.description %}
-                <span class="blog-sidebar-description">{{ item.description }}</span>
-              {% endif %}
-              {% if series_posts.size > 0 %}
-                <span class="blog-sidebar-count">{{ series_posts.size }} notes</span>
               {% endif %}
             </li>
           {% endfor %}
@@ -117,16 +128,6 @@
                 {% assign topic_href = topic.url %}
               {% else %}
                 {% assign topic_href = topic.url | relative_url %}
-              {% endif %}
-            {% elsif topic.tag %}
-              {% assign topic_posts = site.tags[topic.tag] %}
-              {% if topic_posts and topic_posts.size > 0 %}
-                {% assign topic_href = topic.tag | slugify | prepend: '/blog/tag/' | relative_url %}
-              {% endif %}
-            {% elsif topic.category %}
-              {% assign topic_posts = site.categories[topic.category] %}
-              {% if topic_posts and topic_posts.size > 0 %}
-                {% assign topic_href = topic.category | slugify | prepend: '/blog/category/' | relative_url %}
               {% endif %}
             {% endif %}
             <li>

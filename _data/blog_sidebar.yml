@@ -1,29 +1,17 @@
-about:
-  text: "Notes from building robots at the boundary of mechanism, control, and contact."
-
 major_series:
   - title: "Robot Hardware KR"
-    description: "로봇 하드웨어를 Physical AI 관점에서 정리한 한국어 시리즈"
     url: /projects/hardware-kr/
 
   - title: "CAN Bus for Robotic Hardware"
-    description: "CAN bus, SocketCAN, ESP32, and PCAN notes for robot hardware"
     series: "CAN Bus for Robotic Hardware"
 
   - title: "PLATO Build Notes"
-    description: "Build notes on robot hand morphology, fingertips, and contact-rich manipulation"
     series: "PLATO Build Notes"
 
 topics:
   - name: "Robot Hands"
-    tag: "robotic-hand"
   - name: "Hardware Development"
-    tag: "Hardware Development"
   - name: "Real-Time Control"
-    tag: "real-time-control"
   - name: "Contact-Rich Manipulation"
-    tag: "Robotic Manipulation"
   - name: "Humanoids"
-    tag: "humanoids"
   - name: "Learning Resources"
-    tag: "robotics"
