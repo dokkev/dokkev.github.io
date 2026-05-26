@@ -6,6 +6,8 @@ published: true
 date: 2023-09-02 00:00:00
 img: /assets/img/can/socketcan.jpg
 permalink: /socketcan/
+series: "CAN Bus for Robotic Hardware"
+series_order: 2
 tags: [Hardware Development]
 # categories: robotics101
 

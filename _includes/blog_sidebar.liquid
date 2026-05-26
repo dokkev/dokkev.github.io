@@ -3,116 +3,139 @@
 
 {% if sidebar %}
   <nav class="blog-sidebar sticky-top" aria-label="Blog navigation">
-    {% if sidebar.about %}
+    {% if page.collection == 'posts' %}
+      {% if page.series %}
+        {% assign current_series_posts = site.posts | where: 'series', page.series | sort: 'series_order' %}
+        {% if current_series_posts.size > 0 %}
+          <section class="blog-sidebar-section">
+            <h2 class="blog-sidebar-heading">In This Series</h2>
+            <h3 class="blog-sidebar-series-title">{{ page.series }}</h3>
+            <ol class="blog-sidebar-list blog-sidebar-series-list list-unstyled">
+              {% for post in current_series_posts %}
+                {% assign post_href = post.url | relative_url %}
+                <li>
+                  <a class="blog-sidebar-link{% if post_href == current_url %} active{% endif %}" href="{{ post_href }}" {% if post_href == current_url %}aria-current="page"{% endif %}>
+                    {% if post.series_order %}
+                      <span class="blog-sidebar-order">{{ post.series_order | prepend: '0' | slice: -2, 2 }}.</span>
+                    {% endif %}
+                    {{ post.title }}
+                  </a>
+                </li>
+              {% endfor %}
+            </ol>
+          </section>
+        {% endif %}
+      {% else %}
+        {% assign first_tag = page.tags | first %}
+        <section class="blog-sidebar-section">
+          <h2 class="blog-sidebar-heading">Related Notes</h2>
+          <ul class="blog-sidebar-list list-unstyled">
+            {% if first_tag %}
+              {% assign related_count = 0 %}
+              {% for post in site.posts %}
+                {% if related_count >= 5 %}
+                  {% break %}
+                {% endif %}
+                {% if post.url == page.url or post.hidden == true %}
+                  {% continue %}
+                {% endif %}
+                {% if post.tags contains first_tag %}
+                  {% assign post_href = post.url | relative_url %}
+                  <li>
+                    <a class="blog-sidebar-link" href="{{ post_href }}">{{ post.title }}</a>
+                  </li>
+                  {% assign related_count = related_count | plus: 1 %}
+                {% endif %}
+              {% endfor %}
+              {% if related_count == 0 %}
+                <li><span class="blog-sidebar-text">No closely related notes yet.</span></li>
+              {% endif %}
+            {% else %}
+              <li><span class="blog-sidebar-text">No closely related notes yet.</span></li>
+            {% endif %}
+          </ul>
+        </section>
+      {% endif %}
+    {% endif %}
+
+    {% if sidebar.about and sidebar.about.text %}
       <section class="blog-sidebar-section">
         <h2 class="blog-sidebar-heading">About This Blog</h2>
-        <p class="blog-sidebar-about">{{ sidebar.about }}</p>
+        <p class="blog-sidebar-about">{{ sidebar.about.text }}</p>
       </section>
     {% endif %}
 
-    {% if sidebar.start_here and sidebar.start_here.size > 0 %}
+    {% if sidebar.major_series and sidebar.major_series.size > 0 %}
       <section class="blog-sidebar-section">
-        <h2 class="blog-sidebar-heading">Start Here</h2>
+        <h2 class="blog-sidebar-heading">Major Series</h2>
         <ul class="blog-sidebar-list list-unstyled">
-          {% for item in sidebar.start_here %}
+          {% for item in sidebar.major_series %}
             {% assign item_url = item.url | default: '' %}
-            <li>
-              {% if item_url != '' %}
-                {% if item_url contains '://' %}
-                  {% assign item_href = item_url %}
-                {% else %}
-                  {% assign item_href = item_url | relative_url %}
-                {% endif %}
+            {% assign item_href = '' %}
+            {% assign series_posts = '' | split: '' %}
+            {% if item.series %}
+              {% assign series_posts = site.posts | where: 'series', item.series | sort: 'series_order' %}
+            {% endif %}
+            {% if item_url != '' %}
+              {% if item_url contains '://' %}
+                {% assign item_href = item_url %}
+              {% else %}
+                {% assign item_href = item_url | relative_url %}
+              {% endif %}
+            {% elsif series_posts.size > 0 %}
+              {% assign first_series_post = series_posts | first %}
+              {% assign item_href = first_series_post.url | relative_url %}
+            {% endif %}
+            <li class="blog-sidebar-major-series">
+              {% if item_href != '' %}
                 <a class="blog-sidebar-link{% if item_href == current_url %} active{% endif %}" href="{{ item_href }}" {% if item_href == current_url %}aria-current="page"{% endif %}>
                   {{ item.title }}
                 </a>
               {% else %}
                 <span class="blog-sidebar-text">{{ item.title }}</span>
               {% endif %}
-            </li>
-          {% endfor %}
-        </ul>
-      </section>
-    {% endif %}
-
-    {% if sidebar.featured and sidebar.featured.size > 0 %}
-      <section class="blog-sidebar-section">
-        <h2 class="blog-sidebar-heading">Featured</h2>
-        <ul class="blog-sidebar-list list-unstyled">
-          {% for item in sidebar.featured %}
-            {% assign item_url = item.url | default: '' %}
-            <li>
-              {% if item_url != '' %}
-                {% if item_url contains '://' %}
-                  {% assign item_href = item_url %}
-                {% else %}
-                  {% assign item_href = item_url | relative_url %}
-                {% endif %}
-                <a class="blog-sidebar-link{% if item_href == current_url %} active{% endif %}" href="{{ item_href }}" {% if item_href == current_url %}aria-current="page"{% endif %}>
-                  {{ item.title }}
-                </a>
-              {% else %}
-                <span class="blog-sidebar-text">{{ item.title }}</span>
+              {% if item.description %}
+                <span class="blog-sidebar-description">{{ item.description }}</span>
+              {% endif %}
+              {% if series_posts.size > 0 %}
+                <span class="blog-sidebar-count">{{ series_posts.size }} notes</span>
               {% endif %}
             </li>
           {% endfor %}
         </ul>
-      </section>
-    {% endif %}
-
-    {% if sidebar.series and sidebar.series.size > 0 %}
-      <section class="blog-sidebar-section">
-        <h2 class="blog-sidebar-heading">Series</h2>
-        {% for series in sidebar.series %}
-          <div class="blog-sidebar-series">
-            <h3 class="blog-sidebar-series-title">{{ series.title }}</h3>
-            {% if series.description %}
-              <p class="blog-sidebar-series-description">{{ series.description }}</p>
-            {% endif %}
-            {% if series.posts and series.posts.size > 0 %}
-              <ol class="blog-sidebar-list blog-sidebar-series-list list-unstyled">
-                {% for item in series.posts %}
-                  {% assign item_url = item.url | default: '' %}
-                  <li>
-                    {% if item_url != '' %}
-                      {% if item_url contains '://' %}
-                        {% assign item_href = item_url %}
-                      {% else %}
-                        {% assign item_href = item_url | relative_url %}
-                      {% endif %}
-                      <a class="blog-sidebar-link{% if item_href == current_url %} active{% endif %}" href="{{ item_href }}" {% if item_href == current_url %}aria-current="page"{% endif %}>
-                        {{ item.title }}
-                      </a>
-                    {% else %}
-                      <span class="blog-sidebar-text">{{ item.title }}</span>
-                    {% endif %}
-                  </li>
-                {% endfor %}
-              </ol>
-            {% endif %}
-          </div>
-        {% endfor %}
       </section>
     {% endif %}
 
     {% if sidebar.topics and sidebar.topics.size > 0 %}
       <section class="blog-sidebar-section">
         <h2 class="blog-sidebar-heading">Topics</h2>
-        <ul class="blog-sidebar-list blog-sidebar-topic-list list-unstyled">
-          {% for item in sidebar.topics %}
-            {% assign item_url = item.url | default: '' %}
+        <ul class="blog-sidebar-topic-list list-unstyled">
+          {% for topic in sidebar.topics %}
+            {% assign topic_href = '' %}
+            {% if topic.url %}
+              {% if topic.url contains '://' %}
+                {% assign topic_href = topic.url %}
+              {% else %}
+                {% assign topic_href = topic.url | relative_url %}
+              {% endif %}
+            {% elsif topic.tag %}
+              {% assign topic_posts = site.tags[topic.tag] %}
+              {% if topic_posts and topic_posts.size > 0 %}
+                {% assign topic_href = topic.tag | slugify | prepend: '/blog/tag/' | relative_url %}
+              {% endif %}
+            {% elsif topic.category %}
+              {% assign topic_posts = site.categories[topic.category] %}
+              {% if topic_posts and topic_posts.size > 0 %}
+                {% assign topic_href = topic.category | slugify | prepend: '/blog/category/' | relative_url %}
+              {% endif %}
+            {% endif %}
             <li>
-              {% if item_url != '' %}
-                {% if item_url contains '://' %}
-                  {% assign item_href = item_url %}
-                {% else %}
-                  {% assign item_href = item_url | relative_url %}
-                {% endif %}
-                <a class="blog-sidebar-link{% if item_href == current_url %} active{% endif %}" href="{{ item_href }}" {% if item_href == current_url %}aria-current="page"{% endif %}>
-                  {{ item.title }}
+              {% if topic_href != '' %}
+                <a class="blog-sidebar-topic{% if topic_href == current_url %} active{% endif %}" href="{{ topic_href }}" {% if topic_href == current_url %}aria-current="page"{% endif %}>
+                  {{ topic.name }}
                 </a>
               {% else %}
-                <span class="blog-sidebar-text">{{ item.title }}</span>
+                <span class="blog-sidebar-topic">{{ topic.name }}</span>
               {% endif %}
             </li>
           {% endfor %}

@@ -1,37 +1,29 @@
-about: "Notes from building robots at the boundary of mechanism, control, and contact."
+about:
+  text: "Notes from building robots at the boundary of mechanism, control, and contact."
 
-start_here:
-  - title: "Resources for Learning Robotics"
-    url: /Intro-to-Robotics/
-  - title: "CAN Bus for Robotic Hardware"
-    url: /projects/can-hardware/
+major_series:
+  - title: "Robot Hardware KR"
+    description: "로봇 하드웨어를 Physical AI 관점에서 정리한 한국어 시리즈"
+    url: /projects/hardware-kr/
 
-featured:
   - title: "CAN Bus for Robotic Hardware"
-    url: /projects/can-hardware/
-  - title: "Resources for Learning Robotics"
-    url: /Intro-to-Robotics/
+    description: "CAN bus, SocketCAN, ESP32, and PCAN notes for robot hardware"
+    series: "CAN Bus for Robotic Hardware"
 
-series:
-  - title: "CAN Bus for Robotic Hardware"
-    description: "CAN, SocketCAN, embedded nodes, and motor-control notes."
-    posts:
-      - title: "[CAN 01] What is CAN?"
-        url: /aboutcan/
-      - title: "[CAN 02] Setting up SocketCAN on Linux"
-        url: /socketcan/
-      - title: "[CAN 03] Communicating to ESP32 with SocketCAN"
-        url: /esp32can/
-      - title: "[CAN 04] Gripper Motor Control with CAN Bus"
-        url: /motorcan/
-      - title: "[CAN 05] PCAN Device Driver Installation on Linux"
-        url: /pcan/
+  - title: "PLATO Build Notes"
+    description: "Build notes on robot hand morphology, fingertips, and contact-rich manipulation"
+    series: "PLATO Build Notes"
 
 topics:
-  - title: "Robot Hands"
-  - title: "Contact-Rich Manipulation"
-  - title: "Hardware Development"
-    url: /blog/tag/hardware-development/
-  - title: "Real-Time Control"
-  - title: "Humanoids"
-  - title: "Learning Resources"
+  - name: "Robot Hands"
+    tag: "robotic-hand"
+  - name: "Hardware Development"
+    tag: "Hardware Development"
+  - name: "Real-Time Control"
+    tag: "real-time-control"
+  - name: "Contact-Rich Manipulation"
+    tag: "Robotic Manipulation"
+  - name: "Humanoids"
+    tag: "humanoids"
+  - name: "Learning Resources"
+    tag: "robotics"
