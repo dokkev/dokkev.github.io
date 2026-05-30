@@ -1,0 +1,277 @@
+<!DOCTYPE html> <html> <head> <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <title> [CAN 06] - From CAN Frames to ROS 2 Control | Dong Ho Kang </title> <meta name="author" content="Dong Ho Kang"> <meta name="description" content="Connecting CAN-based robot hardware to ROS 2 through custom wrappers and ROS 2 Control hardware interfaces"> <meta name="keywords" content="jekyll, jekyll-theme, academic-website, portfolio-website"> <link rel="stylesheet" href="/assets/css/bootstrap.min.css?a4b3f509e79c54a512b890d73235ef04"> <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mdbootstrap@4.20.0/css/mdb.min.css" integrity="sha256-jpjYvU3G3N6nrrBwXJoVEYI/0zw8htfFnhT9ljN3JJw=" crossorigin="anonymous"> <link defer rel="stylesheet" href="/assets/css/academicons.min.css?f0b7046b84e425c55f3463ac249818f5"> <link defer rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons&amp;display=swap"> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-github.css?591dab5a4e56573bf4ef7fd332894c99" media="" id="highlight_theme_light"> <link rel="shortcut icon" href="/assets/img/favicon.ico?968244106ed7c833589321ca0f99f9b2"> <link rel="stylesheet" href="/assets/css/main.css?d41d8cd98f00b204e9800998ecf8427e"> <link rel="canonical" href="https://dongho.dev/can06/"> <script src="/assets/js/theme.js?9a0c749ec5240d9cda97bc72359a72c0"></script> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-native.css?5847e5ed4a4568527aa6cfab446049ca" media="none" id="highlight_theme_dark"> <script>initTheme();</script> <script defer src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js" integrity="sha256-ZgMyDAIYDYGxbcpJcfUnYwNevG/xi9OHKaR/8GK+jWc=" crossorigin="anonymous"></script> <script defer src="/assets/js/zoom.js?85ddb88934d28b74e78031fd54cf8308"></script> <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script> <script type="text/javascript">window.MathJax={tex:{tags:"ams"}};</script> <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script> <script defer src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6" crossorigin="anonymous"></script> <script src="/assets/js/distillpub/template.v2.js"></script> <script src="/assets/js/distillpub/transforms.v2.js"></script> <script src="/assets/js/distillpub/overrides.js"></script> </head> <body> <d-front-matter> <script async type="text/json">
+      {
+            "title": "[CAN 06] - From CAN Frames to ROS 2 Control",
+            "description": "Connecting CAN-based robot hardware to ROS 2 through custom wrappers and ROS 2 Control hardware interfaces",
+            "published": "September 01, 2024",
+            "authors": [
+              
+            ],
+            "katex": {
+              "delimiters": [
+                {
+                  "left": "$",
+                  "right": "$",
+                  "display": false
+                },
+                {
+                  "left": "$$",
+                  "right": "$$",
+                  "display": true
+                }
+              ]
+            }
+          }
+    </script> </d-front-matter> <header> <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top" role="navigation"> <div class="container"> <a class="navbar-brand title font-weight-lighter" href="/"> <span class="font-weight-bold">Dong Ho</span> Kang </a> <button class="navbar-toggler collapsed ml-auto" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar top-bar"></span> <span class="icon-bar middle-bar"></span> <span class="icon-bar bottom-bar"></span> </button> <div class="collapse navbar-collapse text-right" id="navbarNav"> <ul class="navbar-nav ml-auto flex-nowrap"> <li class="nav-item "> <a class="nav-link" href="/">about </a> </li> <li class="nav-item "> <a class="nav-link" href="/blog/">blog </a> </li> <li class="nav-item "> <a class="nav-link" href="/publications/">publications </a> </li> <li class="nav-item "> <a class="nav-link" href="/projects/">projects </a> </li> <li class="nav-item "> <a class="nav-link" href="/assets/pdf/dk_cv.pdf">cv </a> </li> <li class="nav-item"> <button id="search-toggle" title="Search" onclick="openSearchModal()"> <span class="nav-link">ctrl k <i class="ti ti-search"></i></span> </button> </li> <li class="toggle-container"> <button id="light-toggle" title="Change theme"> <i class="ti ti-sun-moon" id="light-toggle-system"></i> <i class="ti ti-moon-filled" id="light-toggle-dark"></i> <i class="ti ti-sun-filled" id="light-toggle-light"></i> </button> </li> </ul> </div> </div> </nav> <progress id="progress" value="0"> <div class="progress-container"> <span class="progress-bar"></span> </div> </progress> </header> <div class="container mt-5 blog-container" role="main"> <div class="row blog-layout"> <div class="col-lg-9 blog-main blog-main-distill"> <div class="post distill"> <d-title> <h1>[CAN 06] - From CAN Frames to ROS 2 Control</h1> <p>Connecting CAN-based robot hardware to ROS 2 through custom wrappers and ROS 2 Control hardware interfaces</p> </d-title> <d-article> <p>Previous Posts:</p> <ul> <li><a href="/can01/">What is CAN?</a></li> <li><a href="/can02/">Setting up SocketCAN on Linux</a></li> <li><a href="/can03/">SocketCAN Communication with ESP32</a></li> <li><a href="/can04/">Gripper Motor Control with CAN Bus</a></li> <li><a href="/can05/">PCAN Device Driver Installation on Linux</a></li> </ul> <h2 id="overview">Overview</h2> <p>Once a CAN-based actuator or sensor board is working at the SocketCAN level, the next step is usually integration with ROS 2.</p> <p>At the CAN level, the interface is frame-based. A device is addressed by a CAN ID, and the payload is interpreted according to a device-specific protocol.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>CAN ID: 0x101
+Data: [0xA1, 0x00, 0x40, 0x3F, ...]
+</code></pre></div></div> <p>At the robot-control level, the interface is usually expressed in joint states and joint commands.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>joint1 position = 0.52 rad
+joint1 velocity = 1.30 rad/s
+joint1 command  = 1.57 rad
+</code></pre></div></div> <p>The main task of a ROS 2 hardware integration layer is to translate between these two representations.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>CAN protocol representation
+  CAN IDs
+  data bytes
+  encoder counts
+  status flags
+
+ROS 2 control representation
+  joint positions
+  joint velocities
+  joint efforts
+  command interfaces
+  state interfaces
+</code></pre></div></div> <p>This post summarizes two common approaches for connecting CAN-based robot hardware to ROS 2:</p> <ol> <li>a custom ROS 2 wrapper node</li> <li>a ROS 2 Control hardware interface</li> </ol> <p>The focus is not on the full implementation yet, but on the structure of the integration layer.</p> <h2 id="two-ways-to-connect-hardware-to-ros-2">Two Ways to Connect Hardware to ROS 2</h2> <p>There are two common integration patterns.</p> <table> <thead> <tr> <th>Method</th> <th>Description</th> </tr> </thead> <tbody> <tr> <td>Custom ROS 2 wrapper</td> <td>A user-defined ROS 2 node handles hardware communication and exposes topics, services, or actions.</td> </tr> <tr> <td>ROS 2 Control hardware interface</td> <td>The hardware is implemented as a ROS 2 Control hardware component and accessed through standard command and state interfaces.</td> </tr> </tbody> </table> <p>Both approaches are valid. The appropriate choice depends on the system size, timing requirements, and expected lifetime of the codebase.</p> <h2 id="option-1-custom-ros-2-wrapper">Option 1: Custom ROS 2 Wrapper</h2> <p>In a custom wrapper approach, the hardware communication code is implemented directly inside a ROS 2 node or library used by that node.</p> <p>For a CAN motor driver, the structure may look like this:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Custom ROS 2 Node
+  ├── subscribe to command topic
+  ├── encode command into CAN frame
+  ├── send CAN frame through SocketCAN
+  ├── receive CAN feedback frame
+  ├── decode motor state
+  └── publish state topic
+</code></pre></div></div> <p>This approach is flexible. The developer can choose the message format, timing model, state machine, and error handling structure.</p> <p>It is often sufficient for:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- simple sensors
+- diagnostic tools
+- actuator bring-up
+- gripper prototypes
+- one-off hardware tests
+- non-real-time monitoring
+</code></pre></div></div> <p>The main disadvantage is that the developer is responsible for the full structure of the driver.</p> <p>This includes:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- command storage
+- state storage
+- timing
+- timeout handling
+- lifecycle behavior
+- safety checks
+- controller integration
+- simulation/hardware switching
+</code></pre></div></div> <p>For small systems, this may be acceptable. For larger multi-joint systems, the custom wrapper can become difficult to maintain.</p> <h2 id="option-2-ros-2-control-hardware-interface">Option 2: ROS 2 Control Hardware Interface</h2> <p>ROS 2 Control separates the controller from the hardware communication layer.</p> <p>The controller reads state interfaces and writes command interfaces. The hardware interface maps those interfaces to the physical hardware.</p> <p>For a CAN-based robot, the structure is:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ROS 2 Controller
+  ↓
+ROS 2 Control
+  ↓
+Hardware Interface
+  ↓
+SocketCAN
+  ↓
+CAN Bus
+  ↓
+Motor Driver
+</code></pre></div></div> <p>The hardware interface is responsible for converting between ROS 2 Control interfaces and CAN protocol messages.</p> <p>A ROS 2 Control hardware interface requires more structure than a custom wrapper. It typically includes:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- lifecycle callbacks
+- state interface export
+- command interface export
+- hardware parameters
+- pluginlib registration
+- URDF/Xacro configuration
+- read() and write() implementation
+</code></pre></div></div> <p>The advantage is that the hardware can be used with the ROS 2 Control ecosystem. Existing controllers can be reused, and the same robot description can be used to organize joints, interfaces, and controller configuration.</p> <p>This approach is more appropriate for:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- robot arms
+- robot hands
+- mobile manipulators
+- multi-actuator systems
+- systems intended to grow over time
+- platforms that need simulation/hardware consistency
+</code></pre></div></div> <h2 id="custom-wrapper-vs-ros-2-control">Custom Wrapper vs ROS 2 Control</h2> <table> <thead> <tr> <th>Method</th> <th>Pros</th> <th>Cons</th> <th>Suitable Use Cases</th> </tr> </thead> <tbody> <tr> <td>Custom ROS 2 wrapper</td> <td>Flexible, simple to start, easy to modify for bring-up</td> <td>Timing, lifecycle, safety, and controller structure must be implemented manually</td> <td>Sensors, simple actuators, grippers, debugging tools, short-term prototypes</td> </tr> <tr> <td>ROS 2 Control hardware interface</td> <td>Standard controller interface, reusable controllers, cleaner scaling to multi-joint systems</td> <td>More boilerplate, requires ROS 2 Control conventions</td> <td>Robot arms, hands, mobile manipulators, long-term robot platforms</td> </tr> </tbody> </table> <p>A custom wrapper is usually faster for initial hardware testing. ROS 2 Control is usually preferable when the hardware behaves as part of a robot joint system.</p> <h2 id="topic-bridges-and-low-level-control">Topic Bridges and Low-Level Control</h2> <p>A CAN-to-topic bridge maps CAN frames to ROS 2 messages.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>CAN frame
+  ↔
+ROS 2 topic
+</code></pre></div></div> <p>This is useful for:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- monitoring CAN traffic
+- logging device feedback
+- sending test commands
+- visualizing sensor data
+- diagnostics
+- GUI tools
+</code></pre></div></div> <p>However, a topic bridge is not always the right abstraction for low-level joint control.</p> <p>ROS 2 topics are message-passing primitives. Joint-level control is usually implemented as a periodic loop.</p> <p>A typical control loop is:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>read state
+compute command
+write command
+repeat
+</code></pre></div></div> <p>For example, at 1 kHz, this loop must complete every 1 ms. If state feedback and command output are distributed across multiple topic callbacks, the timing becomes harder to reason about.</p> <p>Important questions include:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- Which state sample was used by the controller?
+- When was the command actually sent?
+- Was the callback delayed?
+- Was the message queued?
+- Was the state already stale when the controller used it?
+</code></pre></div></div> <p>For high-level commands, topic-based communication is usually acceptable. For torque control, impedance control, or fast joint position control, the low-level loop should usually be organized more explicitly.</p> <p>A practical split is:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Low-level periodic control
+  → ROS 2 Control hardware interface
+
+Monitoring, logging, GUI, diagnostics
+  → ROS 2 topics
+</code></pre></div></div> <h2 id="ros-2-and-real-time-behavior">ROS 2 and Real-Time Behavior</h2> <p>ROS 2 does not automatically provide real-time control behavior.</p> <p>Real-time behavior depends on several layers:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- operating system scheduling
+- thread priorities
+- executor behavior
+- memory allocation
+- callback structure
+- DDS configuration
+- CAN bus load
+- SocketCAN receive behavior
+- motor driver feedback rate
+- actuator-side control rate
+</code></pre></div></div> <p>For example:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- If the CAN bus is overloaded, ROS 2 does not remove the bus bottleneck.
+- If the motor driver sends feedback at 100 Hz, a 1 kHz controller does not receive fresh hardware state at 1 kHz.
+- If the control loop blocks while waiting for a CAN frame, the control period is no longer stable.
+</code></pre></div></div> <p>For many research robots and prototypes, ROS 2 Control is a practical integration layer. For hard real-time motor control or safety-critical industrial systems, the lowest-level control and safety logic should usually be implemented closer to the hardware.</p> <p>A common layered structure is:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Motor current loop / safety-critical logic
+  → motor driver, MCU, FPGA, or RTOS
+
+Joint-level control and hardware abstraction
+  → ROS 2 Control or another real-time-capable control process
+
+Planning, visualization, logging, user interfaces
+  → ROS 2 nodes and topics
+</code></pre></div></div> <h2 id="the-core-of-a-hardware-interface-read-and-write">The Core of a Hardware Interface: <code class="language-plaintext highlighter-rouge">read()</code> and <code class="language-plaintext highlighter-rouge">write()</code> </h2> <p>ROS 2 Control includes several concepts: hardware components, lifecycle states, controller managers, plugins, URDF tags, command interfaces, and state interfaces.</p> <p>For a hardware developer, the core of the interface is usually concentrated in two functions:</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">read</span><span class="p">();</span>
+<span class="n">write</span><span class="p">();</span>
+</code></pre></div></div> <p>In simplified form:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>read()
+  hardware feedback → ROS 2 state interfaces
+
+write()
+  ROS 2 command interfaces → hardware commands
+</code></pre></div></div> <p>For a CAN-based robot:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>read()
+  CAN frame
+  → decode protocol data
+  → convert raw values to joint units
+  → update state interfaces
+
+write()
+  command interface
+  → convert joint command to protocol units
+  → encode CAN frame
+  → send frame
+</code></pre></div></div> <p>Most of the surrounding structure exists to make these two operations fit into the ROS 2 Control execution model.</p> <h2 id="read"><code class="language-plaintext highlighter-rouge">read()</code></h2> <p>The <code class="language-plaintext highlighter-rouge">read()</code> function updates the hardware state visible to ROS 2 Control.</p> <p>Suppose a motor driver sends the following feedback frame:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>CAN ID: 0x201
+Data: [0x34, 0x12, 0xA0, 0x00, 0x10, 0x00, 0x2B, 0x00]
+</code></pre></div></div> <p>The payload is meaningful only through the motor protocol. For example:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>bytes 0-1: encoder position
+bytes 2-3: velocity
+bytes 4-5: current
+byte 6: temperature
+byte 7: status flags
+</code></pre></div></div> <p>The controller should not depend on this representation. It should receive state through standard interfaces:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>joint1 position
+joint1 velocity
+joint1 effort
+</code></pre></div></div> <p>A simplified <code class="language-plaintext highlighter-rouge">read()</code> function is:</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">hardware_interface</span><span class="o">::</span><span class="n">return_type</span> <span class="n">CanSystem</span><span class="o">::</span><span class="n">read</span><span class="p">(</span>
+  <span class="k">const</span> <span class="n">rclcpp</span><span class="o">::</span><span class="n">Time</span> <span class="o">&amp;</span> <span class="n">time</span><span class="p">,</span>
+  <span class="k">const</span> <span class="n">rclcpp</span><span class="o">::</span><span class="n">Duration</span> <span class="o">&amp;</span> <span class="n">period</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="c1">// 1. Receive CAN frames</span>
+  <span class="c1">// 2. Identify devices by CAN ID</span>
+  <span class="c1">// 3. Decode raw payload data</span>
+  <span class="c1">// 4. Convert raw values to joint units</span>
+  <span class="c1">// 5. Update state variables</span>
+
+  <span class="k">return</span> <span class="n">hardware_interface</span><span class="o">::</span><span class="n">return_type</span><span class="o">::</span><span class="n">OK</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div> <p>The hardware interface usually stores state in member variables:</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">hw_positions_</span><span class="p">;</span>
+<span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">hw_velocities_</span><span class="p">;</span>
+<span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">hw_efforts_</span><span class="p">;</span>
+</code></pre></div></div> <p>After decoding, <code class="language-plaintext highlighter-rouge">read()</code> updates these variables:</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">hw_positions_</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">decoded_position_rad</span><span class="p">;</span>
+<span class="n">hw_velocities_</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">decoded_velocity_rad_per_sec</span><span class="p">;</span>
+<span class="n">hw_efforts_</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">decoded_torque_nm</span><span class="p">;</span>
+</code></pre></div></div> <p>These variables are then exposed through ROS 2 Control state interfaces.</p> <p>In this sense, <code class="language-plaintext highlighter-rouge">read()</code> is not just a socket read operation. It is the conversion from device feedback to robot state.</p> <h2 id="write"><code class="language-plaintext highlighter-rouge">write()</code></h2> <p>The <code class="language-plaintext highlighter-rouge">write()</code> function sends commands from ROS 2 Control to the hardware.</p> <p>For example, a controller may produce:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>joint1 position command = 1.57 rad
+</code></pre></div></div> <p>The motor driver may not accept floating-point radians directly. It may expect:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- encoder counts
+- a scaled integer
+- a device-specific command packet
+- position, velocity, gain, and feedforward fields
+</code></pre></div></div> <p>The <code class="language-plaintext highlighter-rouge">write()</code> function converts the command interface value into the device protocol.</p> <p>A simplified command path is:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1. read command from command interface
+2. apply limits or validity checks
+3. convert joint units to motor units
+4. pack the value into CAN payload bytes
+5. set CAN ID
+6. send frame
+</code></pre></div></div> <p>A simplified <code class="language-plaintext highlighter-rouge">write()</code> function is:</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">hardware_interface</span><span class="o">::</span><span class="n">return_type</span> <span class="n">CanSystem</span><span class="o">::</span><span class="n">write</span><span class="p">(</span>
+  <span class="k">const</span> <span class="n">rclcpp</span><span class="o">::</span><span class="n">Time</span> <span class="o">&amp;</span> <span class="n">time</span><span class="p">,</span>
+  <span class="k">const</span> <span class="n">rclcpp</span><span class="o">::</span><span class="n">Duration</span> <span class="o">&amp;</span> <span class="n">period</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="c1">// 1. Read command variables</span>
+  <span class="c1">// 2. Convert joint units into protocol units</span>
+  <span class="c1">// 3. Encode CAN frames</span>
+  <span class="c1">// 4. Send frames through SocketCAN</span>
+
+  <span class="k">return</span> <span class="n">hardware_interface</span><span class="o">::</span><span class="n">return_type</span><span class="o">::</span><span class="n">OK</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div> <p>Example:</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">double</span> <span class="n">q_des</span> <span class="o">=</span> <span class="n">hw_commands_</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+
+<span class="kt">uint16_t</span> <span class="n">raw_position</span> <span class="o">=</span> <span class="n">encode_position</span><span class="p">(</span><span class="n">q_des</span><span class="p">);</span>
+
+<span class="k">struct</span> <span class="nc">can_frame</span> <span class="n">frame</span><span class="p">;</span>
+<span class="n">frame</span><span class="p">.</span><span class="n">can_id</span> <span class="o">=</span> <span class="n">command_ids_</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+<span class="n">frame</span><span class="p">.</span><span class="n">can_dlc</span> <span class="o">=</span> <span class="mi">8</span><span class="p">;</span>
+
+<span class="n">frame</span><span class="p">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">raw_position</span> <span class="o">&amp;</span> <span class="mh">0xFF</span><span class="p">;</span>
+<span class="n">frame</span><span class="p">.</span><span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">raw_position</span> <span class="o">&gt;&gt;</span> <span class="mi">8</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xFF</span><span class="p">;</span>
+
+<span class="n">socket_can_</span><span class="p">.</span><span class="n">write</span><span class="p">(</span><span class="n">frame</span><span class="p">);</span>
+</code></pre></div></div> <p>The exact encoding depends on the motor driver protocol. The role of <code class="language-plaintext highlighter-rouge">write()</code> remains the same: convert ROS 2 commands into hardware commands.</p> <h2 id="control-loop-structure">Control Loop Structure</h2> <p>A ROS 2 Control update cycle can be represented as:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>controller_manager update loop
+  ↓
+read()
+  update hardware state
+
+controller update()
+  compute command
+
+write()
+  send command to hardware
+</code></pre></div></div> <p>For a CAN-based system:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Motor driver sends feedback frame
+  ↓
+SocketCAN receives frame
+  ↓
+hardware interface read()
+  decode frame
+  update joint state
+  ↓
+controller update()
+  compute next command
+  ↓
+hardware interface write()
+  encode command
+  send CAN frame
+  ↓
+Motor driver receives command
+</code></pre></div></div> <p>This loop is the main connection between CAN frames and ROS 2 Control.</p> <p>The main implementation questions are:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- Which state variables should read() update?
+- Which command variables should write() consume?
+- How are raw CAN payloads converted to joint units?
+- How are joint commands converted to protocol units?
+- What happens when feedback stops?
+- What happens when a command is outside the valid range?
+- How are device faults represented?
+</code></pre></div></div> <p>These questions define most of the hardware interface behavior.</p> <h2 id="unit-conversion">Unit Conversion</h2> <p>The controller should operate in robot-level units.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>position: rad
+velocity: rad/s
+effort: Nm
+</code></pre></div></div> <p>The motor driver may operate in protocol-level units.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>encoder counts
+integer velocity units
+current units
+scaled torque commands
+status bytes
+</code></pre></div></div> <p>The hardware interface defines the mapping.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>read():
+  protocol units → robot units
+
+write():
+  robot units → protocol units
+</code></pre></div></div> <p>This mapping should be explicit and centralized. Hidden conversions inside scattered callback code make the driver harder to validate.</p> <h2 id="choosing-an-integration-approach">Choosing an Integration Approach</h2> <p>Use a custom ROS 2 wrapper when:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- the device is simple
+- timing requirements are loose
+- the goal is bring-up or diagnostics
+- the device is not part of a tight control loop
+- the interface is unlikely to grow
+</code></pre></div></div> <p>Use ROS 2 Control when:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- the hardware represents robot joints
+- multiple actuators must be managed together
+- existing controllers should be reused
+- command and state interfaces should be standardized
+- simulation and hardware should share a similar interface
+- the system is expected to grow
+</code></pre></div></div> <p>For a single actuator, either approach may be acceptable. For a robot hand, arm, or mobile manipulator, ROS 2 Control usually provides a cleaner long-term structure.</p> <h2 id="summary">Summary</h2> <p>CAN-based hardware can be connected to ROS 2 either through a custom wrapper or through ROS 2 Control.</p> <p>A custom wrapper is simple and flexible, but the driver structure is fully user-defined.</p> <p>A ROS 2 Control hardware interface requires more boilerplate, but provides a standard separation between controllers and hardware communication.</p> <p>The core of a ROS 2 Control hardware interface is:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>read()
+  hardware feedback → ROS 2 state
+
+write()
+  ROS 2 command → hardware command
+</code></pre></div></div> <p>For CAN systems:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>read()
+  CAN frame → decoded joint state
+
+write()
+  joint command → encoded CAN frame
+</code></pre></div></div> <p>The next step is implementation. The following post will focus on the timing structure of the CAN interface: when frames are read, when commands are sent, how buffers are handled, and how stale or missing feedback should be detected.</p> </d-article> <d-appendix> <d-footnote-list></d-footnote-list> <d-citation-list></d-citation-list> </d-appendix> <d-bibliography src="/assets/bibliography/"></d-bibliography> </div> </div> <aside class="col-lg-3 blog-sidebar-column"> <nav class="blog-sidebar sticky-top" aria-label="Blog navigation"> <section class="blog-sidebar-section"> <h2 class="blog-sidebar-heading">In This Series</h2> <h3 class="blog-sidebar-series-title">CAN Bus for Robotic Hardware</h3> <ol class="blog-sidebar-list blog-sidebar-series-list list-unstyled"> <li> <a class="blog-sidebar-link" href="/can01/"> <span class="blog-sidebar-order">01.</span> [CAN 01] - What is CAN? </a> </li> <li> <a class="blog-sidebar-link" href="/can02/"> <span class="blog-sidebar-order">02.</span> [CAN 02] - Setting up SocketCAN on Linux </a> </li> <li> <a class="blog-sidebar-link" href="/can03/"> <span class="blog-sidebar-order">03.</span> [CAN 03] - Communicating to ESP32 with SocketCAN </a> </li> <li> <a class="blog-sidebar-link" href="/can04/"> <span class="blog-sidebar-order">04.</span> [CAN 04] - Gripper Motor Control with CAN Bus </a> </li> <li> <a class="blog-sidebar-link" href="/can05/"> <span class="blog-sidebar-order">05.</span> [CAN 05] - PCAN Device Driver Installation on Linux </a> </li> <li> <a class="blog-sidebar-link active" href="/can06/" aria-current="page"> <span class="blog-sidebar-order">06.</span> [CAN 06] - From CAN Frames to ROS 2 Control </a> </li> </ol> </section> <section class="blog-sidebar-section"> <h2 class="blog-sidebar-heading">Major Series</h2> <ul class="blog-sidebar-list list-unstyled"> <li class="blog-sidebar-major-series"> <a class="blog-sidebar-link" href="/hardware01/"> [EN/KR] Robot Hardware <span class="blog-sidebar-count">16 notes</span> </a> </li> <li class="blog-sidebar-major-series"> <a class="blog-sidebar-link" href="/can01/"> CAN Bus for Robotic Hardware <span class="blog-sidebar-count">6 notes</span> </a> </li> <li class="blog-sidebar-major-series"> <span class="blog-sidebar-text">PLATO Build Notes</span> </li> </ul> </section> <section class="blog-sidebar-section"> <h2 class="blog-sidebar-heading">Recent Posts</h2> <ul class="blog-sidebar-list blog-sidebar-recent-list list-unstyled"> <li> <a class="blog-sidebar-link" href="/can05/"> [CAN 05] - PCAN Device Driver Installation on Linux <span class="blog-sidebar-date">Oct 14, 2024</span> </a> </li> <li> <a class="blog-sidebar-link" href="/blog/2024/roscan2/"> Roscan2 <span class="blog-sidebar-date">Sep 2, 2024</span> </a> </li> <li> <a class="blog-sidebar-link active" href="/can06/" aria-current="page"> [CAN 06] - From CAN Frames to ROS 2 Control <span class="blog-sidebar-date">Sep 1, 2024</span> </a> </li> <li> <a class="blog-sidebar-link" href="/Intro-to-Robotics/"> Resources for Learning Robotics <span class="blog-sidebar-date">Apr 12, 2024</span> </a> </li> <li> <a class="blog-sidebar-link" href="/can04/"> [CAN 04] - Gripper Motor Control with CAN Bus <span class="blog-sidebar-date">Dec 5, 2023</span> </a> </li> </ul> </section> </nav> </aside> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Dong Ho Kang. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Photos from <a href="https://unsplash.com" target="_blank" rel="external nofollow noopener">Unsplash</a>. Last updated: May 30, 2026. </div> </footer> <script src="/assets/js/bootstrap.bundle.min.js"></script> <script src="https://cdn.jsdelivr.net/npm/mdbootstrap@4.20.0/js/mdb.min.js" integrity="sha256-NdbiivsvWt7VYCt6hYNT3h/th9vSTL4EDWeGs5SN3DA=" crossorigin="anonymous"></script> <script type="text/javascript">function progressBarSetup(){"max"in document.createElement("progress")?(initializeProgressElement(),$(document).on("scroll",function(){progressBar.attr({value:getCurrentScrollPosition()})}),$(window).on("resize",initializeProgressElement)):(resizeProgressBar(),$(document).on("scroll",resizeProgressBar),$(window).on("resize",resizeProgressBar))}function getCurrentScrollPosition(){return $(window).scrollTop()}function initializeProgressElement(){let e=$("#navbar").outerHeight(!0);$("body").css({"padding-top":e}),$("progress-container").css({"padding-top":e}),progressBar.css({top:e}),progressBar.attr({max:getDistanceToScroll(),value:getCurrentScrollPosition()})}function getDistanceToScroll(){return $(document).height()-$(window).height()}function resizeProgressBar(){progressBar.css({width:getWidthPercentage()+"%"})}function getWidthPercentage(){return getCurrentScrollPosition()/getDistanceToScroll()*100}const progressBar=$("#progress");window.onload=function(){setTimeout(progressBarSetup,50)};</script> <script src="/assets/js/vanilla-back-to-top.min.js?f40d453793ff4f64e238e420181a1d17"></script> <script>addBackToTop();</script> <script type="module" src="/assets/js/search/ninja-keys.min.js?a3446f084dcaecc5f75aa1757d087dcf"></script> <ninja-keys hidebreadcrumbs noautoloadmdicons placeholder="Type to start searching"></ninja-keys> <script>let searchTheme=determineComputedTheme();const ninjaKeys=document.querySelector("ninja-keys");"dark"===searchTheme?ninjaKeys.classList.add("dark"):ninjaKeys.classList.remove("dark");const openSearchModal=()=>{const e=$("#navbarNav");e.hasClass("show")&&e.collapse("hide"),ninjaKeys.open()};</script> <script>const ninja=document.querySelector("ninja-keys");ninja.data=[{id:"nav-about",title:"about",section:"Navigation",handler:()=>{window.location.href="/"}},{id:"nav-blog",title:"blog",description:"",section:"Navigation",handler:()=>{window.location.href="/blog/"}},{id:"nav-publications",title:"publications",description:"Publications are listed by category in reverse chronological order.",section:"Navigation",handler:()=>{window.location.href="/publications/"}},{id:"nav-projects",title:"projects",description:"Robotics Portfolio",section:"Navigation",handler:()=>{window.location.href="/projects/"}},{id:"nav-cv",title:"cv",description:"",section:"Navigation",handler:()=>{window.location.href="/assets/pdf/dk_cv.pdf"}},{id:"post-\ub85c\ubd07-\ud558\ub4dc\uc6e8\uc5b4-05-\ubaa8\ud130-\uc81c\uc5b4-\ub808\ubca8\uc5d0\uc11c-\ubcf8-physical-ai\uc758-\ud604\uc2e4",title:"[\ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4 05] - \ubaa8\ud130 \uc81c\uc5b4 \ub808\ubca8\uc5d0\uc11c \ubcf8 Physical AI\uc758 \ud604\uc2e4",description:"Physical AI \uad00\uc810\uc5d0\uc11c \ubcf8 \ub2e4\uad00\uc808 \ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4 - FOC, \uc804\ub958 \uc81c\uc5b4, \uadf8\ub9ac\uace0 actuator \ube44\uc774\uc0c1\uc131",section:"Posts",handler:()=>{window.location.href="/hardware05-kr/"}},{id:"post-robot-hardware-05-physical-ai-at-the-motor-control-level",title:"[Robot Hardware 05] - Physical AI at the Motor Control Level",description:"Robot hardware from a Physical AI perspective - FOC, current control, and actuator non-idealities",section:"Posts",handler:()=>{window.location.href="/hardware05/"}},{id:"post-\ub85c\ubd07-\ud558\ub4dc\uc6e8\uc5b4-04-\uc561\ucd94\uc5d0\uc774\ud130-3-qdd-\uc561\ucd94\uc5d0\uc774\ud130",title:"[\ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4 04] - \uc561\ucd94\uc5d0\uc774\ud130(3) : QDD \uc561\ucd94\uc5d0\uc774\ud130",description:"Physical AI \uad00\uc810\uc5d0\uc11c \ubcf8 \ub2e4\uad00\uc808 \ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4 - QDD \uc561\ucd94\uc5d0\uc774\ud130",section:"Posts",handler:()=>{window.location.href="/hardware04-kr/"}},{id:"post-robot-hardware-04-actuators-3-qdd-actuators",title:"[Robot Hardware 04] - Actuators (3): QDD Actuators",description:"Robot hardware from a Physical AI perspective - QDD actuators",section:"Posts",handler:()=>{window.location.href="/hardware04/"}},{id:"post-\ub85c\ubd07-\ud558\ub4dc\uc6e8\uc5b4-03-\uc0ac\uc774\ud074\ub85c\uc774\ub4dc-\uac10\uc18d\uae30",title:"[\ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4 03] - \uc0ac\uc774\ud074\ub85c\uc774\ub4dc \uac10\uc18d\uae30",description:"Physical AI \uad00\uc810\uc5d0\uc11c \ubcf8 \ub2e4\uad00\uc808 \ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4 - \uc0ac\uc774\ud074\ub85c\uc774\ub4dc \uac10\uc18d\uae30",section:"Posts",handler:()=>{window.location.href="/hardware03-03-kr/"}},{id:"post-robot-hardware-03-cycloidal-drives",title:"[Robot Hardware 03] - Cycloidal Drives",description:"Robot hardware from a Physical AI perspective - cycloidal drives",section:"Posts",handler:()=>{window.location.href="/hardware03-03/"}},{id:"post-\ub85c\ubd07-\ud558\ub4dc\uc6e8\uc5b4-03-\uc720\uc131\uae30\uc5b4-\uac10\uc18d\uae30",title:"[\ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4 03] - \uc720\uc131\uae30\uc5b4 \uac10\uc18d\uae30",description:"Physical AI \uad00\uc810\uc5d0\uc11c \ubcf8 \ub2e4\uad00\uc808 \ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4 - \uc720\uc131\uae30\uc5b4 \uac10\uc18d\uae30",section:"Posts",handler:()=>{window.location.href="/hardware03-02-kr/"}},{id:"post-robot-hardware-03-planetary-gearboxes",title:"[Robot Hardware 03] - Planetary Gearboxes",description:"Robot hardware from a Physical AI perspective - planetary gearboxes",section:"Posts",handler:()=>{window.location.href="/hardware03-02/"}},{id:"post-\ub85c\ubd07-\ud558\ub4dc\uc6e8\uc5b4-03-\ud558\ubaa8\ub2c9-\ub4dc\ub77c\uc774\ube0c-\uac10\uc18d\uae30",title:"[\ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4 03] - \ud558\ubaa8\ub2c9 \ub4dc\ub77c\uc774\ube0c \uac10\uc18d\uae30",description:"Physical AI \uad00\uc810\uc5d0\uc11c \ubcf8 \ub2e4\uad00\uc808 \ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4 - \ud558\ubaa8\ub2c9 \ub4dc\ub77c\uc774\ube0c",section:"Posts",handler:()=>{window.location.href="/hardware03-01-kr/"}},{id:"post-\ub85c\ubd07-\ud558\ub4dc\uc6e8\uc5b4-03-\uc561\ucd94\uc5d0\uc774\ud130-2-\uac10\uc18d\uae30",title:"[\ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4 03] - \uc561\ucd94\uc5d0\uc774\ud130 (2): \uac10\uc18d\uae30",description:"Physical AI \uad00\uc810\uc5d0\uc11c \ubcf8 \ub2e4\uad00\uc808 \ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4 - \uac10\uc18d\uae30",section:"Posts",handler:()=>{window.location.href="/hardware03-kr/"}},{id:"post-robot-hardware-03-harmonic-drives",title:"[Robot Hardware 03] - Harmonic Drives",description:"Robot hardware from a Physical AI perspective - Harmonic Drive reducers",section:"Posts",handler:()=>{window.location.href="/hardware03-01/"}},{id:"post-robot-hardware-03-actuators-2-reducers",title:"[Robot Hardware 03] - Actuators (2): Reducers",description:"Robot hardware from a Physical AI perspective - reducers",section:"Posts",handler:()=>{window.location.href="/hardware03/"}},{id:"post-\ub85c\ubd07-\ud558\ub4dc\uc6e8\uc5b4-02-\uc561\ucd94\uc5d0\uc774\ud130-1-bldc-\ubaa8\ud130",title:"[\ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4 02] - \uc561\ucd94\uc5d0\uc774\ud130 (1): BLDC \ubaa8\ud130",description:"Physical AI \uad00\uc810\uc5d0\uc11c \ubcf8 \ub2e4\uad00\uc808 \ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4 - BLDC \ubaa8\ud130",section:"Posts",handler:()=>{window.location.href="/hardware02-kr/"}},{id:"post-robot-hardware-02-actuators-1-bldc-motors",title:"[Robot Hardware 02] - Actuators (1): BLDC Motors",description:"Robot hardware from a Physical AI perspective - BLDC motors",section:"Posts",handler:()=>{window.location.href="/hardware02/"}},{id:"post-\ub85c\ubd07-\ud558\ub4dc\uc6e8\uc5b4-01-\ub85c\ubd07-\ud558\ub4dc\uc6e8\uc5b4\ub780",title:"[\ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4 01] - \ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4\ub780?",description:"Physical AI \uad00\uc810\uc5d0\uc11c \ubcf8 \ub2e4\uad00\uc808 \ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4  - \uc11c\ub860",section:"Posts",handler:()=>{window.location.href="/hardware01-kr/"}},{id:"post-robot-hardware-01-what-is-robot-hardware",title:"[Robot Hardware 01] - What Is Robot Hardware?",description:"Robot hardware from a Physical AI perspective - Introduction",section:"Posts",handler:()=>{window.location.href="/hardware01/"}},{id:"post-can-05-pcan-device-driver-installation-on-linux",title:"[CAN 05] - PCAN Device Driver Installation on Linux",description:"Step-by-step guide to installing PEAK-System&#39;s PCAN drivers on Linux for SocketCAN and PCAN-Basic API",section:"Posts",handler:()=>{window.location.href="/can05/"}},{id:"post-roscan2",title:"Roscan2",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2024/roscan2/"}},{id:"post-can-06-from-can-frames-to-ros-2-control",title:"[CAN 06] - From CAN Frames to ROS 2 Control",description:"Connecting CAN-based robot hardware to ROS 2 through custom wrappers and ROS 2 Control hardware interfaces",section:"Posts",handler:()=>{window.location.href="/can06/"}},{id:"post-resources-for-learning-robotics",title:"Resources for Learning Robotics",description:"Collection of useful resources for learning robotics.",section:"Posts",handler:()=>{window.location.href="/Intro-to-Robotics/"}},{id:"post-can-04-gripper-motor-control-with-can-bus",title:"[CAN 04] - Gripper Motor Control with CAN Bus",description:"Single Motor Control with ESP32, simpleFOC, and SocketCAN for Robotic Gripper",section:"Posts",handler:()=>{window.location.href="/can04/"}},{id:"post-can-03-communicating-to-esp32-with-socketcan",title:"[CAN 03] - Communicating to ESP32 with SocketCAN",description:"SocketCAN Communication with ESP32",section:"Posts",handler:()=>{window.location.href="/can03/"}},{id:"post-can-02-setting-up-socketcan-on-linux",title:"[CAN 02] - Setting up SocketCAN on Linux",description:"Setting up SocketCAN",section:"Posts",handler:()=>{window.location.href="/can02/"}},{id:"post-can-01-what-is-can",title:"[CAN 01] - What is CAN?",description:"What is CAN Bus and how is it used in robotics?",section:"Posts",handler:()=>{window.location.href="/can01/"}},{id:"news-our-paper-rpc-a-modular-framework-for-robot-planning-control-and-deployment-https-arxiv-org-abs-2409-10015-has-been-accepted-to-the-2025-ieee-sice-international-symposium-on-system-integration-sii",title:"Our paper [RPC: A Modular Framework for Robot Planning, Control, and Deployment](https://arxiv.org/abs/2409.10015) has...",description:"",section:"News"},{id:"news-our-paper-soft-vortex-gripper-for-dexterous-manipulation-using-hand-like-robots-has-been-accepted-to-the-2026-ieee-international-conference-on-robotics-and-automation-icra",title:"Our paper Soft Vortex Gripper for Dexterous Manipulation using Hand-Like Robots has been...",description:"",section:"News"},{id:"news-our-paper-plato-hand-shaping-contact-behavior-with-fingernails-for-precise-manipulation-https-platohand-github-io-plato-has-been-accepted-to-ieee-robotics-and-automation-letters-ra-l",title:"Our paper [PLATO Hand: Shaping Contact Behavior with Fingernails for Precise Manipulation](https://platohand.github.io/plato) has...",description:"",section:"News"},{id:"news-our-paper-aristo-hand-sensing-driven-distal-hyperextension-for-fine-grained-manipulation-https-aristohand-github-io-has-been-accepted-to-ieee-asme-international-conference-on-advanced-intelligent-mechatronics-aim-2026",title:"Our paper [ARISTO Hand: Sensing-Driven Distal Hyperextension for Fine-Grained Manipulation](https://aristohand.github.io/) has been accepted...",description:"",section:"News"},{id:"projects-cup-tower-stacking-with-baxter",title:"Cup Tower Stacking with Baxter",description:"Baxter stacks tower of cups with MoveIt, AprilTag, and OpenCV",section:"Projects",handler:()=>{window.location.href="/projects/baxter-tower/"}},{id:"projects-brushed-dc-motor-control-with-pid-controller",title:"Brushed DC Motor Control with PID Controller",description:"Brushed DC motor control with NU32 microcontroller and DRV8835 H-bridge motor driver",section:"Projects",handler:()=>{window.location.href="/projects/motor/"}},{id:"projects-autonomous-fire-fighting-robot-arm",title:"Autonomous Fire Fighting Robot Arm",description:"Sensing and Localization of Fire &amp; Manipulation of Fire Extinguisher",section:"Projects",handler:()=>{window.location.href="/projects/firefighter/"}},{id:"projects-programming-pic32-with-c",title:"Programming PIC32 with C",description:"UART, SPI, LCD, LED, IMU, and more",section:"Projects",handler:()=>{window.location.href="/projects/PIC32/"}},{id:"projects-impact-modeling-with-euler-lagrangian-and-hamiltonian-mechanics",title:"Impact Modeling with Euler-Lagrangian and Hamiltonian Mechanics",description:"4 point mass system impact simulation in Python with SymPy",section:"Projects",handler:()=>{window.location.href="/projects/impact/"}},{id:"projects-whisker-based-tactile-sensing-and-shape-classification",title:"Whisker-based Tactile Sensing and Shape Classification",description:"active vibrissal sensing to classify concave and convex objects using ANN and investigation of the transformation from the whisker base frame to the head frame using RL",section:"Projects",handler:()=>{window.location.href="/projects/whisker-tactile/"}},{id:"projects-whole-body-control-for-humanoid-robots",title:"Whole-Body Control for Humanoid Robots",description:"From floating-base dynamics to operational-space control, contact-constrained QP, balancing, and DCM walking",section:"Projects",handler:()=>{window.location.href="/projects/pypnc/"}},{id:"projects-can-in-robotics-series",title:"CAN in Robotics Series",description:"CAN-based robot hardware design with SocketCAN, PCAN, and ROS2",section:"Projects",handler:()=>{window.location.href="/projects/can-hardware/"}},{id:"projects-robot-hardware-series-en-kr",title:"Robot Hardware Series [EN/KR]",description:"Robot hardware notes from a Physical AI perspective",section:"Projects",handler:()=>{window.location.href="/projects/hardware-kr/"}},{id:"projects-plato-hand",title:"PLATO Hand",description:"Shaping Contact Behavior with Fingernails for Precise Manipulation",section:"Projects",handler:()=>{window.location.href="/projects/platohand/"}},{id:"projects-aristo-hand",title:"ARISTO Hand",description:"Sensing-Driven Distal Hyperextension for Fine-Grained Manipulation",section:"Projects",handler:()=>{window.location.href="/projects/aristohand/"}},{id:"socials-email",title:"Send email",section:"Socials",handler:()=>{window.open("mailto:%64%6F%6E%67%68%6F.%72%6F%62%6F%74@%67%6D%61%69%6C.%63%6F%6D","_blank")}},{id:"socials-google-scholar",title:"Google Scholar",section:"Socials",handler:()=>{window.open("https://scholar.google.com/citations?user=YlYSer0AAAAJ","_blank")}},{id:"socials-github",title:"GitHub",section:"Socials",handler:()=>{window.open("https://github.com/dokkev","_blank")}},{id:"light-theme",title:"Change theme to light",description:"Change the theme of the site to Light",section:"Theme",handler:()=>{setThemeSetting("light")}},{id:"dark-theme",title:"Change theme to dark",description:"Change the theme of the site to Dark",section:"Theme",handler:()=>{setThemeSetting("dark")}},{id:"system-theme",title:"Use system default theme",description:"Change the theme of the site to System Default",section:"Theme",handler:()=>{setThemeSetting("system")}}];</script> <script src="/assets/js/shortcut-key.js?6f508d74becd347268a7f822bca7309d"></script> </body> </html>
