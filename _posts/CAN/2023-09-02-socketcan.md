@@ -86,7 +86,7 @@ Run `ip link ls` to check the status of the CAN bus.
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/can/up.jpg" title="up" class="img-fluid rounded z-depth-1" %}
+        {% include figure.liquid loading="eager" path="assets/img/can/up.png" title="up" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 <div class="caption">
@@ -126,7 +126,7 @@ sudo ifconfig can0 up
 ```
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/can/up.jpg" title="up" class="img-fluid rounded z-depth-1" %}
+        {% include figure.liquid loading="eager" path="assets/img/can/up.png" title="up" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 <div class="caption">
