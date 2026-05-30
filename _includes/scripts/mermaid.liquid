@@ -1,4 +1,12 @@
+{% assign render_mermaid = false %}
 {% if page.mermaid and page.mermaid.enabled %}
+  {% assign render_mermaid = true %}
+{% endif %}
+{% if content contains 'language-mermaid' or content contains '```mermaid' %}
+  {% assign render_mermaid = true %}
+{% endif %}
+
+{% if render_mermaid %}
   <script
     defer
     src="{{ site.third_party_libraries.mermaid.url.js }}"
