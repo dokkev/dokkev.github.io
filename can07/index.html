@@ -1,0 +1,435 @@
+<!DOCTYPE html> <html> <head> <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <title> [CAN 07] - CAN I/O Logic in ROS 2 Hardware Interfaces | Dong Ho Kang </title> <meta name="author" content="Dong Ho Kang"> <meta name="description" content="Read/write timing, CAN I/O patterns, TX pacing, buffering, and stale feedback handling for CAN-based ROS 2 hardware interfaces"> <meta name="keywords" content="jekyll, jekyll-theme, academic-website, portfolio-website"> <link rel="stylesheet" href="/assets/css/bootstrap.min.css?a4b3f509e79c54a512b890d73235ef04"> <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mdbootstrap@4.20.0/css/mdb.min.css" integrity="sha256-jpjYvU3G3N6nrrBwXJoVEYI/0zw8htfFnhT9ljN3JJw=" crossorigin="anonymous"> <link defer rel="stylesheet" href="/assets/css/academicons.min.css?f0b7046b84e425c55f3463ac249818f5"> <link defer rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons&amp;display=swap"> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-github.css?591dab5a4e56573bf4ef7fd332894c99" media="" id="highlight_theme_light"> <link rel="shortcut icon" href="/assets/img/favicon.ico?968244106ed7c833589321ca0f99f9b2"> <link rel="stylesheet" href="/assets/css/main.css?d41d8cd98f00b204e9800998ecf8427e"> <link rel="canonical" href="https://dongho.dev/can07/"> <script src="/assets/js/theme.js?9a0c749ec5240d9cda97bc72359a72c0"></script> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-native.css?5847e5ed4a4568527aa6cfab446049ca" media="none" id="highlight_theme_dark"> <script>initTheme();</script> <script defer src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js" integrity="sha256-ZgMyDAIYDYGxbcpJcfUnYwNevG/xi9OHKaR/8GK+jWc=" crossorigin="anonymous"></script> <script defer src="/assets/js/zoom.js?85ddb88934d28b74e78031fd54cf8308"></script> <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script> <script type="text/javascript">window.MathJax={tex:{tags:"ams"}};</script> <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script> <script defer src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6" crossorigin="anonymous"></script> <script src="/assets/js/distillpub/template.v2.js"></script> <script src="/assets/js/distillpub/transforms.v2.js"></script> <script src="/assets/js/distillpub/overrides.js"></script> </head> <body> <d-front-matter> <script async type="text/json">
+      {
+            "title": "[CAN 07] - CAN I/O Logic in ROS 2 Hardware Interfaces",
+            "description": "Read/write timing, CAN I/O patterns, TX pacing, buffering, and stale feedback handling for CAN-based ROS 2 hardware interfaces",
+            "published": "September 08, 2024",
+            "authors": [
+              
+            ],
+            "katex": {
+              "delimiters": [
+                {
+                  "left": "$",
+                  "right": "$",
+                  "display": false
+                },
+                {
+                  "left": "$$",
+                  "right": "$$",
+                  "display": true
+                }
+              ]
+            }
+          }
+    </script> </d-front-matter> <header> <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top" role="navigation"> <div class="container"> <a class="navbar-brand title font-weight-lighter" href="/"> <span class="font-weight-bold">Dong Ho</span> Kang </a> <button class="navbar-toggler collapsed ml-auto" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar top-bar"></span> <span class="icon-bar middle-bar"></span> <span class="icon-bar bottom-bar"></span> </button> <div class="collapse navbar-collapse text-right" id="navbarNav"> <ul class="navbar-nav ml-auto flex-nowrap"> <li class="nav-item "> <a class="nav-link" href="/">about </a> </li> <li class="nav-item "> <a class="nav-link" href="/blog/">blog </a> </li> <li class="nav-item "> <a class="nav-link" href="/publications/">publications </a> </li> <li class="nav-item "> <a class="nav-link" href="/projects/">projects </a> </li> <li class="nav-item "> <a class="nav-link" href="/assets/pdf/dk_cv.pdf">cv </a> </li> <li class="nav-item"> <button id="search-toggle" title="Search" onclick="openSearchModal()"> <span class="nav-link">ctrl k <i class="ti ti-search"></i></span> </button> </li> <li class="toggle-container"> <button id="light-toggle" title="Change theme"> <i class="ti ti-sun-moon" id="light-toggle-system"></i> <i class="ti ti-moon-filled" id="light-toggle-dark"></i> <i class="ti ti-sun-filled" id="light-toggle-light"></i> </button> </li> </ul> </div> </div> </nav> <progress id="progress" value="0"> <div class="progress-container"> <span class="progress-bar"></span> </div> </progress> </header> <div class="container mt-5 blog-container" role="main"> <div class="row blog-layout"> <div class="col-lg-9 blog-main blog-main-distill"> <div class="post distill"> <d-title> <h1>[CAN 07] - CAN I/O Logic in ROS 2 Hardware Interfaces</h1> <p>Read/write timing, CAN I/O patterns, TX pacing, buffering, and stale feedback handling for CAN-based ROS 2 hardware interfaces</p> </d-title> <d-article> <p>Previous Posts:</p> <ul> <li><a href="/can01/">What is CAN?</a></li> <li><a href="/can02/">Setting up SocketCAN on Linux</a></li> <li><a href="/can03/">SocketCAN Communication with ESP32</a></li> <li><a href="/can04/">Gripper Motor Control with CAN Bus</a></li> <li><a href="/can05/">PCAN Device Driver Installation on Linux</a></li> <li><a href="/can06/">From CAN Frames to ROS 2 Control</a></li> </ul> <h2 id="overview">Overview</h2> <p>In the previous post, we discussed the basic role of a ROS 2 Control hardware interface.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>read()
+  hardware feedback → ROS 2 state
+
+write()
+  ROS 2 command → hardware command
+</code></pre></div></div> <p>For CAN-based hardware, this becomes:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>read()
+  CAN frame → decoded joint state
+
+write()
+  joint command → encoded CAN frame
+</code></pre></div></div> <p>This description is correct, but incomplete.</p> <p>In practice, the difficult part is not only encoding and decoding CAN frames. The difficult part is deciding:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- when to read
+- when to write
+- how often to write
+- how to handle incoming bursts
+- how to avoid blocking the control loop
+- how to detect stale feedback
+- how to avoid overwhelming the actuator driver
+</code></pre></div></div> <p>A CAN hardware interface is therefore not just a protocol translator. It is also an I/O scheduling layer between an event-driven CAN bus and a periodic control loop.</p> <pre><code class="language-mermaid">flowchart LR
+    CAN[CAN bus&lt;br/&gt;event-driven frames]
+    HW[Hardware Interface&lt;br/&gt;I/O scheduling]
+    CTRL[ROS 2 Control&lt;br/&gt;periodic loop]
+
+    CAN &lt;--&gt; HW
+    HW &lt;--&gt; CTRL
+</code></pre> <h2 id="control-loops-are-periodic-can-frames-are-not">Control Loops Are Periodic, CAN Frames Are Not</h2> <p>A controller usually runs at a fixed rate.</p> <pre><code class="language-mermaid">sequenceDiagram
+    participant C as Controller Loop
+
+    loop Fixed control period
+        C-&gt;&gt;C: read()
+        C-&gt;&gt;C: update()
+        C-&gt;&gt;C: write()
+    end
+</code></pre> <p>CAN traffic does not necessarily follow the same timing. Frames arrive when devices send them. Some devices broadcast periodically. Some only respond to queries. Some reply after receiving commands.</p> <pre><code class="language-mermaid">sequenceDiagram
+    participant D1 as Sensor
+    participant D2 as Motor Driver
+    participant H as Host
+
+    D1-&gt;&gt;H: periodic state frame
+    H-&gt;&gt;D2: command frame
+    D2-&gt;&gt;H: feedback frame
+    H-&gt;&gt;D2: diagnostic query
+    D2-&gt;&gt;H: diagnostic response
+</code></pre> <p>The hardware interface must connect these two timing models.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>CAN side:
+  asynchronous frame stream
+
+ROS 2 Control side:
+  periodic read → update → write loop
+</code></pre></div></div> <p>This is the main reason CAN I/O logic needs explicit design.</p> <h2 id="common-can-io-patterns">Common CAN I/O Patterns</h2> <p>Before implementing <code class="language-plaintext highlighter-rouge">read()</code> and <code class="language-plaintext highlighter-rouge">write()</code>, the device I/O pattern should be identified.</p> <p>Most CAN devices used in robot hardware follow one of three patterns.</p> <table> <thead> <tr> <th>Pattern</th> <th>Description</th> <th>Typical Devices</th> </tr> </thead> <tbody> <tr> <td>Periodic broadcast</td> <td>The device sends state at a fixed rate without being asked.</td> <td>sensors, IMUs, encoder boards</td> </tr> <tr> <td>Query-response</td> <td>The host sends a query, and the device replies with state or configuration data.</td> <td>diagnostics, parameter reads, low-rate devices</td> </tr> <tr> <td>Command-response</td> <td>The host sends a command, and the device replies with feedback.</td> <td>motor drivers, smart actuators</td> </tr> </tbody> </table> <h2 id="pattern-1-periodic-broadcast">Pattern 1: Periodic Broadcast</h2> <p>In this pattern, the device sends state using its own internal timer.</p> <pre><code class="language-mermaid">sequenceDiagram
+    participant Device
+    participant Host
+
+    loop Device update rate
+        Device-&gt;&gt;Host: State frame
+    end
+</code></pre> <p>This pattern is common for sensors.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Examples:
+- IMU
+- force sensor
+- tactile sensor board
+- encoder board
+- temperature monitor
+</code></pre></div></div> <p>The host does not request every sample. The hardware interface should collect incoming frames and update the latest-state cache.</p> <pre><code class="language-mermaid">flowchart LR
+    CAN[CAN frames] --&gt; RX[Receive / decode]
+    RX --&gt; Cache[Latest-state cache]
+    Cache --&gt; Read[read()]
+    Read --&gt; State[ROS 2 state interfaces]
+</code></pre> <p>The main risk is that frames arrive faster than the application drains them. If the receive buffer accumulates old frames, the controller may use stale data even though the device is still transmitting correctly.</p> <h2 id="pattern-2-query-response">Pattern 2: Query-Response</h2> <p>In this pattern, the host explicitly requests data.</p> <pre><code class="language-mermaid">sequenceDiagram
+    participant Host
+    participant Device
+
+    Host-&gt;&gt;Device: Query frame
+    Device-&gt;&gt;Host: Response frame
+</code></pre> <p>This pattern is useful for diagnostics, configuration reads, and low-rate data.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Examples:
+- firmware version
+- device parameter read
+- diagnostic status
+- error code request
+- calibration data
+</code></pre></div></div> <p>It is usually not ideal as the main mechanism for high-rate joint feedback.</p> <p>A blocking query inside <code class="language-plaintext highlighter-rouge">read()</code> can delay the control loop.</p> <pre><code class="language-mermaid">flowchart TD
+    Read[read()] --&gt; Query[Send query]
+    Query --&gt; Wait[Wait for response]
+    Wait --&gt; Decode[Decode response]
+    Decode --&gt; State[Update state]
+
+    Wait -.-&gt; Problem[Control loop blocked]
+</code></pre> <p>A safer structure is to keep query-response logic outside the main periodic control path.</p> <pre><code class="language-mermaid">flowchart LR
+    Loop[Control loop] --&gt; Read[Read latest state]
+    Loop --&gt; Write[Write command]
+
+    QueryTask[Query task] --&gt; Send[Send query]
+    Send --&gt; Resp[Receive response]
+    Resp --&gt; Diag[Update diagnostic state]
+</code></pre> <h2 id="pattern-3-command-response">Pattern 3: Command-Response</h2> <p>In this pattern, the host sends a command and the device returns feedback.</p> <pre><code class="language-mermaid">sequenceDiagram
+    participant Host
+    participant Device
+
+    loop Control rate
+        Host-&gt;&gt;Device: Command frame
+        Device-&gt;&gt;Host: Feedback frame
+    end
+</code></pre> <p>This pattern is common for motor drivers and smart actuator modules.</p> <p>The command frame may contain:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- desired position
+- desired velocity
+- control gains
+- feedforward torque
+- mode command
+</code></pre></div></div> <p>The response frame may contain:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- measured position
+- measured velocity
+- measured current
+- temperature
+- status flags
+</code></pre></div></div> <p>This pattern maps naturally to a control loop.</p> <pre><code class="language-mermaid">flowchart TD
+    Read[read()] --&gt; State[Update joint state]
+    State --&gt; Ctrl[Controller update]
+    Ctrl --&gt; Cmd[Command interface]
+    Cmd --&gt; Write[write()]
+    Write --&gt; CAN[Send CAN command]
+    CAN --&gt; FB[Receive feedback frame]
+    FB --&gt; Read
+</code></pre> <p>However, the feedback frame should not automatically be interpreted as the state after the command has been applied.</p> <p>Depending on the driver firmware, the response may contain:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- the latest measured state before the command was applied
+- the latest measured state after the command was accepted
+- a cached state from the actuator control loop
+- a status packet generated independently of the command timing
+</code></pre></div></div> <p>The hardware interface should treat the response as timestamped feedback, not as a perfectly synchronized result of the command.</p> <h2 id="io-frequency-is-a-hardware-constraint">I/O Frequency Is a Hardware Constraint</h2> <p>The update frequency of a CAN hardware interface should not be chosen only from the ROS 2 control rate.</p> <p>It must also consider:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- CAN bitrate
+- number of devices on the bus
+- number of frames per device
+- feedback frame rate
+- command frame rate
+- frame size
+- driver-side receive buffer
+- firmware parsing rate
+- actuator control-loop rate
+</code></pre></div></div> <p>A common mistake is to assume that if the ROS 2 controller runs at 1 kHz, every actuator command should also be sent at 1 kHz.</p> <p>That is not always possible or useful.</p> <p>For example, with 8 actuators:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>8 command frames × 1000 Hz = 8000 command frames/s
+8 feedback frames × 1000 Hz = 8000 feedback frames/s
+</code></pre></div></div> <p>This gives 16000 frames/s before considering diagnostics, retransmissions, or protocol overhead.</p> <p>Even if the host CAN adapter accepts the outgoing frames, the actuator driver may not process them reliably if they arrive as a burst.</p> <pre><code class="language-mermaid">flowchart LR
+    Host[Host PC] --&gt;|write succeeds| Kernel[Kernel TX queue]
+    Kernel --&gt; Adapter[CAN adapter]
+    Adapter --&gt; Bus[CAN bus]
+    Bus --&gt; Driver[Motor driver RX]
+    Driver --&gt; Firmware[Firmware parser]
+
+    Firmware -. may not keep up .-&gt; Drop[Command ignored&lt;br/&gt;or overwritten]
+</code></pre> <p>A successful <code class="language-plaintext highlighter-rouge">CAN_Write()</code> or socket <code class="language-plaintext highlighter-rouge">write()</code> call means the frame was accepted by the host-side transmit path. It does not necessarily mean the actuator firmware consumed and applied the command.</p> <p>This distinction matters when several frames are sent back-to-back.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="n">frame</span> <span class="o">:</span> <span class="n">command_frames</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">can_socket</span><span class="p">.</span><span class="n">writeFrame</span><span class="p">(</span><span class="n">frame</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div> <p>This can create a burst.</p> <pre><code class="language-mermaid">sequenceDiagram
+    participant Host
+    participant Driver
+
+    Host-&gt;&gt;Driver: command motor 1
+    Host-&gt;&gt;Driver: command motor 2
+    Host-&gt;&gt;Driver: command motor 3
+    Host-&gt;&gt;Driver: command motor 4
+    Host-&gt;&gt;Driver: command motor 5
+    Host-&gt;&gt;Driver: command motor 6
+    Host-&gt;&gt;Driver: command motor 7
+    Host-&gt;&gt;Driver: command motor 8
+
+    Note over Driver: Frames arrive close together.&lt;br/&gt;Firmware may not process all of them.
+</code></pre> <p>For this reason, the transmit path often needs pacing.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="n">frame</span> <span class="o">:</span> <span class="n">command_frames</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">can_socket</span><span class="p">.</span><span class="n">writeFrame</span><span class="p">(</span><span class="n">frame</span><span class="p">);</span>
+  <span class="n">sleep_for</span><span class="p">(</span><span class="n">tx_frame_delay</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div> <p>The delay does not need to be large. The correct value depends on the CAN adapter, bus bitrate, actuator driver, and firmware implementation.</p> <p>The goal is not to slow the robot unnecessarily. The goal is to avoid sending bursts that the receiving device cannot process.</p> <pre><code class="language-mermaid">sequenceDiagram
+    participant Host
+    participant Driver
+
+    Host-&gt;&gt;Driver: command motor 1
+    Note over Host: small delay
+    Host-&gt;&gt;Driver: command motor 2
+    Note over Host: small delay
+    Host-&gt;&gt;Driver: command motor 3
+    Note over Host: small delay
+    Host-&gt;&gt;Driver: command motor 4
+    Note over Host: small delay
+    Host-&gt;&gt;Driver: command motor 5
+    Note over Host: small delay
+    Host-&gt;&gt;Driver: command motor 6
+    Note over Host: small delay
+    Host-&gt;&gt;Driver: command motor 7
+    Note over Host: small delay
+    Host-&gt;&gt;Driver: command motor 8
+</code></pre> <p>The correct command rate and inter-frame delay must be tuned on the actual hardware.</p> <p>Two devices can use the same CAN bitrate and still behave differently.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Same CAN bitrate
+Same number of command frames
+Different actuator firmware
+Different RX buffer size
+Different parser timing
+Different result
+</code></pre></div></div> <p>This difference is often strongly hardware-dependent. High-end motor drivers may handle dense traffic, deeper buffering, and bursty command streams. Cheaper actuator modules may have smaller receive buffers, slower firmware loops, or weaker handling of back-to-back frames.</p> <p>CAN I/O frequency should therefore be treated as a hardware parameter, not only a software parameter.</p> <h2 id="blocking-vs-non-blocking-read">Blocking vs Non-Blocking Read</h2> <p>A direct blocking read is simple.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">can_frame</span> <span class="n">frame</span><span class="p">;</span>
+<span class="n">read</span><span class="p">(</span><span class="n">socket_fd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">frame</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">frame</span><span class="p">));</span>
+<span class="n">decode</span><span class="p">(</span><span class="n">frame</span><span class="p">);</span>
+</code></pre></div></div> <p>However, if no frame is available, the call can block.</p> <pre><code class="language-mermaid">flowchart TD
+    Read[read()] --&gt; HasFrame{Frame available?}
+    HasFrame --&gt;|yes| Decode[Decode frame]
+    HasFrame --&gt;|no| Block[Block]
+    Block --&gt; Delay[Control loop delayed]
+</code></pre> <p>This is usually not acceptable inside a periodic control loop.</p> <p>A non-blocking read avoids this.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">can_frame</span> <span class="n">frame</span><span class="p">;</span>
+
+<span class="k">while</span> <span class="p">(</span><span class="n">can_socket</span><span class="p">.</span><span class="n">readFrameNonBlocking</span><span class="p">(</span><span class="n">frame</span><span class="p">))</span> <span class="p">{</span>
+  <span class="n">decode</span><span class="p">(</span><span class="n">frame</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div> <p>The idea is to drain all currently available frames without waiting for new ones.</p> <pre><code class="language-mermaid">flowchart TD
+    Read[read()]
+    Read --&gt; Check{Frame available?}
+    Check --&gt;|yes| Decode[Decode frame]
+    Decode --&gt; Check
+    Check --&gt;|no| Snapshot[Use latest decoded state]
+    Snapshot --&gt; Return[Return to control loop]
+</code></pre> <p>This pattern is useful when the control loop itself is responsible for polling RX frames.</p> <h2 id="latest-state-cache">Latest-State Cache</h2> <p>The controller should not depend on a specific CAN frame arriving exactly during the current <code class="language-plaintext highlighter-rouge">read()</code> call.</p> <p>A more robust structure is to maintain a latest-state cache.</p> <pre><code class="language-mermaid">flowchart LR
+    CAN[CAN frames] --&gt; Decode[Decode]
+    Decode --&gt; Cache[Latest-state cache]
+    Cache --&gt; Read[read()]
+    Read --&gt; State[ROS 2 state interfaces]
+</code></pre> <p>The cache stores the most recent valid feedback per device.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">struct</span> <span class="nc">DeviceFeedback</span>
+<span class="p">{</span>
+  <span class="kt">double</span> <span class="n">position</span><span class="p">;</span>
+  <span class="kt">double</span> <span class="n">velocity</span><span class="p">;</span>
+  <span class="kt">double</span> <span class="n">effort</span><span class="p">;</span>
+  <span class="n">rclcpp</span><span class="o">::</span><span class="n">Time</span> <span class="n">stamp</span><span class="p">;</span>
+  <span class="kt">bool</span> <span class="n">valid</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">DeviceFeedback</span><span class="o">&gt;</span> <span class="n">latest_feedback_</span><span class="p">;</span>
+</code></pre></div></div> <p>Then <code class="language-plaintext highlighter-rouge">read()</code> copies the latest valid feedback into ROS 2 state interfaces.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">hardware_interface</span><span class="o">::</span><span class="n">return_type</span> <span class="n">CanSystem</span><span class="o">::</span><span class="n">read</span><span class="p">(</span>
+  <span class="k">const</span> <span class="n">rclcpp</span><span class="o">::</span><span class="n">Time</span><span class="o">&amp;</span> <span class="n">time</span><span class="p">,</span>
+  <span class="k">const</span> <span class="n">rclcpp</span><span class="o">::</span><span class="n">Duration</span><span class="o">&amp;</span> <span class="n">period</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">can_frame</span> <span class="n">frame</span><span class="p">;</span>
+
+  <span class="k">while</span> <span class="p">(</span><span class="n">can_bus_</span><span class="p">.</span><span class="n">readFrameNonBlocking</span><span class="p">(</span><span class="n">frame</span><span class="p">))</span> <span class="p">{</span>
+    <span class="k">const</span> <span class="k">auto</span> <span class="n">feedback</span> <span class="o">=</span> <span class="n">protocol_</span><span class="p">.</span><span class="n">decodeFeedback</span><span class="p">(</span><span class="n">frame</span><span class="p">);</span>
+    <span class="n">latest_feedback_</span><span class="p">[</span><span class="n">feedback</span><span class="p">.</span><span class="n">device_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">feedback</span><span class="p">;</span>
+    <span class="n">latest_feedback_</span><span class="p">[</span><span class="n">feedback</span><span class="p">.</span><span class="n">device_id</span><span class="p">].</span><span class="n">stamp</span> <span class="o">=</span> <span class="n">time</span><span class="p">;</span>
+    <span class="n">latest_feedback_</span><span class="p">[</span><span class="n">feedback</span><span class="p">.</span><span class="n">device_id</span><span class="p">].</span><span class="n">valid</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="k">for</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">latest_feedback_</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">hw_positions_</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">latest_feedback_</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">position</span><span class="p">;</span>
+    <span class="n">hw_velocities_</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">latest_feedback_</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">velocity</span><span class="p">;</span>
+    <span class="n">hw_efforts_</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">latest_feedback_</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">effort</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="k">return</span> <span class="n">hardware_interface</span><span class="o">::</span><span class="n">return_type</span><span class="o">::</span><span class="n">OK</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div> <p>The cache should also support freshness checks.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">bool</span> <span class="n">is_fresh</span> <span class="o">=</span>
+  <span class="p">(</span><span class="n">time</span> <span class="o">-</span> <span class="n">latest_feedback_</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">stamp</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">rx_stale_timeout_</span><span class="p">;</span>
+</code></pre></div></div> <p>A decoded value is not always a usable value. It must also be recent enough.</p> <h2 id="writeplan-and-tx-pacing">WritePlan and TX Pacing</h2> <p>The transmit path should be explicit.</p> <p>Instead of writing CAN frames directly in several places, the hardware interface can build a write plan and pass it to a frame executor.</p> <pre><code class="language-mermaid">flowchart TD
+    Cmd[ROS 2 command interfaces]
+    Cmd --&gt; Convert[Convert to device commands]
+    Convert --&gt; Encode[Encode CAN frames]
+    Encode --&gt; Plan[WritePlan]
+    Plan --&gt; Exec[Frame executor]
+    Exec --&gt; Bus[CAN bus]
+</code></pre> <p>A simple write plan may contain:</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">struct</span> <span class="nc">WritePlan</span>
+<span class="p">{</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">can_frame</span><span class="o">&gt;</span> <span class="n">frames</span><span class="p">;</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">microseconds</span> <span class="n">inter_frame_delay</span><span class="p">;</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">microseconds</span> <span class="n">frame_timeout</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div></div> <p>The hardware-specific <code class="language-plaintext highlighter-rouge">write()</code> function builds the plan.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">hardware_interface</span><span class="o">::</span><span class="n">return_type</span> <span class="n">CanSystem</span><span class="o">::</span><span class="n">write</span><span class="p">(</span>
+  <span class="k">const</span> <span class="n">rclcpp</span><span class="o">::</span><span class="n">Time</span><span class="o">&amp;</span> <span class="n">time</span><span class="p">,</span>
+  <span class="k">const</span> <span class="n">rclcpp</span><span class="o">::</span><span class="n">Duration</span><span class="o">&amp;</span> <span class="n">period</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">WritePlan</span> <span class="n">plan</span><span class="p">;</span>
+
+  <span class="k">for</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">hw_commands_</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">plan</span><span class="p">.</span><span class="n">frames</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span>
+      <span class="n">protocol_</span><span class="p">.</span><span class="n">encodeCommand</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">hw_commands_</span><span class="p">[</span><span class="n">i</span><span class="p">]));</span>
+  <span class="p">}</span>
+
+  <span class="n">plan</span><span class="p">.</span><span class="n">inter_frame_delay</span> <span class="o">=</span> <span class="n">tx_frame_delay_</span><span class="p">;</span>
+  <span class="n">plan</span><span class="p">.</span><span class="n">frame_timeout</span> <span class="o">=</span> <span class="n">tx_frame_timeout_</span><span class="p">;</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">frame_executor_</span><span class="p">.</span><span class="n">execute</span><span class="p">(</span><span class="n">plan</span><span class="p">))</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">hardware_interface</span><span class="o">::</span><span class="n">return_type</span><span class="o">::</span><span class="n">ERROR</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="k">return</span> <span class="n">hardware_interface</span><span class="o">::</span><span class="n">return_type</span><span class="o">::</span><span class="n">OK</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div> <p>The executor applies the transmit policy.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">bool</span> <span class="n">CanFrameExecutor</span><span class="o">::</span><span class="n">execute</span><span class="p">(</span><span class="k">const</span> <span class="n">WritePlan</span><span class="o">&amp;</span> <span class="n">plan</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="n">frame</span> <span class="o">:</span> <span class="n">plan</span><span class="p">.</span><span class="n">frames</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">can_bus_</span><span class="p">.</span><span class="n">writeFrame</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">plan</span><span class="p">.</span><span class="n">frame_timeout</span><span class="p">))</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">plan</span><span class="p">.</span><span class="n">inter_frame_delay</span><span class="p">.</span><span class="n">count</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">plan</span><span class="p">.</span><span class="n">inter_frame_delay</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div> <p>This separation makes it easier to tune the transmit path without changing the controller or protocol code.</p> <h2 id="example-cansystem-structure">Example CanSystem Structure</h2> <p>A useful structure is to separate raw CAN I/O, frame execution, and robot-specific hardware logic.</p> <pre><code class="language-mermaid">flowchart LR
+    System[CanSystem]
+    System --&gt;|inherits| Base[CanSystemBase]
+    System --&gt;|owns| Bus[CanBus]
+    System --&gt;|owns| Exec[CanFrameExecutor]
+    Bus --&gt; Interface[CanInterface&lt;br/&gt;SocketCAN / PCAN]
+</code></pre> <p>Each layer has a limited responsibility.</p> <table> <thead> <tr> <th>Layer</th> <th>Responsibility</th> </tr> </thead> <tbody> <tr> <td><code class="language-plaintext highlighter-rouge">CanInterface</code></td> <td>Direct access to SocketCAN, PCAN, or another CAN backend</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">CanBus</code></td> <td>RX polling, TX sending, optional observer dispatch</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">CanFrameExecutor</code></td> <td>TX execution, pacing, timeout handling, RX freshness</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">CanSystemBase</code></td> <td>Common <code class="language-plaintext highlighter-rouge">read()</code> / <code class="language-plaintext highlighter-rouge">write()</code> structure</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">CanSystem</code></td> <td>Robot-specific command conversion and state update</td> </tr> </tbody> </table> <p>The base class keeps the main structure small.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">bool</span> <span class="n">CanSystemBase</span><span class="o">::</span><span class="n">read</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="k">const</span> <span class="kt">bool</span> <span class="n">ok</span> <span class="o">=</span> <span class="n">update_measurements_</span><span class="p">();</span>
+  <span class="n">refresh_state_snapshot_</span><span class="p">();</span>
+  <span class="k">return</span> <span class="n">ok</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">bool</span> <span class="n">CanSystemBase</span><span class="o">::</span><span class="n">write</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="n">WritePlan</span> <span class="n">plan</span><span class="p">;</span>
+
+  <span class="n">plan</span><span class="p">.</span><span class="n">ready</span> <span class="o">=</span> <span class="n">commands_are_valid</span><span class="p">();</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">plan</span><span class="p">.</span><span class="n">ready</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">invalidate_previous_commands</span><span class="p">();</span>
+    <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="n">build_write_plan_</span><span class="p">(</span><span class="n">plan</span><span class="p">);</span>
+  <span class="n">store_previous_commands</span><span class="p">();</span>
+
+  <span class="k">return</span> <span class="nf">execute_write_plan_</span><span class="p">(</span><span class="n">plan</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div> <p>The concrete system provides the hardware-specific hooks.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">bool</span> <span class="n">CanSystem</span><span class="o">::</span><span class="n">update_measurements_</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="k">return</span> <span class="n">frame_executor_</span><span class="p">.</span><span class="n">poll_rx</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div></div> <p>Incoming frames can be dispatched through an observer.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">can_bus_</span><span class="p">.</span><span class="n">add_rx_observer</span><span class="p">([</span><span class="k">this</span><span class="p">](</span><span class="k">const</span> <span class="n">CanFrame</span><span class="o">&amp;</span> <span class="n">frame</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lock</span><span class="p">(</span><span class="n">state_mutex_</span><span class="p">);</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="n">protocol_</span><span class="p">.</span><span class="n">dispatch_rx_frame</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">devices_</span><span class="p">))</span> <span class="p">{</span>
+    <span class="n">frame_executor_</span><span class="p">.</span><span class="n">mark_rx_frame</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">});</span>
+</code></pre></div></div> <p>The receive path becomes:</p> <pre><code class="language-mermaid">flowchart TD
+    Read[read()]
+    Read --&gt; Poll[frame_executor.poll_rx()]
+    Poll --&gt; Bus[CanBus.poll_rx()]
+    Bus --&gt; Frame[Receive CAN frame]
+    Frame --&gt; Observer[RX observer]
+    Observer --&gt; Dispatch[dispatch_rx_frame()]
+    Dispatch --&gt; Device[Update device state]
+    Dispatch --&gt; Mark[mark_rx_frame()]
+    Read --&gt; Snapshot[refresh_state_snapshot()]
+</code></pre> <p>The state snapshot can include both decoded joint state and hardware health information.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="n">CanSystem</span><span class="o">::</span><span class="n">refresh_state_snapshot_</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lock</span><span class="p">(</span><span class="n">state_mutex_</span><span class="p">);</span>
+
+  <span class="n">update_joint_states_from_devices</span><span class="p">();</span>
+
+  <span class="n">state_snapshot_</span><span class="p">.</span><span class="n">stamp</span> <span class="o">=</span> <span class="n">now</span><span class="p">();</span>
+  <span class="n">state_snapshot_</span><span class="p">.</span><span class="n">has_fresh_rx</span> <span class="o">=</span>
+    <span class="n">frame_executor_</span><span class="p">.</span><span class="n">has_fresh_rx</span><span class="p">(</span><span class="n">rx_stale_timeout_</span><span class="p">);</span>
+  <span class="n">state_snapshot_</span><span class="p">.</span><span class="n">transport_healthy</span> <span class="o">=</span>
+    <span class="n">frame_executor_</span><span class="p">.</span><span class="n">transport_healthy</span><span class="p">();</span>
+
+  <span class="n">copy_joint_state_to_snapshot</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div></div> <p>The write path is similarly separated.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="n">CanSystem</span><span class="o">::</span><span class="n">build_write_plan_</span><span class="p">(</span><span class="n">WritePlan</span><span class="o">&amp;</span> <span class="n">plan</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lock</span><span class="p">(</span><span class="n">state_mutex_</span><span class="p">);</span>
+
+  <span class="n">convert_joint_commands_to_device_commands</span><span class="p">();</span>
+
+  <span class="n">protocol_</span><span class="p">.</span><span class="n">append_command_frames</span><span class="p">(</span>
+    <span class="n">devices_</span><span class="p">,</span>
+    <span class="n">device_commands_</span><span class="p">,</span>
+    <span class="n">plan</span><span class="p">.</span><span class="n">frames</span><span class="p">);</span>
+
+  <span class="n">plan</span><span class="p">.</span><span class="n">inter_frame_delay</span> <span class="o">=</span> <span class="n">tx_frame_delay_</span><span class="p">;</span>
+  <span class="n">plan</span><span class="p">.</span><span class="n">frame_timeout</span> <span class="o">=</span> <span class="n">tx_frame_timeout_</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div> <p>Then the executor sends the frames.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">bool</span> <span class="n">CanSystem</span><span class="o">::</span><span class="n">execute_write_plan_</span><span class="p">(</span><span class="k">const</span> <span class="n">WritePlan</span><span class="o">&amp;</span> <span class="n">plan</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">return</span> <span class="n">frame_executor_</span><span class="p">.</span><span class="n">execute</span><span class="p">(</span><span class="n">plan</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div> <p>The full write path is:</p> <pre><code class="language-mermaid">flowchart TD
+    Cmd[Joint commands]
+    Cmd --&gt; Convert[Joint-to-device command conversion]
+    Convert --&gt; Frames[Encode CAN command frames]
+    Frames --&gt; Plan[WritePlan]
+    Plan --&gt; Exec[CanFrameExecutor]
+    Exec --&gt; Bus[CanBus.writeFrame]
+</code></pre> <p>This structure avoids putting all transport, protocol, timing, and robot-specific logic directly inside <code class="language-plaintext highlighter-rouge">read()</code> and <code class="language-plaintext highlighter-rouge">write()</code>.</p> <h2 id="tuning-procedure">Tuning Procedure</h2> <p>A practical tuning process is:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1. Start with a conservative command rate.
+2. Add inter-frame delay between command frames.
+3. Check that every device responds consistently.
+4. Monitor stale feedback and missed responses.
+5. Increase command frequency gradually.
+6. Reduce inter-frame delay only after the bus and drivers are stable.
+7. Re-test with all devices enabled, not only one actuator.
+</code></pre></div></div> <p>The final values should be selected based on measured hardware behavior.</p> <p>Important parameters include:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- control loop rate
+- command transmission rate
+- feedback rate
+- inter-frame TX delay
+- RX stale timeout
+- TX frame timeout
+- maximum allowed missing feedback count
+</code></pre></div></div> <p>These values are not universal. They depend on the adapter, bus topology, device firmware, and actuator hardware.</p> <h2 id="summary">Summary</h2> <p>A CAN hardware interface is not only an encoding and decoding layer.</p> <p>It must also define the I/O timing policy.</p> <p>The main points are:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- CAN devices follow different I/O patterns.
+- Periodic broadcast, query-response, and command-response require different read/write logic.
+- Blocking reads should be avoided inside a periodic control loop.
+- Incoming frames should be drained and stored in a latest-state cache.
+- Command frames may need inter-frame delay to avoid burst problems.
+- A successful host-side CAN write does not guarantee actuator firmware processing.
+- Command frequency and TX pacing must be tuned on real hardware.
+</code></pre></div></div> <p>A useful design separates the system into:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>CanInterface
+  raw CAN backend
+
+CanBus
+  RX/TX transport
+
+CanFrameExecutor
+  pacing, timeout, freshness
+
+CanSystem
+  ROS 2 Control hardware interface
+</code></pre></div></div> <p>The next post will turn this structure into a concrete ROS 2 Control implementation.</p> </d-article> <d-appendix> <d-footnote-list></d-footnote-list> <d-citation-list></d-citation-list> </d-appendix> <d-bibliography src="/assets/bibliography/"></d-bibliography> </div> </div> <aside class="col-lg-3 blog-sidebar-column"> <nav class="blog-sidebar sticky-top" aria-label="Blog navigation"> <section class="blog-sidebar-section"> <h2 class="blog-sidebar-heading">In This Series</h2> <h3 class="blog-sidebar-series-title">CAN Bus for Robotic Hardware</h3> <ol class="blog-sidebar-list blog-sidebar-series-list list-unstyled"> <li> <a class="blog-sidebar-link" href="/can01/"> <span class="blog-sidebar-order">01.</span> [CAN 01] - What is CAN? </a> </li> <li> <a class="blog-sidebar-link" href="/can02/"> <span class="blog-sidebar-order">02.</span> [CAN 02] - Setting up SocketCAN on Linux </a> </li> <li> <a class="blog-sidebar-link" href="/can03/"> <span class="blog-sidebar-order">03.</span> [CAN 03] - Communicating to ESP32 with SocketCAN </a> </li> <li> <a class="blog-sidebar-link" href="/can04/"> <span class="blog-sidebar-order">04.</span> [CAN 04] - Gripper Motor Control with CAN Bus </a> </li> <li> <a class="blog-sidebar-link" href="/can05/"> <span class="blog-sidebar-order">05.</span> [CAN 05] - PCAN Device Driver Installation on Linux </a> </li> <li> <a class="blog-sidebar-link" href="/can06/"> <span class="blog-sidebar-order">06.</span> [CAN 06] - From CAN Frames to ROS 2 Control </a> </li> <li> <a class="blog-sidebar-link active" href="/can07/" aria-current="page"> <span class="blog-sidebar-order">07.</span> [CAN 07] - CAN I/O Logic in ROS 2 Hardware Interfaces </a> </li> </ol> </section> <section class="blog-sidebar-section"> <h2 class="blog-sidebar-heading">Major Series</h2> <ul class="blog-sidebar-list list-unstyled"> <li class="blog-sidebar-major-series"> <a class="blog-sidebar-link" href="/hardware01/"> [EN/KR] Robot Hardware <span class="blog-sidebar-count">16 notes</span> </a> </li> <li class="blog-sidebar-major-series"> <a class="blog-sidebar-link" href="/can01/"> CAN Bus for Robotic Hardware <span class="blog-sidebar-count">7 notes</span> </a> </li> <li class="blog-sidebar-major-series"> <span class="blog-sidebar-text">PLATO Build Notes</span> </li> </ul> </section> <section class="blog-sidebar-section"> <h2 class="blog-sidebar-heading">Recent Posts</h2> <ul class="blog-sidebar-list blog-sidebar-recent-list list-unstyled"> <li> <a class="blog-sidebar-link" href="/can05/"> [CAN 05] - PCAN Device Driver Installation on Linux <span class="blog-sidebar-date">Oct 14, 2024</span> </a> </li> <li> <a class="blog-sidebar-link active" href="/can07/" aria-current="page"> [CAN 07] - CAN I/O Logic in ROS 2 Hardware Interfaces <span class="blog-sidebar-date">Sep 8, 2024</span> </a> </li> <li> <a class="blog-sidebar-link" href="/can06/"> [CAN 06] - From CAN Frames to ROS 2 Control <span class="blog-sidebar-date">Sep 1, 2024</span> </a> </li> <li> <a class="blog-sidebar-link" href="/Intro-to-Robotics/"> Resources for Learning Robotics <span class="blog-sidebar-date">Apr 12, 2024</span> </a> </li> <li> <a class="blog-sidebar-link" href="/can04/"> [CAN 04] - Gripper Motor Control with CAN Bus <span class="blog-sidebar-date">Dec 5, 2023</span> </a> </li> </ul> </section> </nav> </aside> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Dong Ho Kang. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Photos from <a href="https://unsplash.com" target="_blank" rel="external nofollow noopener">Unsplash</a>. Last updated: May 30, 2026. </div> </footer> <script src="/assets/js/bootstrap.bundle.min.js"></script> <script src="https://cdn.jsdelivr.net/npm/mdbootstrap@4.20.0/js/mdb.min.js" integrity="sha256-NdbiivsvWt7VYCt6hYNT3h/th9vSTL4EDWeGs5SN3DA=" crossorigin="anonymous"></script> <script type="text/javascript">function progressBarSetup(){"max"in document.createElement("progress")?(initializeProgressElement(),$(document).on("scroll",function(){progressBar.attr({value:getCurrentScrollPosition()})}),$(window).on("resize",initializeProgressElement)):(resizeProgressBar(),$(document).on("scroll",resizeProgressBar),$(window).on("resize",resizeProgressBar))}function getCurrentScrollPosition(){return $(window).scrollTop()}function initializeProgressElement(){let e=$("#navbar").outerHeight(!0);$("body").css({"padding-top":e}),$("progress-container").css({"padding-top":e}),progressBar.css({top:e}),progressBar.attr({max:getDistanceToScroll(),value:getCurrentScrollPosition()})}function getDistanceToScroll(){return $(document).height()-$(window).height()}function resizeProgressBar(){progressBar.css({width:getWidthPercentage()+"%"})}function getWidthPercentage(){return getCurrentScrollPosition()/getDistanceToScroll()*100}const progressBar=$("#progress");window.onload=function(){setTimeout(progressBarSetup,50)};</script> <script src="/assets/js/vanilla-back-to-top.min.js?f40d453793ff4f64e238e420181a1d17"></script> <script>addBackToTop();</script> <script type="module" src="/assets/js/search/ninja-keys.min.js?a3446f084dcaecc5f75aa1757d087dcf"></script> <ninja-keys hidebreadcrumbs noautoloadmdicons placeholder="Type to start searching"></ninja-keys> <script>let searchTheme=determineComputedTheme();const ninjaKeys=document.querySelector("ninja-keys");"dark"===searchTheme?ninjaKeys.classList.add("dark"):ninjaKeys.classList.remove("dark");const openSearchModal=()=>{const e=$("#navbarNav");e.hasClass("show")&&e.collapse("hide"),ninjaKeys.open()};</script> <script>const ninja=document.querySelector("ninja-keys");ninja.data=[{id:"nav-about",title:"about",section:"Navigation",handler:()=>{window.location.href="/"}},{id:"nav-blog",title:"blog",description:"",section:"Navigation",handler:()=>{window.location.href="/blog/"}},{id:"nav-publications",title:"publications",description:"Publications are listed by category in reverse chronological order.",section:"Navigation",handler:()=>{window.location.href="/publications/"}},{id:"nav-projects",title:"projects",description:"Robotics Portfolio",section:"Navigation",handler:()=>{window.location.href="/projects/"}},{id:"nav-cv",title:"cv",description:"",section:"Navigation",handler:()=>{window.location.href="/assets/pdf/dk_cv.pdf"}},{id:"post-\ub85c\ubd07-\ud558\ub4dc\uc6e8\uc5b4-05-\ubaa8\ud130-\uc81c\uc5b4-\ub808\ubca8\uc5d0\uc11c-\ubcf8-physical-ai\uc758-\ud604\uc2e4",title:"[\ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4 05] - \ubaa8\ud130 \uc81c\uc5b4 \ub808\ubca8\uc5d0\uc11c \ubcf8 Physical AI\uc758 \ud604\uc2e4",description:"Physical AI \uad00\uc810\uc5d0\uc11c \ubcf8 \ub2e4\uad00\uc808 \ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4 - FOC, \uc804\ub958 \uc81c\uc5b4, \uadf8\ub9ac\uace0 actuator \ube44\uc774\uc0c1\uc131",section:"Posts",handler:()=>{window.location.href="/hardware05-kr/"}},{id:"post-robot-hardware-05-physical-ai-at-the-motor-control-level",title:"[Robot Hardware 05] - Physical AI at the Motor Control Level",description:"Robot hardware from a Physical AI perspective - FOC, current control, and actuator non-idealities",section:"Posts",handler:()=>{window.location.href="/hardware05/"}},{id:"post-\ub85c\ubd07-\ud558\ub4dc\uc6e8\uc5b4-04-\uc561\ucd94\uc5d0\uc774\ud130-3-qdd-\uc561\ucd94\uc5d0\uc774\ud130",title:"[\ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4 04] - \uc561\ucd94\uc5d0\uc774\ud130(3) : QDD \uc561\ucd94\uc5d0\uc774\ud130",description:"Physical AI \uad00\uc810\uc5d0\uc11c \ubcf8 \ub2e4\uad00\uc808 \ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4 - QDD \uc561\ucd94\uc5d0\uc774\ud130",section:"Posts",handler:()=>{window.location.href="/hardware04-kr/"}},{id:"post-robot-hardware-04-actuators-3-qdd-actuators",title:"[Robot Hardware 04] - Actuators (3): QDD Actuators",description:"Robot hardware from a Physical AI perspective - QDD actuators",section:"Posts",handler:()=>{window.location.href="/hardware04/"}},{id:"post-\ub85c\ubd07-\ud558\ub4dc\uc6e8\uc5b4-03-\uc0ac\uc774\ud074\ub85c\uc774\ub4dc-\uac10\uc18d\uae30",title:"[\ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4 03] - \uc0ac\uc774\ud074\ub85c\uc774\ub4dc \uac10\uc18d\uae30",description:"Physical AI \uad00\uc810\uc5d0\uc11c \ubcf8 \ub2e4\uad00\uc808 \ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4 - \uc0ac\uc774\ud074\ub85c\uc774\ub4dc \uac10\uc18d\uae30",section:"Posts",handler:()=>{window.location.href="/hardware03-03-kr/"}},{id:"post-robot-hardware-03-cycloidal-drives",title:"[Robot Hardware 03] - Cycloidal Drives",description:"Robot hardware from a Physical AI perspective - cycloidal drives",section:"Posts",handler:()=>{window.location.href="/hardware03-03/"}},{id:"post-\ub85c\ubd07-\ud558\ub4dc\uc6e8\uc5b4-03-\uc720\uc131\uae30\uc5b4-\uac10\uc18d\uae30",title:"[\ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4 03] - \uc720\uc131\uae30\uc5b4 \uac10\uc18d\uae30",description:"Physical AI \uad00\uc810\uc5d0\uc11c \ubcf8 \ub2e4\uad00\uc808 \ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4 - \uc720\uc131\uae30\uc5b4 \uac10\uc18d\uae30",section:"Posts",handler:()=>{window.location.href="/hardware03-02-kr/"}},{id:"post-robot-hardware-03-planetary-gearboxes",title:"[Robot Hardware 03] - Planetary Gearboxes",description:"Robot hardware from a Physical AI perspective - planetary gearboxes",section:"Posts",handler:()=>{window.location.href="/hardware03-02/"}},{id:"post-\ub85c\ubd07-\ud558\ub4dc\uc6e8\uc5b4-03-\ud558\ubaa8\ub2c9-\ub4dc\ub77c\uc774\ube0c-\uac10\uc18d\uae30",title:"[\ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4 03] - \ud558\ubaa8\ub2c9 \ub4dc\ub77c\uc774\ube0c \uac10\uc18d\uae30",description:"Physical AI \uad00\uc810\uc5d0\uc11c \ubcf8 \ub2e4\uad00\uc808 \ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4 - \ud558\ubaa8\ub2c9 \ub4dc\ub77c\uc774\ube0c",section:"Posts",handler:()=>{window.location.href="/hardware03-01-kr/"}},{id:"post-\ub85c\ubd07-\ud558\ub4dc\uc6e8\uc5b4-03-\uc561\ucd94\uc5d0\uc774\ud130-2-\uac10\uc18d\uae30",title:"[\ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4 03] - \uc561\ucd94\uc5d0\uc774\ud130 (2): \uac10\uc18d\uae30",description:"Physical AI \uad00\uc810\uc5d0\uc11c \ubcf8 \ub2e4\uad00\uc808 \ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4 - \uac10\uc18d\uae30",section:"Posts",handler:()=>{window.location.href="/hardware03-kr/"}},{id:"post-robot-hardware-03-harmonic-drives",title:"[Robot Hardware 03] - Harmonic Drives",description:"Robot hardware from a Physical AI perspective - Harmonic Drive reducers",section:"Posts",handler:()=>{window.location.href="/hardware03-01/"}},{id:"post-robot-hardware-03-actuators-2-reducers",title:"[Robot Hardware 03] - Actuators (2): Reducers",description:"Robot hardware from a Physical AI perspective - reducers",section:"Posts",handler:()=>{window.location.href="/hardware03/"}},{id:"post-\ub85c\ubd07-\ud558\ub4dc\uc6e8\uc5b4-02-\uc561\ucd94\uc5d0\uc774\ud130-1-bldc-\ubaa8\ud130",title:"[\ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4 02] - \uc561\ucd94\uc5d0\uc774\ud130 (1): BLDC \ubaa8\ud130",description:"Physical AI \uad00\uc810\uc5d0\uc11c \ubcf8 \ub2e4\uad00\uc808 \ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4 - BLDC \ubaa8\ud130",section:"Posts",handler:()=>{window.location.href="/hardware02-kr/"}},{id:"post-robot-hardware-02-actuators-1-bldc-motors",title:"[Robot Hardware 02] - Actuators (1): BLDC Motors",description:"Robot hardware from a Physical AI perspective - BLDC motors",section:"Posts",handler:()=>{window.location.href="/hardware02/"}},{id:"post-\ub85c\ubd07-\ud558\ub4dc\uc6e8\uc5b4-01-\ub85c\ubd07-\ud558\ub4dc\uc6e8\uc5b4\ub780",title:"[\ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4 01] - \ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4\ub780?",description:"Physical AI \uad00\uc810\uc5d0\uc11c \ubcf8 \ub2e4\uad00\uc808 \ub85c\ubd07 \ud558\ub4dc\uc6e8\uc5b4  - \uc11c\ub860",section:"Posts",handler:()=>{window.location.href="/hardware01-kr/"}},{id:"post-robot-hardware-01-what-is-robot-hardware",title:"[Robot Hardware 01] - What Is Robot Hardware?",description:"Robot hardware from a Physical AI perspective - Introduction",section:"Posts",handler:()=>{window.location.href="/hardware01/"}},{id:"post-can-05-pcan-device-driver-installation-on-linux",title:"[CAN 05] - PCAN Device Driver Installation on Linux",description:"Step-by-step guide to installing PEAK-System&#39;s PCAN drivers on Linux for SocketCAN and PCAN-Basic API",section:"Posts",handler:()=>{window.location.href="/can05/"}},{id:"post-can-07-can-i-o-logic-in-ros-2-hardware-interfaces",title:"[CAN 07] - CAN I/O Logic in ROS 2 Hardware Interfaces",description:"Read/write timing, CAN I/O patterns, TX pacing, buffering, and stale feedback handling for CAN-based ROS 2 hardware interfaces",section:"Posts",handler:()=>{window.location.href="/can07/"}},{id:"post-can-06-from-can-frames-to-ros-2-control",title:"[CAN 06] - From CAN Frames to ROS 2 Control",description:"Connecting CAN-based robot hardware to ROS 2 through custom wrappers and ROS 2 Control hardware interfaces",section:"Posts",handler:()=>{window.location.href="/can06/"}},{id:"post-resources-for-learning-robotics",title:"Resources for Learning Robotics",description:"Collection of useful resources for learning robotics.",section:"Posts",handler:()=>{window.location.href="/Intro-to-Robotics/"}},{id:"post-can-04-gripper-motor-control-with-can-bus",title:"[CAN 04] - Gripper Motor Control with CAN Bus",description:"Single Motor Control with ESP32, simpleFOC, and SocketCAN for Robotic Gripper",section:"Posts",handler:()=>{window.location.href="/can04/"}},{id:"post-can-03-communicating-to-esp32-with-socketcan",title:"[CAN 03] - Communicating to ESP32 with SocketCAN",description:"SocketCAN Communication with ESP32",section:"Posts",handler:()=>{window.location.href="/can03/"}},{id:"post-can-02-setting-up-socketcan-on-linux",title:"[CAN 02] - Setting up SocketCAN on Linux",description:"Setting up SocketCAN",section:"Posts",handler:()=>{window.location.href="/can02/"}},{id:"post-can-01-what-is-can",title:"[CAN 01] - What is CAN?",description:"What is CAN Bus and how is it used in robotics?",section:"Posts",handler:()=>{window.location.href="/can01/"}},{id:"news-our-paper-rpc-a-modular-framework-for-robot-planning-control-and-deployment-https-arxiv-org-abs-2409-10015-has-been-accepted-to-the-2025-ieee-sice-international-symposium-on-system-integration-sii",title:"Our paper [RPC: A Modular Framework for Robot Planning, Control, and Deployment](https://arxiv.org/abs/2409.10015) has...",description:"",section:"News"},{id:"news-our-paper-soft-vortex-gripper-for-dexterous-manipulation-using-hand-like-robots-has-been-accepted-to-the-2026-ieee-international-conference-on-robotics-and-automation-icra",title:"Our paper Soft Vortex Gripper for Dexterous Manipulation using Hand-Like Robots has been...",description:"",section:"News"},{id:"news-our-paper-plato-hand-shaping-contact-behavior-with-fingernails-for-precise-manipulation-https-platohand-github-io-plato-has-been-accepted-to-ieee-robotics-and-automation-letters-ra-l",title:"Our paper [PLATO Hand: Shaping Contact Behavior with Fingernails for Precise Manipulation](https://platohand.github.io/plato) has...",description:"",section:"News"},{id:"news-our-paper-aristo-hand-sensing-driven-distal-hyperextension-for-fine-grained-manipulation-https-aristohand-github-io-has-been-accepted-to-ieee-asme-international-conference-on-advanced-intelligent-mechatronics-aim-2026",title:"Our paper [ARISTO Hand: Sensing-Driven Distal Hyperextension for Fine-Grained Manipulation](https://aristohand.github.io/) has been accepted...",description:"",section:"News"},{id:"projects-cup-tower-stacking-with-baxter",title:"Cup Tower Stacking with Baxter",description:"Baxter stacks tower of cups with MoveIt, AprilTag, and OpenCV",section:"Projects",handler:()=>{window.location.href="/projects/baxter-tower/"}},{id:"projects-brushed-dc-motor-control-with-pid-controller",title:"Brushed DC Motor Control with PID Controller",description:"Brushed DC motor control with NU32 microcontroller and DRV8835 H-bridge motor driver",section:"Projects",handler:()=>{window.location.href="/projects/motor/"}},{id:"projects-autonomous-fire-fighting-robot-arm",title:"Autonomous Fire Fighting Robot Arm",description:"Sensing and Localization of Fire &amp; Manipulation of Fire Extinguisher",section:"Projects",handler:()=>{window.location.href="/projects/firefighter/"}},{id:"projects-programming-pic32-with-c",title:"Programming PIC32 with C",description:"UART, SPI, LCD, LED, IMU, and more",section:"Projects",handler:()=>{window.location.href="/projects/PIC32/"}},{id:"projects-impact-modeling-with-euler-lagrangian-and-hamiltonian-mechanics",title:"Impact Modeling with Euler-Lagrangian and Hamiltonian Mechanics",description:"4 point mass system impact simulation in Python with SymPy",section:"Projects",handler:()=>{window.location.href="/projects/impact/"}},{id:"projects-whisker-based-tactile-sensing-and-shape-classification",title:"Whisker-based Tactile Sensing and Shape Classification",description:"active vibrissal sensing to classify concave and convex objects using ANN and investigation of the transformation from the whisker base frame to the head frame using RL",section:"Projects",handler:()=>{window.location.href="/projects/whisker-tactile/"}},{id:"projects-whole-body-control-for-humanoid-robots",title:"Whole-Body Control for Humanoid Robots",description:"From floating-base dynamics to operational-space control, contact-constrained QP, balancing, and DCM walking",section:"Projects",handler:()=>{window.location.href="/projects/pypnc/"}},{id:"projects-can-in-robotics-series",title:"CAN in Robotics Series",description:"CAN-based robot hardware design with SocketCAN, PCAN, and ROS2",section:"Projects",handler:()=>{window.location.href="/projects/can-hardware/"}},{id:"projects-robot-hardware-series-en-kr",title:"Robot Hardware Series [EN/KR]",description:"Robot hardware notes from a Physical AI perspective",section:"Projects",handler:()=>{window.location.href="/projects/hardware-kr/"}},{id:"projects-plato-hand",title:"PLATO Hand",description:"Shaping Contact Behavior with Fingernails for Precise Manipulation",section:"Projects",handler:()=>{window.location.href="/projects/platohand/"}},{id:"projects-aristo-hand",title:"ARISTO Hand",description:"Sensing-Driven Distal Hyperextension for Fine-Grained Manipulation",section:"Projects",handler:()=>{window.location.href="/projects/aristohand/"}},{id:"socials-email",title:"Send email",section:"Socials",handler:()=>{window.open("mailto:%64%6F%6E%67%68%6F.%72%6F%62%6F%74@%67%6D%61%69%6C.%63%6F%6D","_blank")}},{id:"socials-google-scholar",title:"Google Scholar",section:"Socials",handler:()=>{window.open("https://scholar.google.com/citations?user=YlYSer0AAAAJ","_blank")}},{id:"socials-github",title:"GitHub",section:"Socials",handler:()=>{window.open("https://github.com/dokkev","_blank")}},{id:"light-theme",title:"Change theme to light",description:"Change the theme of the site to Light",section:"Theme",handler:()=>{setThemeSetting("light")}},{id:"dark-theme",title:"Change theme to dark",description:"Change the theme of the site to Dark",section:"Theme",handler:()=>{setThemeSetting("dark")}},{id:"system-theme",title:"Use system default theme",description:"Change the theme of the site to System Default",section:"Theme",handler:()=>{setThemeSetting("system")}}];</script> <script src="/assets/js/shortcut-key.js?6f508d74becd347268a7f822bca7309d"></script> </body> </html>
