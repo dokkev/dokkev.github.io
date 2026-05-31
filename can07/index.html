@@ -45,54 +45,18 @@ write()
 
     CAN &lt;--&gt; HW
     HW &lt;--&gt; CTRL
-</code></pre> <h2 id="control-loops-are-periodic-can-frames-are-not">Control Loops Are Periodic, CAN Frames Are Not</h2> <p>A controller usually runs at a fixed rate.</p> <pre><code class="language-mermaid">sequenceDiagram
-    participant C as Controller Loop
-
-    loop Fixed control period
-        C-&gt;&gt;C: read()
-        C-&gt;&gt;C: update()
-        C-&gt;&gt;C: write()
-    end
-</code></pre> <p>CAN traffic does not necessarily follow the same timing. Frames arrive when devices send them. Some devices broadcast periodically. Some only respond to queries. Some reply after receiving commands.</p> <pre><code class="language-mermaid">sequenceDiagram
-    participant D1 as Sensor
-    participant D2 as Motor Driver
-    participant H as Host
-
-    D1-&gt;&gt;H: periodic state frame
-    H-&gt;&gt;D2: command frame
-    D2-&gt;&gt;H: feedback frame
-    H-&gt;&gt;D2: diagnostic query
-    D2-&gt;&gt;H: diagnostic response
-</code></pre> <p>The hardware interface must connect these two timing models.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>CAN side:
+</code></pre> <h2 id="control-loops-are-periodic-can-frames-are-not">Control Loops Are Periodic, CAN Frames Are Not</h2> <p>A controller usually runs at a fixed rate.</p> <p>CAN traffic does not necessarily follow the same timing. Frames arrive when devices send them. Some devices broadcast periodically. Some only respond to queries. Some reply after receiving commands.</p> <p>The hardware interface must connect these two timing models.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>CAN side:
   asynchronous frame stream
 
 ROS 2 Control side:
   periodic read → update → write loop
-</code></pre></div></div> <p>This is the main reason CAN I/O logic needs explicit design.</p> <h2 id="common-can-io-patterns">Common CAN I/O Patterns</h2> <p>Before implementing <code class="language-plaintext highlighter-rouge">read()</code> and <code class="language-plaintext highlighter-rouge">write()</code>, the device I/O pattern should be identified.</p> <p>Most CAN devices used in robot hardware follow one of three patterns.</p> <table> <thead> <tr> <th>Pattern</th> <th>Description</th> <th>Typical Devices</th> </tr> </thead> <tbody> <tr> <td>Periodic broadcast</td> <td>The device sends state at a fixed rate without being asked.</td> <td>sensors, IMUs, encoder boards</td> </tr> <tr> <td>Query-response</td> <td>The host sends a query, and the device replies with state or configuration data.</td> <td>diagnostics, parameter reads, low-rate devices</td> </tr> <tr> <td>Command-response</td> <td>The host sends a command, and the device replies with feedback.</td> <td>motor drivers, smart actuators</td> </tr> </tbody> </table> <h2 id="pattern-1-periodic-broadcast">Pattern 1: Periodic Broadcast</h2> <p>In this pattern, the device sends state using its own internal timer.</p> <pre><code class="language-mermaid">sequenceDiagram
-    participant Device
-    participant Host
-
-    loop Device update rate
-        Device-&gt;&gt;Host: State frame
-    end
-</code></pre> <p>This pattern is common for sensors.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Examples:
+</code></pre></div></div> <p>This is the main reason CAN I/O logic needs explicit design.</p> <h2 id="common-can-io-patterns">Common CAN I/O Patterns</h2> <p>Before implementing <code class="language-plaintext highlighter-rouge">read()</code> and <code class="language-plaintext highlighter-rouge">write()</code>, the device I/O pattern should be identified.</p> <p>Most CAN devices used in robot hardware follow one of three patterns.</p> <table> <thead> <tr> <th>Pattern</th> <th>Description</th> <th>Typical Devices</th> </tr> </thead> <tbody> <tr> <td>Periodic broadcast</td> <td>The device sends state at a fixed rate without being asked.</td> <td>sensors, IMUs, encoder boards</td> </tr> <tr> <td>Query-response</td> <td>The host sends a query, and the device replies with state or configuration data.</td> <td>diagnostics, parameter reads, low-rate devices</td> </tr> <tr> <td>Command-response</td> <td>The host sends a command, and the device replies with feedback.</td> <td>motor drivers, smart actuators</td> </tr> </tbody> </table> <p>The important point is not the message shape itself. The important point is whether the hardware interface can treat the data as a cached stream, a blocking request, or feedback tied to command timing.</p> <h2 id="pattern-1-periodic-broadcast">Pattern 1: Periodic Broadcast</h2> <p>In this pattern, the device sends state using its own internal timer.</p> <p>This pattern is common for sensors.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Examples:
 - IMU
 - force sensor
 - tactile sensor board
 - encoder board
 - temperature monitor
-</code></pre></div></div> <p>The host does not request every sample. The hardware interface should collect incoming frames and update the latest-state cache.</p> <pre><code class="language-mermaid">flowchart LR
-    CAN[CAN frames] --&gt; RX[Receive / decode]
-    RX --&gt; Cache[Latest-state cache]
-    Cache --&gt; Read[read()]
-    Read --&gt; State[ROS 2 state interfaces]
-</code></pre> <p>The main risk is that frames arrive faster than the application drains them. If the receive buffer accumulates old frames, the controller may use stale data even though the device is still transmitting correctly.</p> <h2 id="pattern-2-query-response">Pattern 2: Query-Response</h2> <p>In this pattern, the host explicitly requests data.</p> <pre><code class="language-mermaid">sequenceDiagram
-    participant Host
-    participant Device
-
-    Host-&gt;&gt;Device: Query frame
-    Device-&gt;&gt;Host: Response frame
-</code></pre> <p>This pattern is useful for diagnostics, configuration reads, and low-rate data.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Examples:
+</code></pre></div></div> <p>The host does not request every sample. The hardware interface should collect incoming frames and update the latest-state cache.</p> <p>The main risk is that frames arrive faster than the application drains them. If the receive buffer accumulates old frames, the controller may use stale data even though the device is still transmitting correctly.</p> <h2 id="pattern-2-query-response">Pattern 2: Query-Response</h2> <p>In this pattern, the host explicitly requests data.</p> <p>This pattern is useful for diagnostics, configuration reads, and low-rate data.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Examples:
 - firmware version
 - device parameter read
 - diagnostic status
@@ -105,22 +69,7 @@ ROS 2 Control side:
     Decode --&gt; State[Update state]
 
     Wait -.-&gt; Problem[Control loop blocked]
-</code></pre> <p>A safer structure is to keep query-response logic outside the main periodic control path.</p> <pre><code class="language-mermaid">flowchart LR
-    Loop[Control loop] --&gt; Read[Read latest state]
-    Loop --&gt; Write[Write command]
-
-    QueryTask[Query task] --&gt; Send[Send query]
-    Send --&gt; Resp[Receive response]
-    Resp --&gt; Diag[Update diagnostic state]
-</code></pre> <h2 id="pattern-3-command-response">Pattern 3: Command-Response</h2> <p>In this pattern, the host sends a command and the device returns feedback.</p> <pre><code class="language-mermaid">sequenceDiagram
-    participant Host
-    participant Device
-
-    loop Control rate
-        Host-&gt;&gt;Device: Command frame
-        Device-&gt;&gt;Host: Feedback frame
-    end
-</code></pre> <p>This pattern is common for motor drivers and smart actuator modules.</p> <p>The command frame may contain:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- desired position
+</code></pre> <p>A safer structure is to keep query-response logic outside the main periodic control path.</p> <h2 id="pattern-3-command-response">Pattern 3: Command-Response</h2> <p>In this pattern, the host sends a command and the device returns feedback.</p> <p>This pattern is common for motor drivers and smart actuator modules.</p> <p>The command frame may contain:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- desired position
 - desired velocity
 - control gains
 - feedforward torque
@@ -130,15 +79,7 @@ ROS 2 Control side:
 - measured current
 - temperature
 - status flags
-</code></pre></div></div> <p>This pattern maps naturally to a control loop.</p> <pre><code class="language-mermaid">flowchart TD
-    Read[read()] --&gt; State[Update joint state]
-    State --&gt; Ctrl[Controller update]
-    Ctrl --&gt; Cmd[Command interface]
-    Cmd --&gt; Write[write()]
-    Write --&gt; CAN[Send CAN command]
-    CAN --&gt; FB[Receive feedback frame]
-    FB --&gt; Read
-</code></pre> <p>However, the feedback frame should not automatically be interpreted as the state after the command has been applied.</p> <p>Depending on the driver firmware, the response may contain:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- the latest measured state before the command was applied
+</code></pre></div></div> <p>This pattern maps naturally to a control loop.</p> <p>However, the feedback frame should not automatically be interpreted as the state after the command has been applied.</p> <p>Depending on the driver firmware, the response may contain:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- the latest measured state before the command was applied
 - the latest measured state after the command was accepted
 - a cached state from the actuator control loop
 - a status packet generated independently of the command timing
@@ -164,44 +105,11 @@ ROS 2 Control side:
 </code></pre> <p>A successful <code class="language-plaintext highlighter-rouge">CAN_Write()</code> or socket <code class="language-plaintext highlighter-rouge">write()</code> call means the frame was accepted by the host-side transmit path. It does not necessarily mean the actuator firmware consumed and applied the command.</p> <p>This distinction matters when several frames are sent back-to-back.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="n">frame</span> <span class="o">:</span> <span class="n">command_frames</span><span class="p">)</span> <span class="p">{</span>
   <span class="n">can_socket</span><span class="p">.</span><span class="n">writeFrame</span><span class="p">(</span><span class="n">frame</span><span class="p">);</span>
 <span class="p">}</span>
-</code></pre></div></div> <p>This can create a burst.</p> <pre><code class="language-mermaid">sequenceDiagram
-    participant Host
-    participant Driver
-
-    Host-&gt;&gt;Driver: command motor 1
-    Host-&gt;&gt;Driver: command motor 2
-    Host-&gt;&gt;Driver: command motor 3
-    Host-&gt;&gt;Driver: command motor 4
-    Host-&gt;&gt;Driver: command motor 5
-    Host-&gt;&gt;Driver: command motor 6
-    Host-&gt;&gt;Driver: command motor 7
-    Host-&gt;&gt;Driver: command motor 8
-
-    Note over Driver: Frames arrive close together.&lt;br/&gt;Firmware may not process all of them.
-</code></pre> <p>For this reason, the transmit path often needs pacing.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="n">frame</span> <span class="o">:</span> <span class="n">command_frames</span><span class="p">)</span> <span class="p">{</span>
+</code></pre></div></div> <p>This can create a burst.</p> <p>When eight command frames are written back-to-back, the bus may still serialize them correctly, but the receiving firmware may experience them as a dense burst at its RX path.</p> <p>For this reason, the transmit path often needs pacing.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="n">frame</span> <span class="o">:</span> <span class="n">command_frames</span><span class="p">)</span> <span class="p">{</span>
   <span class="n">can_socket</span><span class="p">.</span><span class="n">writeFrame</span><span class="p">(</span><span class="n">frame</span><span class="p">);</span>
   <span class="n">sleep_for</span><span class="p">(</span><span class="n">tx_frame_delay</span><span class="p">);</span>
 <span class="p">}</span>
-</code></pre></div></div> <p>The delay does not need to be large. The correct value depends on the CAN adapter, bus bitrate, actuator driver, and firmware implementation.</p> <p>The goal is not to slow the robot unnecessarily. The goal is to avoid sending bursts that the receiving device cannot process.</p> <pre><code class="language-mermaid">sequenceDiagram
-    participant Host
-    participant Driver
-
-    Host-&gt;&gt;Driver: command motor 1
-    Note over Host: small delay
-    Host-&gt;&gt;Driver: command motor 2
-    Note over Host: small delay
-    Host-&gt;&gt;Driver: command motor 3
-    Note over Host: small delay
-    Host-&gt;&gt;Driver: command motor 4
-    Note over Host: small delay
-    Host-&gt;&gt;Driver: command motor 5
-    Note over Host: small delay
-    Host-&gt;&gt;Driver: command motor 6
-    Note over Host: small delay
-    Host-&gt;&gt;Driver: command motor 7
-    Note over Host: small delay
-    Host-&gt;&gt;Driver: command motor 8
-</code></pre> <p>The correct command rate and inter-frame delay must be tuned on the actual hardware.</p> <p>Two devices can use the same CAN bitrate and still behave differently.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Same CAN bitrate
+</code></pre></div></div> <p>The delay does not need to be large. The correct value depends on the CAN adapter, bus bitrate, actuator driver, and firmware implementation.</p> <p>The goal is not to slow the robot unnecessarily. The goal is to avoid sending bursts that the receiving device cannot process.</p> <p>The correct command rate and inter-frame delay must be tuned on the actual hardware.</p> <p>Two devices can use the same CAN bitrate and still behave differently.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Same CAN bitrate
 Same number of command frames
 Different actuator firmware
 Different RX buffer size
@@ -210,12 +118,7 @@ Different result
 </code></pre></div></div> <p>This difference is often strongly hardware-dependent. High-end motor drivers may handle dense traffic, deeper buffering, and bursty command streams. Cheaper actuator modules may have smaller receive buffers, slower firmware loops, or weaker handling of back-to-back frames.</p> <p>CAN I/O frequency should therefore be treated as a hardware parameter, not only a software parameter.</p> <h2 id="blocking-vs-non-blocking-read">Blocking vs Non-Blocking Read</h2> <p>A direct blocking read is simple.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">can_frame</span> <span class="n">frame</span><span class="p">;</span>
 <span class="n">read</span><span class="p">(</span><span class="n">socket_fd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">frame</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">frame</span><span class="p">));</span>
 <span class="n">decode</span><span class="p">(</span><span class="n">frame</span><span class="p">);</span>
-</code></pre></div></div> <p>However, if no frame is available, the call can block.</p> <pre><code class="language-mermaid">flowchart TD
-    Read[read()] --&gt; HasFrame{Frame available?}
-    HasFrame --&gt;|yes| Decode[Decode frame]
-    HasFrame --&gt;|no| Block[Block]
-    Block --&gt; Delay[Control loop delayed]
-</code></pre> <p>This is usually not acceptable inside a periodic control loop.</p> <p>A non-blocking read avoids this.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">can_frame</span> <span class="n">frame</span><span class="p">;</span>
+</code></pre></div></div> <p>However, if no frame is available, the call can block.</p> <p>This is usually not acceptable inside a periodic control loop.</p> <p>A non-blocking read avoids this.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">can_frame</span> <span class="n">frame</span><span class="p">;</span>
 
 <span class="k">while</span> <span class="p">(</span><span class="n">can_socket</span><span class="p">.</span><span class="n">readFrameNonBlocking</span><span class="p">(</span><span class="n">frame</span><span class="p">))</span> <span class="p">{</span>
   <span class="n">decode</span><span class="p">(</span><span class="n">frame</span><span class="p">);</span>
@@ -224,15 +127,12 @@ Different result
     Read[read()]
     Read --&gt; Check{Frame available?}
     Check --&gt;|yes| Decode[Decode frame]
-    Decode --&gt; Check
-    Check --&gt;|no| Snapshot[Use latest decoded state]
+    Decode --&gt; Cache[Update latest-state cache]
+    Cache --&gt; Fresh[Update timestamp and valid flag]
+    Fresh --&gt; Check
+    Check --&gt;|no| Snapshot[Copy fresh cached state]
     Snapshot --&gt; Return[Return to control loop]
-</code></pre> <p>This pattern is useful when the control loop itself is responsible for polling RX frames.</p> <h2 id="latest-state-cache">Latest-State Cache</h2> <p>The controller should not depend on a specific CAN frame arriving exactly during the current <code class="language-plaintext highlighter-rouge">read()</code> call.</p> <p>A more robust structure is to maintain a latest-state cache.</p> <pre><code class="language-mermaid">flowchart LR
-    CAN[CAN frames] --&gt; Decode[Decode]
-    Decode --&gt; Cache[Latest-state cache]
-    Cache --&gt; Read[read()]
-    Read --&gt; State[ROS 2 state interfaces]
-</code></pre> <p>The cache stores the most recent valid feedback per device.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">struct</span> <span class="nc">DeviceFeedback</span>
+</code></pre> <p>This pattern is useful when the control loop itself is responsible for polling RX frames.</p> <h2 id="latest-state-cache">Latest-State Cache</h2> <p>The controller should not depend on a specific CAN frame arriving exactly during the current <code class="language-plaintext highlighter-rouge">read()</code> call.</p> <p>A more robust structure is to maintain a latest-state cache.</p> <p>The cache stores the most recent valid feedback per device.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">struct</span> <span class="nc">DeviceFeedback</span>
 <span class="p">{</span>
   <span class="kt">double</span> <span class="n">position</span><span class="p">;</span>
   <span class="kt">double</span> <span class="n">velocity</span><span class="p">;</span>
@@ -312,13 +212,7 @@ Different result
 
   <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
 <span class="p">}</span>
-</code></pre></div></div> <p>This separation makes it easier to tune the transmit path without changing the controller or protocol code.</p> <h2 id="example-cansystem-structure">Example CanSystem Structure</h2> <p>A useful structure is to separate raw CAN I/O, frame execution, and robot-specific hardware logic.</p> <pre><code class="language-mermaid">flowchart LR
-    System[CanSystem]
-    System --&gt;|inherits| Base[CanSystemBase]
-    System --&gt;|owns| Bus[CanBus]
-    System --&gt;|owns| Exec[CanFrameExecutor]
-    Bus --&gt; Interface[CanInterface&lt;br/&gt;SocketCAN / PCAN]
-</code></pre> <p>Each layer has a limited responsibility.</p> <table> <thead> <tr> <th>Layer</th> <th>Responsibility</th> </tr> </thead> <tbody> <tr> <td><code class="language-plaintext highlighter-rouge">CanInterface</code></td> <td>Direct access to SocketCAN, PCAN, or another CAN backend</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">CanBus</code></td> <td>RX polling, TX sending, optional observer dispatch</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">CanFrameExecutor</code></td> <td>TX execution, pacing, timeout handling, RX freshness</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">CanSystemBase</code></td> <td>Common <code class="language-plaintext highlighter-rouge">read()</code> / <code class="language-plaintext highlighter-rouge">write()</code> structure</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">CanSystem</code></td> <td>Robot-specific command conversion and state update</td> </tr> </tbody> </table> <p>The base class keeps the main structure small.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">bool</span> <span class="n">CanSystemBase</span><span class="o">::</span><span class="n">read</span><span class="p">()</span>
+</code></pre></div></div> <p>This separation makes it easier to tune the transmit path without changing the controller or protocol code.</p> <h2 id="example-cansystem-structure">Example CanSystem Structure</h2> <p>A useful structure is to separate raw CAN I/O, frame execution, and robot-specific hardware logic.</p> <p>Each layer has a limited responsibility.</p> <table> <thead> <tr> <th>Layer</th> <th>Responsibility</th> </tr> </thead> <tbody> <tr> <td><code class="language-plaintext highlighter-rouge">CanInterface</code></td> <td>Direct access to SocketCAN, PCAN, or another CAN backend</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">CanBus</code></td> <td>RX polling, TX sending, optional observer dispatch</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">CanFrameExecutor</code></td> <td>TX execution, pacing, timeout handling, RX freshness</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">CanSystemBase</code></td> <td>Common <code class="language-plaintext highlighter-rouge">read()</code> / <code class="language-plaintext highlighter-rouge">write()</code> structure</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">CanSystem</code></td> <td>Robot-specific command conversion and state update</td> </tr> </tbody> </table> <p>The base class keeps the main structure small.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">bool</span> <span class="n">CanSystemBase</span><span class="o">::</span><span class="n">read</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="k">const</span> <span class="kt">bool</span> <span class="n">ok</span> <span class="o">=</span> <span class="n">update_measurements_</span><span class="p">();</span>
   <span class="n">refresh_state_snapshot_</span><span class="p">();</span>
@@ -351,17 +245,7 @@ Different result
     <span class="n">frame_executor_</span><span class="p">.</span><span class="n">mark_rx_frame</span><span class="p">();</span>
   <span class="p">}</span>
 <span class="p">});</span>
-</code></pre></div></div> <p>The receive path becomes:</p> <pre><code class="language-mermaid">flowchart TD
-    Read[read()]
-    Read --&gt; Poll[frame_executor.poll_rx()]
-    Poll --&gt; Bus[CanBus.poll_rx()]
-    Bus --&gt; Frame[Receive CAN frame]
-    Frame --&gt; Observer[RX observer]
-    Observer --&gt; Dispatch[dispatch_rx_frame()]
-    Dispatch --&gt; Device[Update device state]
-    Dispatch --&gt; Mark[mark_rx_frame()]
-    Read --&gt; Snapshot[refresh_state_snapshot()]
-</code></pre> <p>The state snapshot can include both decoded joint state and hardware health information.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="n">CanSystem</span><span class="o">::</span><span class="n">refresh_state_snapshot_</span><span class="p">()</span>
+</code></pre></div></div> <p>The receive path becomes:</p> <p>The state snapshot can include both decoded joint state and hardware health information.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="n">CanSystem</span><span class="o">::</span><span class="n">refresh_state_snapshot_</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lock</span><span class="p">(</span><span class="n">state_mutex_</span><span class="p">);</span>
 
@@ -393,14 +277,7 @@ Different result
 <span class="p">{</span>
   <span class="k">return</span> <span class="n">frame_executor_</span><span class="p">.</span><span class="n">execute</span><span class="p">(</span><span class="n">plan</span><span class="p">);</span>
 <span class="p">}</span>
-</code></pre></div></div> <p>The full write path is:</p> <pre><code class="language-mermaid">flowchart TD
-    Cmd[Joint commands]
-    Cmd --&gt; Convert[Joint-to-device command conversion]
-    Convert --&gt; Frames[Encode CAN command frames]
-    Frames --&gt; Plan[WritePlan]
-    Plan --&gt; Exec[CanFrameExecutor]
-    Exec --&gt; Bus[CanBus.writeFrame]
-</code></pre> <p>This structure avoids putting all transport, protocol, timing, and robot-specific logic directly inside <code class="language-plaintext highlighter-rouge">read()</code> and <code class="language-plaintext highlighter-rouge">write()</code>.</p> <h2 id="tuning-procedure">Tuning Procedure</h2> <p>A practical tuning process is:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1. Start with a conservative command rate.
+</code></pre></div></div> <p>The full write path is:</p> <p>This structure avoids putting all transport, protocol, timing, and robot-specific logic directly inside <code class="language-plaintext highlighter-rouge">read()</code> and <code class="language-plaintext highlighter-rouge">write()</code>.</p> <h2 id="tuning-procedure">Tuning Procedure</h2> <p>A practical tuning process is:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1. Start with a conservative command rate.
 2. Add inter-frame delay between command frames.
 3. Check that every device responds consistently.
 4. Monitor stale feedback and missed responses.
@@ -419,27 +296,16 @@ OS --&gt; USB
 USB --&gt; Conv
 Conv --&gt; CAN
 CAN --&gt; Driver ```
-</code></pre></div></div> <p>Even if the CAN bus is configured at 1 Mbps, the host application is not directly writing bits onto the CAN wires. Frames pass through the operating system, USB stack, converter firmware, and driver buffers before reaching the bus.</p> <p>This can introduce:</p> <p>```text id=”j8wk3p”</p> <ul> <li>additional latency</li> <li>timing jitter</li> <li>transmit buffering</li> <li>receive buffering</li> <li>bursty frame delivery</li> <li>device-dependent throughput limits ```</li> </ul> <p>This is important when the hardware interface sends many frames at a high rate.</p> <p>```mermaid id=”e5e7xw” flowchart LR App[Application writes frames] –&gt; Queue[Host / USB / converter queue] Queue –&gt; Burst[Frames released as burst] Burst –&gt; CAN[CAN bus] CAN –&gt; Device[Device RX buffer]</p> <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-From the application side, several writes may return successfully.
+</code></pre></div></div> <p>Even if the CAN bus is configured at 1 Mbps, the host application is not directly writing bits onto the CAN wires. Frames pass through the operating system, USB stack, converter firmware, and driver buffers before reaching the bus.</p> <p>This can introduce:</p> <p>```text id=”j8wk3p”</p> <ul> <li>additional latency</li> <li>timing jitter</li> <li>transmit buffering</li> <li>receive buffering</li> <li>bursty frame delivery</li> <li>device-dependent throughput limits ```</li> </ul> <p>This is important when the hardware interface sends many frames at a high rate.</p> <p>From the application side, several writes may return successfully.</p> <p>```cpp id=”ym7ymy” for (const auto&amp; frame : frames) { can_interface.writeFrame(frame); }</p> <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+However, this does not guarantee that the frames were placed on the CAN bus with the intended spacing. The USB-CAN converter may buffer them and transmit them later, sometimes in a burst.
 
-```cpp id="ym7ymy"
-for (const auto&amp; frame : frames) {
-  can_interface.writeFrame(frame);
-}
-</code></pre></div></div> <p>However, this does not guarantee that the frames were placed on the CAN bus with the intended spacing. The USB-CAN converter may buffer them and transmit them later, sometimes in a burst.</p> <p>This matters for actuator drivers with limited receive buffering or slow command parsing.</p> <p>```text id=”jvb9iq” Application write succeeds ≠ frame transmitted immediately ≠ actuator firmware processed the command</p> <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-The bottleneck is not always the nominal CAN bitrate.
+This matters for actuator drivers with limited receive buffering or slow command parsing.
 
-For high-rate control, the limiting factor may be:
-
-```text id="gqt199"
-- USB-CAN converter firmware
-- USB polling interval
-- driver implementation
-- host-side queue size
-- converter-side TX buffer
-- converter-side RX buffer
-- application read frequency
-</code></pre></div></div> <p>Different USB-CAN converters can behave very differently. Some devices handle dense traffic and timestamping well. Others are acceptable for diagnostics but unreliable for high-rate multi-actuator control.</p> <p>This difference is often more visible when the system scales from one actuator to many actuators.</p> <p>```text id=”xk0f2s” One actuator: low bus load low burst pressure most converters appear to work</p> <p>Eight actuators: higher command rate higher feedback rate more bursts converter behavior becomes important</p> <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+```text id="jvb9iq"
+Application write succeeds
+  ≠ frame transmitted immediately
+  ≠ actuator firmware processed the command
+</code></pre></div></div> <p>The bottleneck is not always the nominal CAN bitrate.</p> <p>For high-rate control, the limiting factor may be:</p> <p>```text id=”gqt199”</p> <ul> <li>USB-CAN converter firmware</li> <li>USB polling interval</li> <li>driver implementation</li> <li>host-side queue size</li> <li>converter-side TX buffer</li> <li>converter-side RX buffer</li> <li>application read frequency ```</li> </ul> <p>Different USB-CAN converters can behave very differently. Some devices handle dense traffic and timestamping well. Others are acceptable for diagnostics but unreliable for high-rate multi-actuator control.</p> <p>This difference is often more visible when the system scales from one actuator to many actuators.</p> <p>```text id=”xk0f2s” One actuator: low bus load low burst pressure most converters appear to work</p> <p>Eight actuators: higher command rate higher feedback rate more bursts converter behavior becomes important</p> <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
 For this reason, USB-CAN converter selection should be treated as part of the hardware design, not just as a cable choice.
 
 When using a USB-CAN converter, the hardware interface should be tuned with the converter in the loop.

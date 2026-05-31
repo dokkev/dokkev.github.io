@@ -172,12 +172,12 @@ Observed:
 </code></pre></div></div> <p>A healthy interface should normally be <code class="language-plaintext highlighter-rouge">UP</code> and <code class="language-plaintext highlighter-rouge">ERROR-ACTIVE</code>.</p> <pre><code class="language-mermaid">flowchart TD
     A["ip -details link show can0"] --&gt; B{"Interface UP?"}
     B --&gt;|No| C["Bring interface up"]
-    B --&gt;|Yes| D{"ERROR-ACTIVE?"}
+    B --&gt;|Yes| D{"ERROR ACTIVE?"}
 
     D --&gt;|Yes| E["Interface state is likely OK"]
-    D --&gt;|ERROR-WARNING| F["Check increasing error counters"]
-    D --&gt;|ERROR-PASSIVE| G["Bus has many errors"]
-    D --&gt;|BUS-OFF| H["Node stopped participating&lt;br/&gt;restart and fix bus issue"]
+    D --&gt;|ERROR WARNING| F["Check increasing error counters"]
+    D --&gt;|ERROR PASSIVE| G["Bus has many errors"]
+    D --&gt;|BUS OFF| H["Node stopped participating&lt;br/&gt;restart and fix bus issue"]
 </code></pre> <p>Bring up the interface with the correct bitrate.</p> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo </span>ip <span class="nb">link set </span>can0 down
 <span class="nb">sudo </span>ip <span class="nb">link set </span>can0 up <span class="nb">type </span>can bitrate 1000000
 </code></pre></div></div> <p>If the interface enters <code class="language-plaintext highlighter-rouge">BUS-OFF</code>, the node has observed too many CAN errors and stopped participating in the bus.</p> <p>Common causes include:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- wrong bitrate
@@ -234,10 +234,10 @@ less than 60 Ω:
 </code></pre></div></div> <pre><code class="language-mermaid">flowchart TD
     A["Measure CANH-CANL resistance&lt;br/&gt;with bus powered off"] --&gt; B{"Measured resistance"}
 
-    B --&gt;|"~60 Ω"| C["Likely correct termination"]
-    B --&gt;|"~120 Ω"| D["Only one terminator"]
-    B --&gt;|"Open / very high"| E["No termination or open circuit"]
-    B --&gt;|"less than 60 ohm"| F["Too many terminators or short"]
+    B --&gt;|about 60 ohm| C["Likely correct termination"]
+    B --&gt;|about 120 ohm| D["Only one terminator"]
+    B --&gt;|open or very high| E["No termination or open circuit"]
+    B --&gt;|less than 60 ohm| F["Too many terminators or short"]
 </code></pre> <p>Then check wiring.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- CANH to CANH
 - CANL to CANL
 - common ground when required
