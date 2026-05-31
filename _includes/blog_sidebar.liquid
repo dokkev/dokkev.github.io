@@ -26,7 +26,11 @@
                     {% if order_label != '' %}
                       <span class="blog-sidebar-order">{{ order_label }}.</span>
                     {% endif %}
-                    {{ post.title }}
+                    {% assign sidebar_title = post.title %}
+                    {% if sidebar_title contains '] - ' %}
+                      {% assign sidebar_title = sidebar_title | split: '] - ' | last %}
+                    {% endif %}
+                    {{ sidebar_title }}
                   </a>
                 </li>
               {% endfor %}

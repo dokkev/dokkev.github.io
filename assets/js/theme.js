@@ -136,8 +136,16 @@ let setMermaidTheme = (theme) => {
     elem.innerHTML = svgCode;
   });
 
-  mermaid.initialize({ theme: theme });
+  mermaid.initialize({
+    theme: theme,
+    themeVariables: {
+      fontSize: "16px",
+    },
+  });
   window.mermaid.init(undefined, document.querySelectorAll(".mermaid"));
+  if (typeof window.resizeMermaidDiagrams === "function") {
+    setTimeout(window.resizeMermaidDiagrams, 0);
+  }
 
   const observable = document.querySelector(".mermaid svg");
   if (observable !== null) {

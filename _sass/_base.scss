@@ -513,6 +513,14 @@ footer.sticky-bottom {
   margin-top: 2rem;
 }
 
+@media (min-width: 1200px) {
+  .blog-sidebar-column {
+    flex: 0 0 calc(25% + 80px);
+    margin-right: -80px;
+    max-width: calc(25% + 80px);
+  }
+}
+
 .blog-container {
   max-width: 1240px;
 }

@@ -7,6 +7,34 @@
 {% endif %}
 
 {% if render_mermaid %}
+  <style>
+    pre.unloaded {
+      display: none;
+    }
+
+    pre.mermaid {
+      background: transparent;
+      grid-column: text;
+      max-width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 1rem 0;
+      text-align: left;
+    }
+
+    .post.distill d-article pre.mermaid {
+      grid-column: screen;
+      width: 100%;
+    }
+
+    pre.mermaid svg {
+      display: block;
+      height: auto !important;
+      margin: 0 auto;
+      max-width: none !important;
+      overflow: visible;
+    }
+  </style>
   <script
     defer
     src="{{ site.third_party_libraries.mermaid.url.js }}"
@@ -24,6 +52,18 @@
   <script>
     let mermaidTheme = determineComputedTheme();
 
+    function resizeMermaidDiagrams() {
+      document.querySelectorAll('pre.mermaid svg').forEach((svg) => {
+        const viewBox = svg.viewBox && svg.viewBox.baseVal;
+        const naturalWidth = viewBox && viewBox.width ? viewBox.width : Number.parseFloat(svg.getAttribute('width'));
+
+        if (naturalWidth && Number.isFinite(naturalWidth)) {
+          svg.style.width = `${Math.ceil(naturalWidth)}px`;
+        }
+      });
+    }
+    window.resizeMermaidDiagrams = resizeMermaidDiagrams;
+
     /* Create mermaid diagram as another node and hide the code block, appending the mermaid node after it
        this is done to enable retrieving the code again when changing theme between light/dark */
     document.addEventListener('readystatechange', () => {
@@ -40,7 +80,14 @@
           backup.after(mermaid);
         });
 
-        mermaid.initialize({ theme: mermaidTheme });
+        mermaid.initialize({
+          theme: mermaidTheme,
+          themeVariables: {
+            fontSize: '16px',
+          },
+        });
+        window.mermaid.init(undefined, document.querySelectorAll('.mermaid'));
+        setTimeout(resizeMermaidDiagrams, 0);
 
         /* Zoomable mermaid diagrams */
         if (typeof d3 !== 'undefined') {
