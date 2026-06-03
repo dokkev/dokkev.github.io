@@ -15,7 +15,7 @@
     pre.mermaid {
       background: transparent;
       grid-column: text;
-      max-height: 80vh;
+      max-height: 72vh;
       max-width: 100%;
       overflow: auto;
       padding: 1rem 0;
@@ -31,7 +31,7 @@
       display: block;
       height: auto !important;
       margin: 0 auto;
-      max-width: none !important;
+      max-width: 100% !important;
       overflow: visible;
     }
   </style>
@@ -56,9 +56,10 @@
       document.querySelectorAll('pre.mermaid svg').forEach((svg) => {
         const viewBox = svg.viewBox && svg.viewBox.baseVal;
         const naturalWidth = viewBox && viewBox.width ? viewBox.width : Number.parseFloat(svg.getAttribute('width'));
+        const containerWidth = svg.parentElement ? svg.parentElement.clientWidth : 0;
 
         if (naturalWidth && Number.isFinite(naturalWidth)) {
-          svg.style.width = `${Math.ceil(naturalWidth)}px`;
+          svg.style.width = containerWidth && naturalWidth > containerWidth ? '100%' : `${Math.ceil(naturalWidth)}px`;
         }
       });
     }
