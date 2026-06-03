@@ -291,29 +291,49 @@ Different result
 - RX stale timeout
 - TX frame timeout
 - maximum allowed missing feedback count
-</code></pre></div></div> <p>These values are not universal. They depend on the adapter, bus topology, device firmware, and actuator hardware.</p> <h2 id="usb-can-converter-bottleneck">USB-CAN Converter Bottleneck</h2> <p>Many prototype robots use USB-CAN converters.</p> <p>This is convenient, but it adds another layer between the control loop and the CAN bus.</p> <p>```mermaid id=”8zxx31” flowchart LR App[ROS 2 hardware interface] OS[OS scheduler / driver] USB[USB stack] Conv[USB-CAN converter] CAN[CAN bus] Driver[Actuator driver]</p> <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>App --&gt; OS
-OS --&gt; USB
-USB --&gt; Conv
-Conv --&gt; CAN
-CAN --&gt; Driver ```
-</code></pre></div></div> <p>Even if the CAN bus is configured at 1 Mbps, the host application is not directly writing bits onto the CAN wires. Frames pass through the operating system, USB stack, converter firmware, and driver buffers before reaching the bus.</p> <p>This can introduce:</p> <p>```text id=”j8wk3p”</p> <ul> <li>additional latency</li> <li>timing jitter</li> <li>transmit buffering</li> <li>receive buffering</li> <li>bursty frame delivery</li> <li>device-dependent throughput limits ```</li> </ul> <p>This is important when the hardware interface sends many frames at a high rate.</p> <p>From the application side, several writes may return successfully.</p> <p>```cpp id=”ym7ymy” for (const auto&amp; frame : frames) { can_interface.writeFrame(frame); }</p> <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-However, this does not guarantee that the frames were placed on the CAN bus with the intended spacing. The USB-CAN converter may buffer them and transmit them later, sometimes in a burst.
+</code></pre></div></div> <p>These values are not universal. They depend on the adapter, bus topology, device firmware, and actuator hardware.</p> <h2 id="usb-can-converter-bottleneck">USB-CAN Converter Bottleneck</h2> <p>Many prototype robots use USB-CAN converters.</p> <p>This is convenient, but it adds another layer between the control loop and the CAN bus.</p> <pre><code class="language-mermaid">flowchart LR
+    App[ROS 2 hardware interface]
+    OS[OS scheduler / driver]
+    USB[USB stack]
+    Conv[USB-CAN converter]
+    CAN[CAN bus]
+    Driver[Actuator driver]
 
-This matters for actuator drivers with limited receive buffering or slow command parsing.
-
-```text id="jvb9iq"
-Application write succeeds
+    App --&gt; OS
+    OS --&gt; USB
+    USB --&gt; Conv
+    Conv --&gt; CAN
+    CAN --&gt; Driver
+</code></pre> <p>Even if the CAN bus is configured at 1 Mbps, the host application is not directly writing bits onto the CAN wires. Frames pass through the operating system, USB stack, converter firmware, and driver buffers before reaching the bus.</p> <p>This can introduce:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- additional latency
+- timing jitter
+- transmit buffering
+- receive buffering
+- bursty frame delivery
+- device-dependent throughput limits
+</code></pre></div></div> <p>This is important when the hardware interface sends many frames at a high rate.</p> <p>From the application side, several writes may return successfully.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="n">frame</span> <span class="o">:</span> <span class="n">frames</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">can_interface</span><span class="p">.</span><span class="n">writeFrame</span><span class="p">(</span><span class="n">frame</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div> <p>However, this does not guarantee that the frames were placed on the CAN bus with the intended spacing. The USB-CAN converter may buffer them and transmit them later, sometimes in a burst.</p> <p>This matters for actuator drivers with limited receive buffering or slow command parsing.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Application write succeeds
   ≠ frame transmitted immediately
   ≠ actuator firmware processed the command
-</code></pre></div></div> <p>The bottleneck is not always the nominal CAN bitrate.</p> <p>For high-rate control, the limiting factor may be:</p> <p>```text id=”gqt199”</p> <ul> <li>USB-CAN converter firmware</li> <li>USB polling interval</li> <li>driver implementation</li> <li>host-side queue size</li> <li>converter-side TX buffer</li> <li>converter-side RX buffer</li> <li>application read frequency ```</li> </ul> <p>Different USB-CAN converters can behave very differently. Some devices handle dense traffic and timestamping well. Others are acceptable for diagnostics but unreliable for high-rate multi-actuator control.</p> <p>This difference is often more visible when the system scales from one actuator to many actuators.</p> <p>```text id=”xk0f2s” One actuator: low bus load low burst pressure most converters appear to work</p> <p>Eight actuators: higher command rate higher feedback rate more bursts converter behavior becomes important</p> <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-For this reason, USB-CAN converter selection should be treated as part of the hardware design, not just as a cable choice.
+</code></pre></div></div> <p>The bottleneck is not always the nominal CAN bitrate.</p> <p>For high-rate control, the limiting factor may be:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- USB-CAN converter firmware
+- USB polling interval
+- driver implementation
+- host-side queue size
+- converter-side TX buffer
+- converter-side RX buffer
+- application read frequency
+</code></pre></div></div> <p>Different USB-CAN converters can behave very differently. Some devices handle dense traffic and timestamping well. Others are acceptable for diagnostics but unreliable for high-rate multi-actuator control.</p> <p>This difference is often more visible when the system scales from one actuator to many actuators.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>One actuator:
+  low bus load
+  low burst pressure
+  most converters appear to work
 
-When using a USB-CAN converter, the hardware interface should be tuned with the converter in the loop.
-
-Practical checks include:
-
-```text id="eubmql"
-- test with all actuators enabled
+Eight actuators:
+  higher command rate
+  higher feedback rate
+  more bursts
+  converter behavior becomes important
+</code></pre></div></div> <p>For this reason, USB-CAN converter selection should be treated as part of the hardware design, not just as a cable choice.</p> <p>When using a USB-CAN converter, the hardware interface should be tuned with the converter in the loop.</p> <p>Practical checks include:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- test with all actuators enabled
 - monitor missed feedback
 - monitor stale state events
 - increase command rate gradually
