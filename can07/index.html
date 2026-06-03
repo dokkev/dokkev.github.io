@@ -39,12 +39,14 @@ write()
 - how to detect stale feedback
 - how to avoid overwhelming the actuator driver
 </code></pre></div></div> <p>A CAN hardware interface is therefore not just a protocol translator. It is also an I/O scheduling layer between an event-driven CAN bus and a periodic control loop.</p> <pre><code class="language-mermaid">flowchart LR
-    CAN[CAN bus&lt;br/&gt;event-driven frames]
-    HW[Hardware Interface&lt;br/&gt;I/O scheduling]
-    CTRL[ROS 2 Control&lt;br/&gt;periodic loop]
+    A["CAN bus event driven frames"]
+    B["Hardware interface IO scheduling"]
+    C["ROS 2 Control periodic loop"]
 
-    CAN &lt;--&gt; HW
-    HW &lt;--&gt; CTRL
+    A --&gt; B
+    B --&gt; A
+    B --&gt; C
+    C --&gt; B
 </code></pre> <h2 id="control-loops-are-periodic-can-frames-are-not">Control Loops Are Periodic, CAN Frames Are Not</h2> <p>A controller usually runs at a fixed rate.</p> <p>CAN traffic does not necessarily follow the same timing. Frames arrive when devices send them. Some devices broadcast periodically. Some only respond to queries. Some reply after receiving commands.</p> <p>The hardware interface must connect these two timing models.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>CAN side:
   asynchronous frame stream
 
@@ -63,12 +65,12 @@ ROS 2 Control side:
 - error code request
 - calibration data
 </code></pre></div></div> <p>It is usually not ideal as the main mechanism for high-rate joint feedback.</p> <p>A blocking query inside <code class="language-plaintext highlighter-rouge">read()</code> can delay the control loop.</p> <pre><code class="language-mermaid">flowchart TD
-    Read[read()] --&gt; Query[Send query]
-    Query --&gt; Wait[Wait for response]
-    Wait --&gt; Decode[Decode response]
-    Decode --&gt; State[Update state]
+    A["read"] --&gt; B["Send query"]
+    B --&gt; C["Wait for response"]
+    C --&gt; D["Decode response"]
+    D --&gt; E["Update state"]
 
-    Wait -.-&gt; Problem[Control loop blocked]
+    C --&gt; F["Control loop blocked"]
 </code></pre> <p>A safer structure is to keep query-response logic outside the main periodic control path.</p> <h2 id="pattern-3-command-response">Pattern 3: Command-Response</h2> <p>In this pattern, the host sends a command and the device returns feedback.</p> <p>This pattern is common for motor drivers and smart actuator modules.</p> <p>The command frame may contain:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- desired position
 - desired velocity
 - control gains
@@ -95,13 +97,13 @@ ROS 2 Control side:
 </code></pre></div></div> <p>A common mistake is to assume that if the ROS 2 controller runs at 1 kHz, every actuator command should also be sent at 1 kHz.</p> <p>That is not always possible or useful.</p> <p>For example, with 8 actuators:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>8 command frames × 1000 Hz = 8000 command frames/s
 8 feedback frames × 1000 Hz = 8000 feedback frames/s
 </code></pre></div></div> <p>This gives 16000 frames/s before considering diagnostics, retransmissions, or protocol overhead.</p> <p>Even if the host CAN adapter accepts the outgoing frames, the actuator driver may not process them reliably if they arrive as a burst.</p> <pre><code class="language-mermaid">flowchart LR
-    Host[Host PC] --&gt;|write succeeds| Kernel[Kernel TX queue]
-    Kernel --&gt; Adapter[CAN adapter]
-    Adapter --&gt; Bus[CAN bus]
-    Bus --&gt; Driver[Motor driver RX]
-    Driver --&gt; Firmware[Firmware parser]
+    A["Host PC"] --&gt; B["Kernel TX queue"]
+    B --&gt; C["CAN adapter"]
+    C --&gt; D["CAN bus"]
+    D --&gt; E["Motor driver RX"]
+    E --&gt; F["Firmware parser"]
 
-    Firmware -. may not keep up .-&gt; Drop[Command ignored&lt;br/&gt;or overwritten]
+    F --&gt; G["Command ignored or overwritten"]
 </code></pre> <p>A successful <code class="language-plaintext highlighter-rouge">CAN_Write()</code> or socket <code class="language-plaintext highlighter-rouge">write()</code> call means the frame was accepted by the host-side transmit path. It does not necessarily mean the actuator firmware consumed and applied the command.</p> <p>This distinction matters when several frames are sent back-to-back.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="n">frame</span> <span class="o">:</span> <span class="n">command_frames</span><span class="p">)</span> <span class="p">{</span>
   <span class="n">can_socket</span><span class="p">.</span><span class="n">writeFrame</span><span class="p">(</span><span class="n">frame</span><span class="p">);</span>
 <span class="p">}</span>
@@ -124,14 +126,14 @@ Different result
   <span class="n">decode</span><span class="p">(</span><span class="n">frame</span><span class="p">);</span>
 <span class="p">}</span>
 </code></pre></div></div> <p>The idea is to drain all currently available frames without waiting for new ones.</p> <pre><code class="language-mermaid">flowchart TD
-    Read[read()]
-    Read --&gt; Check{Frame available?}
-    Check --&gt;|yes| Decode[Decode frame]
-    Decode --&gt; Cache[Update latest-state cache]
-    Cache --&gt; Fresh[Update timestamp and valid flag]
-    Fresh --&gt; Check
-    Check --&gt;|no| Snapshot[Copy fresh cached state]
-    Snapshot --&gt; Return[Return to control loop]
+    A["read"]
+    A --&gt; B["Frame available"]
+    B --&gt; C["Decode frame"]
+    C --&gt; D["Update latest state cache"]
+    D --&gt; E["Update timestamp and valid flag"]
+    E --&gt; B
+    B --&gt; F["Copy fresh cached state"]
+    F --&gt; G["Return to control loop"]
 </code></pre> <p>This pattern is useful when the control loop itself is responsible for polling RX frames.</p> <h2 id="latest-state-cache">Latest-State Cache</h2> <p>The controller should not depend on a specific CAN frame arriving exactly during the current <code class="language-plaintext highlighter-rouge">read()</code> call.</p> <p>A more robust structure is to maintain a latest-state cache.</p> <p>The cache stores the most recent valid feedback per device.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">struct</span> <span class="nc">DeviceFeedback</span>
 <span class="p">{</span>
   <span class="kt">double</span> <span class="n">position</span><span class="p">;</span>
@@ -166,12 +168,12 @@ Different result
 </code></pre></div></div> <p>The cache should also support freshness checks.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">bool</span> <span class="n">is_fresh</span> <span class="o">=</span>
   <span class="p">(</span><span class="n">time</span> <span class="o">-</span> <span class="n">latest_feedback_</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">stamp</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">rx_stale_timeout_</span><span class="p">;</span>
 </code></pre></div></div> <p>A decoded value is not always a usable value. It must also be recent enough.</p> <h2 id="writeplan-and-tx-pacing">WritePlan and TX Pacing</h2> <p>The transmit path should be explicit.</p> <p>Instead of writing CAN frames directly in several places, the hardware interface can build a write plan and pass it to a frame executor.</p> <pre><code class="language-mermaid">flowchart TD
-    Cmd[ROS 2 command interfaces]
-    Cmd --&gt; Convert[Convert to device commands]
-    Convert --&gt; Encode[Encode CAN frames]
-    Encode --&gt; Plan[WritePlan]
-    Plan --&gt; Exec[Frame executor]
-    Exec --&gt; Bus[CAN bus]
+    A["ROS 2 command interfaces"]
+    A --&gt; B["Convert to device commands"]
+    B --&gt; C["Encode CAN frames"]
+    C --&gt; D["WritePlan"]
+    D --&gt; E["Frame executor"]
+    E --&gt; F["CAN bus"]
 </code></pre> <p>A simple write plan may contain:</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">struct</span> <span class="nc">WritePlan</span>
 <span class="p">{</span>
   <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">can_frame</span><span class="o">&gt;</span> <span class="n">frames</span><span class="p">;</span>
@@ -292,18 +294,18 @@ Different result
 - TX frame timeout
 - maximum allowed missing feedback count
 </code></pre></div></div> <p>These values are not universal. They depend on the adapter, bus topology, device firmware, and actuator hardware.</p> <h2 id="usb-can-converter-bottleneck">USB-CAN Converter Bottleneck</h2> <p>Many prototype robots use USB-CAN converters.</p> <p>This is convenient, but it adds another layer between the control loop and the CAN bus.</p> <pre><code class="language-mermaid">flowchart LR
-    App[ROS 2 hardware interface]
-    OS[OS scheduler / driver]
-    USB[USB stack]
-    Conv[USB-CAN converter]
-    CAN[CAN bus]
-    Driver[Actuator driver]
+    A["ROS 2 hardware interface"]
+    B["OS scheduler and driver"]
+    C["USB stack"]
+    D["USB CAN converter"]
+    E["CAN bus"]
+    F["Actuator driver"]
 
-    App --&gt; OS
-    OS --&gt; USB
-    USB --&gt; Conv
-    Conv --&gt; CAN
-    CAN --&gt; Driver
+    A --&gt; B
+    B --&gt; C
+    C --&gt; D
+    D --&gt; E
+    E --&gt; F
 </code></pre> <p>Even if the CAN bus is configured at 1 Mbps, the host application is not directly writing bits onto the CAN wires. Frames pass through the operating system, USB stack, converter firmware, and driver buffers before reaching the bus.</p> <p>This can introduce:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- additional latency
 - timing jitter
 - transmit buffering
