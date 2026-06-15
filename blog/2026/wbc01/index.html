@@ -1,0 +1,205 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd"> <html><body> <h1 id="wbc01-what-is-whole-body-control">WBC01. What Is Whole Body Control?</h1> <p>Whole Body Control, or WBC, is a term that appears frequently in humanoid robotics.</p> <p>The phrase is used in several different contexts. In classical robotics, WBC often refers to a model-based controller that coordinates multiple tasks under contact and actuation constraints. More recently, the same phrase also appears in learning-based humanoid control, where a neural policy coordinates locomotion, manipulation, balance, and recovery behaviors across the full body.</p> <p>These usages are related, but they are not identical.</p> <p>At the most general level, WBC means that the robot is not controlled as a set of isolated limbs. The arm, legs, torso, contacts, balance, and posture are controlled together as one coupled system.</p> <p>For a humanoid, this matters immediately.</p> <p>If the robot reaches toward an object, the hand trajectory is only one part of the problem. The robot also has to maintain balance, avoid slipping, respect joint limits, keep the torso stable, and stay within actuator limits. A controller that only tracks the hand pose while ignoring the rest of the body is not a whole body controller. It is an arm controller attached to a robot that may fall over.</p> <p>That is the basic motivation.</p> <p>WBC is the control layer that tries to answer the following question:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Given a robot with many degrees of freedom,
+a floating base,
+contacts with the environment,
+and multiple objectives,
+
+what should the whole robot do right now?
+</code></pre></div></div> <p>The exact answer depends on the control paradigm. In classical model-based WBC, this question is usually answered through rigid-body dynamics, task Jacobians, contact constraints, and optimization. In learning-based WBC, this question may be answered by a neural policy trained across many simulated situations.</p> <p>This post starts from the model-based definition, then discusses how it relates to modern learning-based WBC.</p> <hr> <h2 id="1-why-wbc-is-not-just-task-space-control">1. Why WBC is not just task-space control</h2> <p>A fixed-base manipulator is a useful starting point.</p> <p>For a conventional 6-DoF or 7-DoF robot arm bolted to a table, the main objective is often end-effector pose tracking.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>desired end-effector position
+desired end-effector orientation
+</code></pre></div></div> <p>The control structure is relatively direct:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>desired end-effector motion
+→ Jacobian
+→ joint velocity, acceleration, or torque
+</code></pre></div></div> <p>The base is fixed to the world. The robot motion is mostly described by the actuated joints.</p> <p>In that setting, it is often acceptable to think:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>q   ≈ joint positions
+q̇   ≈ joint velocities
+τ   ≈ joint torques
+</code></pre></div></div> <p>This approximation is no longer sufficient for humanoids.</p> <p>A humanoid has a floating base. The torso is not attached to the world. The robot is connected to the environment only through contacts: feet on the ground, hands on objects, or other body parts depending on the task.</p> <p>The floating base has six degrees of freedom:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>3 translational DoF
+3 rotational DoF
+</code></pre></div></div> <p>But there is no actuator directly attached to the floating base in world coordinates. The motors are located at the joints. As a result, the robot controls its base indirectly through joint torques and contact forces.</p> <p>The control path looks like this:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>joint torques
+→ joint motion
+→ contact forces
+→ whole-body dynamics
+→ base and CoM motion
+</code></pre></div></div> <p>This is the main difference from a fixed-base arm.</p> <p>A humanoid does not simply move its hand. It moves its hand while maintaining a physically feasible whole-body state.</p> <p>For example:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>The hand should move toward the object.
+The torso should remain balanced.
+The center of mass should stay in a stable region.
+The feet should not slip.
+The joints should avoid hard limits.
+The actuator torques should remain within limits.
+</code></pre></div></div> <p>These objectives do not have equal priority.</p> <p>Balance is usually more important than hand tracking. Contact feasibility is more important than posture preference. Torque limits are not optional. Friction constraints are not tuning suggestions.</p> <p>This naturally leads to task hierarchy.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Higher-priority objectives:
+  maintain balance
+  preserve contacts
+  satisfy physical constraints
+
+Lower-priority objectives:
+  track hand pose
+  regulate posture
+  use redundancy efficiently
+</code></pre></div></div> <p>This is the classical motivation for WBC.</p> <p>WBC is not just “control for robots with many joints.” It is a framework for coordinating many objectives on a floating-base, underactuated, contact-constrained robot.</p> <hr> <h2 id="2-classical-model-based-wbc">2. Classical model-based WBC</h2> <p>A useful reference point is the Stanford line of whole body control work by Sentis and Khatib.</p> <p>In the 2005 IJHR paper, <em>Synthesis of Whole-Body Behaviors Through Hierarchical Control of Behavioral Primitives</em>, whole-body behavior is described as the composition of multiple behavioral primitives. These primitives can represent different movement criteria: center of gravity behavior, hand behavior, leg behavior, head behavior, body posture, joint-limit constraints, contacts, collision avoidance, and so on.</p> <p>The important part is the hierarchy.</p> <p>The paper organizes primitives into three broad categories:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1. Constraints
+2. Operational tasks
+3. Postures
+</code></pre></div></div> <p>Constraints are the highest priority. They represent conditions that should not be violated, such as contacts, joint limits, near-body obstacles, and self-collision constraints.</p> <p>Operational tasks are the main tasks the robot wants to accomplish, such as manipulation, locomotion, vision, hand tracking, foot tracking, or center-of-mass control.</p> <p>Postures use the residual redundancy. They can regulate body shape, symmetry, comfort, effort, or other secondary objectives.</p> <p>This hierarchy is a central idea.</p> <p>The robot should not allow an operational task to violate a constraint. The hand task should not break a contact constraint. A posture objective should not disturb balance. Lower-priority behaviors are projected into the null space of higher-priority behaviors.</p> <p>In simple terms:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>constraints first
+tasks second
+posture last
+</code></pre></div></div> <p>The 2006 ICRA paper, <em>A Whole Body Control Framework for Humanoids Operating in Human Environments</em>, extends this view into a more explicit humanoid control framework. It discusses control primitives, task prioritization, operational-space control, free-floating dynamics, and support contacts.</p> <p>This is where WBC becomes more clearly connected to humanoids.</p> <p>A humanoid is modeled as a free-floating system with six virtual unactuated degrees of freedom attached to the base. Supporting contacts, such as feet on the ground, are included in the control hierarchy. The controller must account for both free-floating dynamics and reaction forces at the contact points.</p> <p>This is the model-based WBC view:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>The robot has a dynamics model.
+The base is unactuated.
+Contacts create support forces.
+Tasks are represented through Jacobians.
+Constraints have priority.
+Posture uses remaining redundancy.
+The controller computes feasible whole-body motion and force.
+</code></pre></div></div> <p>This is different from a simple end-effector controller.</p> <p>The controller is not only asking:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Where should the hand go?
+</code></pre></div></div> <p>It is asking:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Can the hand move there
+while contacts remain feasible,
+balance is maintained,
+torques stay within limits,
+and higher-priority constraints are not violated?
+</code></pre></div></div> <hr> <h2 id="3-a-compact-equation-a-large-implementation">3. A compact equation, a large implementation</h2> <p>A common starting point for floating-base control is the rigid-body dynamics equation:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>M(q) q̈ + h(q, q̇) = Sᵀτ + Jᵀλ
+</code></pre></div></div> <p>The notation varies by paper and codebase, but the meaning is roughly:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>M(q)       mass matrix
+q̈         generalized acceleration
+h(q, q̇)   nonlinear effects: Coriolis, centrifugal, gravity
+Sᵀτ        actuator torques mapped into generalized coordinates
+Jᵀλ        contact forces mapped into generalized coordinates
+</code></pre></div></div> <p>The equation is compact. The implementation is not.</p> <p>Each symbol implies a software decision.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>How is q represented?
+Does q include the floating base?
+Is the base orientation stored as a quaternion?
+Is q̇ the same dimension as q?
+Which coordinates are actuated?
+How is the selection matrix S defined?
+How are contact Jacobians stacked?
+What is the ordering of λ?
+Who owns the robot model?
+Who updates the dynamics?
+Who decides which contacts are active?
+</code></pre></div></div> <p>This is why WBC quickly becomes a software architecture problem.</p> <p>The equation itself is not enough. A deployable controller needs a structure for robot state, dynamics computation, task construction, contact management, optimization, state machines, command conversion, and hardware communication.</p> <hr> <h2 id="4-learning-based-wbc">4. Learning-based WBC</h2> <p>Recently, the phrase WBC has also become common in learning-based humanoid control.</p> <p>In this context, WBC often means a learned policy that coordinates the entire body rather than controlling locomotion and manipulation as separate modules.</p> <p>For example, learning-based whole body control methods may train a policy to handle:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>locomotion
+manipulation
+disturbance recovery
+whole-body motion imitation
+multi-mode command following
+loco-manipulation
+</code></pre></div></div> <p>This direction is natural.</p> <p>Some behaviors are difficult to specify cleanly with a hand-written model-based controller. Footstep recovery, dynamic balance recovery, rich contact transitions, and multi-contact behaviors can be hard to encode as explicit tasks and constraints. Reinforcement learning can expose the robot to many situations in simulation and optimize a policy over a broad distribution of states.</p> <p>Learning-based WBC also changes the software shape.</p> <p>At runtime, the control interface may look simple:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>observation → neural network → action
+</code></pre></div></div> <p>The action might be joint position targets, velocity targets, torque commands, residual commands, contact schedules, or task-space targets. The architecture can appear much simpler than a classical WBC stack with task objects, contact specifications, QP matrices, and command adapters.</p> <p>But the complexity has not disappeared. It has moved.</p> <p>In learning-based WBC, much of the complexity moves into:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>reward design
+curriculum design
+policy architecture
+simulation fidelity
+domain randomization
+dataset quality
+action space design
+debugging policy failures
+sim-to-real transfer
+</code></pre></div></div> <p>The controller may be simple to run, but it can be difficult to inspect.</p> <p>If a model-based controller fails, we can often ask specific questions:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Which task became infeasible?
+Which constraint is active?
+Which torque limit is binding?
+Which Jacobian is singular?
+Which contact force violated the friction cone?
+</code></pre></div></div> <p>With a learned policy, the failure mode may be harder to localize. The policy may output an action that is internally consistent from the network’s perspective but physically difficult for the low-level controller or hardware to track.</p> <p>This is one of the main practical issues.</p> <p>A learned policy can generate a target that is outside the tracking capability of the lower-level system. It may request a motion that violates actuator bandwidth, produces excessive torque demand, changes contact too aggressively, or assumes a contact condition that is not actually present.</p> <p>In that sense, learning-based WBC is not automatically simpler. It is simpler at the runtime interface, but often harder at the training, debugging, and validation layers.</p> <hr> <h2 id="5-model-based-and-learning-based-wbc-have-different-purposes">5. Model-based and learning-based WBC have different purposes</h2> <p>The point is not that model-based WBC is still important and therefore learning-based control is wrong.</p> <p>That framing is not useful.</p> <p>The better view is:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>model-based WBC and learning-based WBC solve different parts of the problem
+</code></pre></div></div> <p>Learning-based control is strong when the behavior is difficult to explicitly model or hand-design.</p> <p>Examples include:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>disturbance recovery
+dynamic footstep adjustment
+multi-contact adaptation
+whole-body motion imitation
+locomotion-manipulation coordination
+robust behavior over a wide state distribution
+</code></pre></div></div> <p>Instead of writing every contact transition and recovery strategy by hand, the policy can learn behavior from simulation, demonstrations, rewards, or motion data.</p> <p>Model-based WBC is strong when we want interpretability and direct control over physical behavior.</p> <p>Examples include:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>task-space position tracking
+force control
+impedance control
+torque limit handling
+contact force constraints
+task prioritization
+posture regulation
+debuggable constraint violations
+</code></pre></div></div> <p>In operational-space-control-style WBC, position and force control have a clear physical interpretation. Gains correspond to stiffness, damping, or desired impedance. A task has a Jacobian. A force has a frame. A constraint has a direction. A torque limit has a meaning.</p> <p>This makes model-based WBC useful when we care about predictable low-level behavior.</p> <p>For example, if we want to change the apparent stiffness of a hand task, a model-based controller gives us a direct knob:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>increase Kp → higher apparent stiffness
+increase Kd → more damping
+change force target → different contact behavior
+</code></pre></div></div> <p>That does not mean tuning is easy. It means the tuning parameter has a physical interpretation.</p> <p>A neural policy can also learn compliant behavior, but the relationship between a network weight and the resulting impedance is not usually something we can inspect directly.</p> <p>So the difference is not:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>model-based = old
+learning-based = new
+</code></pre></div></div> <p>The difference is closer to:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>learning-based control:
+  learns behavior over many situations
+
+model-based WBC:
+  exposes physical structure and enforces interpretable objectives
+</code></pre></div></div> <p>Both are useful.</p> <p>For real humanoid deployment, a hybrid architecture is likely.</p> <p>A learned policy may generate high-level intent, task targets, contact schedules, recovery behaviors, or residual commands. A model-based layer may still handle tracking, impedance, torque limits, contact constraints, safety filters, or hardware command conversion.</p> <p>The boundary will depend on the robot and the task.</p> <hr> <h2 id="6-why-model-based-wbc-software-is-difficult">6. Why model-based WBC software is difficult</h2> <p>Learning-based WBC can have a simple runtime interface:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>input observation
+→ neural network
+→ output action
+</code></pre></div></div> <p>Model-based WBC does not look like that.</p> <p>The controller must explicitly represent the robot, tasks, constraints, contacts, priorities, dynamics, solver variables, and actuator commands.</p> <p>This becomes clear when looking at an inverse-dynamics WBC formulation.</p> <p>A typical IHWBC-style problem may optimize over generalized acceleration and reaction force:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>minimize over q̈, f_r
+
+  Σᵢ wᵢ || Jᵢ q̈ + J̇ᵢ q̇ - ẍᵢᵈ ||²
+  + w_f || f_rᵈ - f_r ||²
+  + λ_q || q̈ ||²
+  + λ_f || f_r ||²
+</code></pre></div></div> <p>subject to constraints such as:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>floating-base dynamics
+friction cone constraints
+reaction force limits
+joint acceleration limits
+torque limits
+</code></pre></div></div> <p>The important point is not the exact equation.</p> <p>The important point is what the equation requires from the software.</p> <p>The WBC input is not simply:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>x_des
+λ_des
+</code></pre></div></div> <p>The input is closer to:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>robot state
+active tasks
+active contacts
+task priorities
+task gains
+desired accelerations
+force targets
+contact constraints
+actuator limits
+</code></pre></div></div> <p>A task is not just a target pose.</p> <p>A task contains information such as:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>controlled frame
+task dimension
+task Jacobian
+J̇q̇ term
+desired position or force
+desired velocity
+desired acceleration
+feedback gains
+weight or hierarchy level
+activation condition
+</code></pre></div></div> <p>A contact specification contains information such as:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>contact frame
+contact Jacobian
+contact force dimension
+friction coefficient
+normal direction
+force limits
+contact activation state
+</code></pre></div></div> <p>A solver solution is also not automatically a hardware command.</p> <p>The solver may output:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>q̈_sol
+f_r_sol
+τ_sol
+</code></pre></div></div> <p>But the actuator interface may require:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>q_cmd
+qdot_cmd
+kp_cmd
+kd_cmd
+tau_ff_cmd
+</code></pre></div></div> <p>Therefore, the controller needs a command conversion layer:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>q̈_sol
+→ integrate
+→ qdot_cmd
+→ q_cmd
+→ clamp
+→ rate limit
+→ hardware command
+</code></pre></div></div> <p>This is where WBC software becomes complicated.</p> <p>The difficulty is not only solving the QP. The difficulty is keeping the software boundaries clean.</p> <hr> <h2 id="7-wbc-as-software-architecture">7. WBC as software architecture</h2> <p>For this project, I want to treat WBC as a software architecture problem.</p> <p>The goal is not to implement one isolated model-based controller. The goal is to design a ROS 2 control-based architecture that can support several control modes under a common robot interface.</p> <p>The architecture should be able to support:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>model-based WBC
+learning-based planning
+learning-based WBC
+model-based trajectory optimization
+MPC
+low-level hardware command conversion
+</code></pre></div></div> <p>The central idea is to separate responsibilities.</p> <p>A practical stack should have at least the following layers:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>RobotSystem
+  Owns robot state, kinematics, dynamics, frame transforms, and model queries.
+
+Task
+  Represents motion, force, constraint, or posture objectives.
+
+ContactSpec
+  Represents active contacts, contact Jacobians, friction cones, and force limits.
+
+Planner / Policy
+  Generates task targets, contact schedules, trajectories, or policy actions.
+
+WBCSolver
+  Converts active tasks and contacts into a dynamics-level solution.
+
+CommandAdapter
+  Converts solver or policy outputs into hardware-compatible commands.
+
+FSM
+  Selects the active control mode, task set, contact set, and safety behavior.
+
+HardwareInterface
+  Sends commands to drivers and reads actuator states.
+</code></pre></div></div> <p>The important part is that these layers should not collapse into each other.</p> <p>The solver should not know about CAN packet encoding. The hardware interface should not know task hierarchy. A task should not directly write motor commands. A learned policy should not bypass safety and command limits unless that is an explicit design choice. The FSM should coordinate modes, not secretly patch every controller failure.</p> <p>This separation is what makes hybrid control possible.</p> <p>For example, a learned policy and a model-based WBC solver can both produce commands through the same command adapter, or they can both generate targets for a shared low-level controller. A model-based trajectory optimizer can generate references that become tasks. MPC can provide short-horizon targets. A learned policy can provide residuals or contact schedules.</p> <p>The architecture should make these combinations possible without rewriting the hardware layer every time.</p> <p>That is the main project goal.</p> <hr> <h2 id="references">References</h2> <ul> <li>O. Khatib, “A Unified Approach for Motion and Force Control of Robot Manipulators: The Operational Space Formulation,” 1987.</li> <li>L. Sentis and O. Khatib, “Synthesis of Whole-Body Behaviors Through Hierarchical Control of Behavioral Primitives,” <em>International Journal of Humanoid Robotics</em>, 2005.</li> <li>L. Sentis and O. Khatib, “A Whole Body Control Framework for Humanoids Operating in Human Environments,” <em>IEEE International Conference on Robotics and Automation</em>, 2006.</li> <li>Z. Fu, X. Cheng, and D. Pathak, “Deep Whole Body Control: Learning a Unified Policy for Manipulation and Locomotion,” CoRL, 2022.</li> <li>T. He et al., “HOVER: Versatile Neural Whole Body Controller for Humanoid Robots,” 2024.</li> <li>Agility Robotics, “Training a Whole Body Control Foundation Model,” 2025.</li> <li>NVIDIA, “GR00T-WholeBodyControl.”</li> </ul> </body></html>
