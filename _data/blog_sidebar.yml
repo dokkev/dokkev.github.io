@@ -6,5 +6,9 @@ major_series:
   - title: "CAN Bus for Robotic Hardware"
     series: "CAN Bus for Robotic Hardware"
 
+  - title: "WBC Software Architecture"
+    url: /wbc01/
+    series: "WBC Software Architecture"
+
   - title: "PLATO Build Notes"
     series: "PLATO Build Notes"
