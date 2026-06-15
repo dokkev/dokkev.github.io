@@ -14,12 +14,17 @@
 
     pre.mermaid {
       background: transparent;
+      box-sizing: border-box;
       grid-column: text;
-      max-height: 72vh;
+      margin: 1.5rem 0 2rem;
+      max-height: none;
       max-width: 100%;
-      overflow: auto;
-      padding: 1rem 0;
+      overflow-x: auto;
+      overflow-y: visible;
+      overscroll-behavior: contain;
+      padding: 2rem 0 2.75rem;
       text-align: left;
+      -webkit-overflow-scrolling: touch;
     }
 
     .post.distill d-article pre.mermaid {
@@ -29,9 +34,9 @@
 
     pre.mermaid svg {
       display: block;
-      height: auto !important;
       margin: 0 auto;
-      max-width: 100% !important;
+      max-height: none !important;
+      max-width: none !important;
       overflow: visible;
     }
   </style>
@@ -54,12 +59,26 @@
 
     function resizeMermaidDiagrams() {
       document.querySelectorAll('pre.mermaid svg').forEach((svg) => {
-        const viewBox = svg.viewBox && svg.viewBox.baseVal;
-        const naturalWidth = viewBox && viewBox.width ? viewBox.width : Number.parseFloat(svg.getAttribute('width'));
-        const containerWidth = svg.parentElement ? svg.parentElement.clientWidth : 0;
+        const padding = 24;
+        const originalViewBox = svg.dataset.originalViewBox || svg.getAttribute('viewBox');
+        const viewBoxValues = originalViewBox ? originalViewBox.trim().split(/[\s,]+/).map(Number) : [];
 
+        if (viewBoxValues.length === 4 && viewBoxValues.every(Number.isFinite)) {
+          const [x, y, width, height] = viewBoxValues;
+          svg.dataset.originalViewBox = originalViewBox;
+          svg.setAttribute('viewBox', `${x - padding} ${y - padding} ${width + padding * 2} ${height + padding * 2}`);
+          svg.style.setProperty('width', `${Math.ceil(width + padding * 2)}px`, 'important');
+          svg.style.setProperty('height', `${Math.ceil(height + padding * 2)}px`, 'important');
+          return;
+        }
+
+        const naturalWidth = Number.parseFloat(svg.getAttribute('width'));
+        const naturalHeight = Number.parseFloat(svg.getAttribute('height'));
         if (naturalWidth && Number.isFinite(naturalWidth)) {
-          svg.style.width = containerWidth && naturalWidth > containerWidth ? '100%' : `${Math.ceil(naturalWidth)}px`;
+          svg.style.setProperty('width', `${Math.ceil(naturalWidth)}px`, 'important');
+        }
+        if (naturalHeight && Number.isFinite(naturalHeight)) {
+          svg.style.setProperty('height', `${Math.ceil(naturalHeight)}px`, 'important');
         }
       });
     }
