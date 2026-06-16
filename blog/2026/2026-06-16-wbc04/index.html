@@ -1,0 +1,201 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd"> <html><body> <h2 id="1-the-task-conflict-problem">1. The task conflict problem</h2> <p>Suppose we have two acceleration-level tasks:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>J1 qddot = a1
+J2 qddot = a2
+</code></pre></div></div> <p>If there exists a <code class="language-plaintext highlighter-rouge">qddot</code> that satisfies both equations, life is easy.</p> <p>But in whole-body control, that is often not the case.</p> <p>The robot has finite degrees of freedom. Contacts restrict motion. Torque limits restrict feasible acceleration. Friction constraints restrict contact forces. Some tasks may simply be incompatible at a given instant.</p> <p>For example:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Task 1:
+  keep the center of mass stable
+
+Task 2:
+  move the hand to a far target
+
+Task 3:
+  keep posture close to nominal
+</code></pre></div></div> <p>If the hand target is too far, the robot may not be able to reach it without moving the CoM or violating a contact constraint.</p> <p>So WBC needs a rule for resolving conflicts.</p> <p>There are two broad philosophies:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Soft priority:
+  important tasks get larger weights, but all tasks are optimized together.
+
+Strict priority:
+  lower-priority tasks are only allowed to use motion that does not disturb higher-priority tasks.
+</code></pre></div></div> <p>Weighted QP belongs to the first category.</p> <p>Nullspace projection and HQP are closer to the second category.</p> <hr> <h2 id="2-weighted-qp-priority-as-cost-weight">2. Weighted QP: priority as cost weight</h2> <p>The most straightforward approach is to put all task errors into one optimization problem.</p> <p>For example:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>minimize over qddot
+
+  w1 || J1 qddot - a1 ||²
++ w2 || J2 qddot - a2 ||²
++ w3 || J3 qddot - a3 ||²
+</code></pre></div></div> <p>Here, task priority is represented by weights.</p> <p>If task 1 is more important than task 2, we choose:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>w1 &gt;&gt; w2
+</code></pre></div></div> <p>In a full inverse-dynamics WBC formulation, this objective may be combined with dynamics, torque limits, friction cones, and contact force constraints.</p> <p>The software structure is relatively simple:</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">solver</span><span class="p">.</span><span class="n">addCost</span><span class="p">(</span><span class="n">com_task</span><span class="p">,</span> <span class="n">weight_com</span><span class="p">);</span>
+<span class="n">solver</span><span class="p">.</span><span class="n">addCost</span><span class="p">(</span><span class="n">hand_task</span><span class="p">,</span> <span class="n">weight_hand</span><span class="p">);</span>
+<span class="n">solver</span><span class="p">.</span><span class="n">addCost</span><span class="p">(</span><span class="n">posture_task</span><span class="p">,</span> <span class="n">weight_posture</span><span class="p">);</span>
+
+<span class="n">solver</span><span class="p">.</span><span class="n">addConstraint</span><span class="p">(</span><span class="n">dynamics</span><span class="p">);</span>
+<span class="n">solver</span><span class="p">.</span><span class="n">addConstraint</span><span class="p">(</span><span class="n">contact_constraints</span><span class="p">);</span>
+<span class="n">solver</span><span class="p">.</span><span class="n">addConstraint</span><span class="p">(</span><span class="n">torque_limits</span><span class="p">);</span>
+
+<span class="n">solution</span> <span class="o">=</span> <span class="n">solver</span><span class="p">.</span><span class="n">solve</span><span class="p">();</span>
+</code></pre></div></div> <p>This is one reason weighted QP is attractive.</p> <p>Everything goes into one QP.</p> <p>Tasks are costs. Physical limits are constraints. The solver returns the best compromise.</p> <h3 id="advantages">Advantages</h3> <p>Weighted QP is easy to formulate and implement compared to strict hierarchy methods.</p> <p>It also handles inequality constraints naturally. Torque limits, friction cones, unilateral contact constraints, and joint limits can be added as constraints in the same optimization problem.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>tau_min &lt;= tau &lt;= tau_max
+friction_cone(lambda) &gt;= 0
+joint_limit_lower &lt;= q &lt;= joint_limit_upper
+</code></pre></div></div> <p>This makes weighted QP practical for real robot systems.</p> <p>It is also flexible. If a task should matter more, increase its weight. If a posture objective should be soft, give it a lower weight.</p> <h3 id="limitations">Limitations</h3> <p>The main limitation is that weights do not create strict priority.</p> <p>A large weight means:</p> <blockquote> <p>This task is expensive to violate.</p> </blockquote> <p>It does not mean:</p> <blockquote> <p>This task can never be violated by lower-priority tasks.</p> </blockquote> <p>If all tasks are in the same objective, then the optimizer can still trade errors between them.</p> <p>For example, a lower-priority hand task can slightly disturb a higher-priority balance task if the cost tradeoff allows it.</p> <p>This is not always bad. In some systems, a soft compromise is exactly what we want.</p> <p>But it is not the same as hierarchy.</p> <p>Weighted QP also introduces tuning problems.</p> <p>Weights depend on units, task dimensions, numerical scaling, and solver conditioning.</p> <p>A position task measured in meters, an orientation task measured in radians, a force task measured in newtons, and a momentum task do not naturally live on the same scale.</p> <p>So a weight is not just a priority number.</p> <p>It is also a numerical scaling parameter.</p> <p>This can make tuning difficult.</p> <h3 id="summary">Summary</h3> <p>Weighted QP represents priority through the objective function.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Priority = cost weight
+</code></pre></div></div> <p>It is simple, flexible, and constraint-friendly.</p> <p>But priority is soft.</p> <hr> <h2 id="3-nullspace-projection-priority-as-motion-subspace">3. Nullspace projection: priority as motion subspace</h2> <p>Nullspace projection takes a different view.</p> <p>Instead of putting all tasks into one cost, it solves tasks in priority order.</p> <p>First, solve the high-priority task.</p> <p>Then, solve the lower-priority task only in the null space of the higher-priority task.</p> <p>For a first task:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>J1 qddot = a1
+</code></pre></div></div> <p>a simple solution is:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>qddot1 = J1# a1
+</code></pre></div></div> <p>where <code class="language-plaintext highlighter-rouge">J1#</code> is some generalized inverse.</p> <p>The nullspace projector is:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>N1 = I - J1# J1
+</code></pre></div></div> <p>Any motion inside <code class="language-plaintext highlighter-rouge">N1</code> does not affect task 1.</p> <p>So a second task can be added as:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>qddot = qddot1 + N1 z
+</code></pre></div></div> <p>where <code class="language-plaintext highlighter-rouge">z</code> is chosen to reduce task 2 error.</p> <p>A common form is:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>qddot2 =
+qddot1
++ N1 (J2 N1)# (a2 - J2 qddot1)
+</code></pre></div></div> <p>The exact expression depends on the chosen inverse and dynamics consistency, but the idea is the same:</p> <blockquote> <p>Task 2 is allowed to use only the motion directions that do not disturb task 1.</p> </blockquote> <p>For multiple tasks, the process continues recursively.</p> <p>In software, nullspace projection often looks like a sequential algorithm:</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">qddot</span> <span class="o">=</span> <span class="n">solveFirstTask</span><span class="p">(</span><span class="n">task1</span><span class="p">);</span>
+
+<span class="n">N</span> <span class="o">=</span> <span class="n">computeNullspace</span><span class="p">(</span><span class="n">task1</span><span class="p">);</span>
+
+<span class="n">qddot</span> <span class="o">+=</span> <span class="n">solveInNullspace</span><span class="p">(</span><span class="n">task2</span><span class="p">,</span> <span class="n">N</span><span class="p">);</span>
+
+<span class="n">N</span> <span class="o">=</span> <span class="n">updateNullspace</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">task2</span><span class="p">);</span>
+
+<span class="n">qddot</span> <span class="o">+=</span> <span class="n">solveInNullspace</span><span class="p">(</span><span class="n">task3</span><span class="p">,</span> <span class="n">N</span><span class="p">);</span>
+</code></pre></div></div> <h3 id="advantages-1">Advantages</h3> <p>The main advantage is strict task hierarchy.</p> <p>If implemented correctly, a lower-priority task cannot change the solution of a higher-priority task.</p> <p>This is very attractive for WBC.</p> <p>For example:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>contact constraint
+→ center of mass
+→ hand task
+→ posture
+</code></pre></div></div> <p>The hand task should not break contact. The posture task should not disturb the hand task. Redundancy is used only after higher-priority objectives are satisfied.</p> <p>Nullspace projection also has a clear physical interpretation.</p> <p>It says:</p> <blockquote> <p>Use the remaining motion freedom after satisfying more important objectives.</p> </blockquote> <p>This matches the classical operational-space control view of task and posture decomposition.</p> <p>It can also be computationally efficient, especially when the task dimensions are moderate and the structure is exploited well.</p> <h3 id="limitations-1">Limitations</h3> <p>The main limitation is inequality constraints.</p> <p>Many real robot constraints are inequalities:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>normal force &gt;= 0
+friction cone satisfied
+tau_min &lt;= tau &lt;= tau_max
+joint position within limits
+contact wrench inside support region
+</code></pre></div></div> <p>Nullspace projection handles equality tasks naturally. It is less natural for inequalities.</p> <p>This becomes a serious issue for dynamic legged robots.</p> <p>Contact is not simply:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>foot acceleration = 0
+</code></pre></div></div> <p>It also requires feasible contact force.</p> <p>The foot cannot pull the ground. Tangential force must remain inside the friction cone. Reaction forces must stay within feasible bounds.</p> <p>If the controller treats contact only as an equality constraint, it may produce a mathematically consistent acceleration but a physically infeasible contact force.</p> <p>That is why pure nullspace projection can be difficult to use as the full solution for modern humanoid WBC.</p> <p>Another limitation is numerical robustness. Nullspace projectors depend on ranks, singular values, and generalized inverses. When a task becomes near-singular, the projector can become sensitive.</p> <h3 id="summary-1">Summary</h3> <p>Nullspace projection represents priority through subspace restriction.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Priority = allowed motion subspace
+</code></pre></div></div> <p>It gives strict hierarchy and a clean interpretation.</p> <p>But inequality constraints are difficult to incorporate directly.</p> <hr> <h2 id="4-hierarchical-qp-priority-as-optimization-hierarchy">4. Hierarchical QP: priority as optimization hierarchy</h2> <p>Hierarchical Quadratic Programming, or HQP, tries to combine two ideas:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>strict priority
++
+optimization with constraints
+</code></pre></div></div> <p>Instead of solving one weighted QP, HQP solves a sequence of optimization problems.</p> <p>At the first level, it solves the highest-priority task:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Level 1:
+  minimize || J1 qddot - a1 ||²
+  subject to constraints
+</code></pre></div></div> <p>At the second level, it solves the next task while preserving the optimal result of level 1:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Level 2:
+  minimize || J2 qddot - a2 ||²
+  subject to
+    level 1 optimality preserved
+    constraints
+</code></pre></div></div> <p>Then level 3 does the same for the next task.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Level 3:
+  minimize || J3 qddot - a3 ||²
+  subject to
+    level 1 and 2 optimality preserved
+    constraints
+</code></pre></div></div> <p>In software, the structure may look like:</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">level1</span><span class="p">.</span><span class="n">addTask</span><span class="p">(</span><span class="n">contact_task</span><span class="p">);</span>
+<span class="n">level1</span><span class="p">.</span><span class="n">addConstraint</span><span class="p">(</span><span class="n">dynamics</span><span class="p">);</span>
+<span class="n">level1</span><span class="p">.</span><span class="n">addConstraint</span><span class="p">(</span><span class="n">torque_limits</span><span class="p">);</span>
+<span class="n">sol1</span> <span class="o">=</span> <span class="n">level1</span><span class="p">.</span><span class="n">solve</span><span class="p">();</span>
+
+<span class="n">level2</span><span class="p">.</span><span class="n">addTask</span><span class="p">(</span><span class="n">com_task</span><span class="p">);</span>
+<span class="n">level2</span><span class="p">.</span><span class="n">addConstraint</span><span class="p">(</span><span class="n">preserve</span><span class="p">(</span><span class="n">level1</span><span class="p">));</span>
+<span class="n">sol2</span> <span class="o">=</span> <span class="n">level2</span><span class="p">.</span><span class="n">solve</span><span class="p">();</span>
+
+<span class="n">level3</span><span class="p">.</span><span class="n">addTask</span><span class="p">(</span><span class="n">hand_task</span><span class="p">);</span>
+<span class="n">level3</span><span class="p">.</span><span class="n">addConstraint</span><span class="p">(</span><span class="n">preserve</span><span class="p">(</span><span class="n">level2</span><span class="p">));</span>
+<span class="n">sol3</span> <span class="o">=</span> <span class="n">level3</span><span class="p">.</span><span class="n">solve</span><span class="p">();</span>
+</code></pre></div></div> <p>There are different ways to implement the preservation of previous optimality, often involving slack variables, equality constraints on previous optimal costs, or nullspace formulations.</p> <p>The important idea is:</p> <blockquote> <p>Lower-priority tasks are optimized only after higher-priority tasks have already claimed their solution quality.</p> </blockquote> <h3 id="advantages-2">Advantages</h3> <p>HQP gives a principled way to express strict priority.</p> <p>Unlike weighted QP, priority is not just a large number.</p> <p>A lower-priority task cannot improve itself by sacrificing a higher-priority task beyond the allowed relaxation.</p> <p>HQP can also include inequality constraints.</p> <p>This is a major advantage over pure nullspace projection.</p> <p>Torque limits, friction cones, contact force bounds, and joint limits can be represented as optimization constraints.</p> <p>So HQP is conceptually very suitable for humanoid WBC:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>strict task hierarchy
++
+physical inequality constraints
++
+optimization-based feasibility handling
+</code></pre></div></div> <h3 id="limitations-2">Limitations</h3> <p>The main limitation is complexity.</p> <p>HQP is more difficult to implement than a single weighted QP.</p> <p>It may require multiple QP solves or a more sophisticated solver structure. It also needs careful treatment of infeasibility, slack variables, numerical tolerances, and rank conditions.</p> <p>This matters for real-time control.</p> <p>Humanoid WBC may need to run at hundreds of Hz or around 1 kHz. If each control tick requires several optimization problems, computation time becomes a serious design constraint.</p> <p>HQP also increases software complexity.</p> <p>The controller must manage:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>priority levels
+task grouping
+slack variables
+constraint inheritance
+optimality preservation
+solver warm-starting
+numerical tolerances
+fallback behavior
+</code></pre></div></div> <p>This is not impossible. Many humanoid systems use HQP-style methods successfully.</p> <p>But it is not a small abstraction.</p> <h3 id="summary-2">Summary</h3> <p>HQP represents priority through optimization levels.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Priority = optimization hierarchy
+</code></pre></div></div> <p>It can provide strict hierarchy and handle inequalities.</p> <p>But it is more complex and can be computationally expensive.</p> <hr> <h2 id="5-why-inequality-constraints-change-the-story">5. Why inequality constraints change the story</h2> <p>The difference between these methods becomes much sharper once contact constraints enter the problem.</p> <p>For a fixed-base manipulator doing only kinematic task tracking, nullspace projection can be very clean.</p> <p>But humanoids are not only tracking motions.</p> <p>They must satisfy contact and force feasibility.</p> <p>For a standing robot, contact constraints include at least:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>no slip
+no pulling on the ground
+contact wrench inside feasible region
+normal force within reasonable bounds
+torque limits respected
+</code></pre></div></div> <p>These are not just nice-to-have conditions.</p> <p>They define whether the motion is physically possible.</p> <p>For example, suppose the controller computes a base or CoM acceleration that requires a contact force outside the friction cone.</p> <p>The task acceleration may look valid in kinematics.</p> <p>But the robot cannot realize it without slipping.</p> <p>This is where weighted QP and HQP have an advantage: inequality constraints fit naturally inside optimization.</p> <p>Nullspace projection can enforce motion constraints elegantly, but force inequalities require additional machinery.</p> <p>So the real distinction is not just mathematical style.</p> <p>It is about what the controller must guarantee.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>If the main issue is task redundancy:
+  nullspace projection is attractive.
+
+If the main issue is physical feasibility under inequalities:
+  QP-based methods become attractive.
+
+If both strict hierarchy and inequalities matter:
+  HQP becomes attractive.
+</code></pre></div></div> <p>This is why there is no universally best formulation.</p> <p>The right method depends on the robot, the task, the required control rate, and the kind of constraints that must be enforced.</p> <hr> <h2 id="6-software-architecture-differences">6. Software architecture differences</h2> <p>These formulations lead to different code structures.</p> <h3 id="weighted-qp-architecture">Weighted QP architecture</h3> <p>In a weighted QP, tasks are usually added as costs:</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">solver</span><span class="p">.</span><span class="n">addCost</span><span class="p">(</span><span class="n">com_task</span><span class="p">,</span> <span class="n">weight_com</span><span class="p">);</span>
+<span class="n">solver</span><span class="p">.</span><span class="n">addCost</span><span class="p">(</span><span class="n">hand_task</span><span class="p">,</span> <span class="n">weight_hand</span><span class="p">);</span>
+<span class="n">solver</span><span class="p">.</span><span class="n">addCost</span><span class="p">(</span><span class="n">posture_task</span><span class="p">,</span> <span class="n">weight_posture</span><span class="p">);</span>
+
+<span class="n">solver</span><span class="p">.</span><span class="n">addConstraint</span><span class="p">(</span><span class="n">dynamics</span><span class="p">);</span>
+<span class="n">solver</span><span class="p">.</span><span class="n">addConstraint</span><span class="p">(</span><span class="n">friction_cone</span><span class="p">);</span>
+<span class="n">solver</span><span class="p">.</span><span class="n">addConstraint</span><span class="p">(</span><span class="n">torque_limit</span><span class="p">);</span>
+
+<span class="n">solution</span> <span class="o">=</span> <span class="n">solver</span><span class="p">.</span><span class="n">solve</span><span class="p">();</span>
+</code></pre></div></div> <p>The solver owns the tradeoff.</p> <p>The task object provides:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>A matrix
+target vector
+weight
+</code></pre></div></div> <p>The priority semantics are mostly encoded in weights.</p> <p>This is easy to implement, but harder to reason about when tasks conflict.</p> <hr> <h3 id="nullspace-projection-architecture">Nullspace projection architecture</h3> <p>In nullspace projection, task execution is sequential:</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">qddot</span> <span class="o">=</span> <span class="n">solveTask</span><span class="p">(</span><span class="n">task1</span><span class="p">);</span>
+<span class="n">N</span> <span class="o">=</span> <span class="n">computeNullspace</span><span class="p">(</span><span class="n">task1</span><span class="p">);</span>
+
+<span class="n">qddot</span> <span class="o">+=</span> <span class="n">solveTaskInNullspace</span><span class="p">(</span><span class="n">task2</span><span class="p">,</span> <span class="n">N</span><span class="p">);</span>
+<span class="n">N</span> <span class="o">=</span> <span class="n">updateNullspace</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">task2</span><span class="p">);</span>
+
+<span class="n">qddot</span> <span class="o">+=</span> <span class="n">solveTaskInNullspace</span><span class="p">(</span><span class="n">task3</span><span class="p">,</span> <span class="n">N</span><span class="p">);</span>
+</code></pre></div></div> <p>The controller owns the hierarchy.</p> <p>The task object provides:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Jacobian
+desired acceleration
+priority order
+</code></pre></div></div> <p>The solver may be lightweight, but the nullspace logic becomes central.</p> <p>This is clean for strict equality-task hierarchy, but contact inequalities require additional handling.</p> <hr> <h3 id="hqp-architecture">HQP architecture</h3> <p>In HQP, tasks are grouped by priority levels:</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">hqp</span><span class="p">.</span><span class="n">level</span><span class="p">(</span><span class="mi">0</span><span class="p">).</span><span class="n">addTask</span><span class="p">(</span><span class="n">contact_or_balance</span><span class="p">);</span>
+<span class="n">hqp</span><span class="p">.</span><span class="n">level</span><span class="p">(</span><span class="mi">0</span><span class="p">).</span><span class="n">addConstraint</span><span class="p">(</span><span class="n">dynamics</span><span class="p">);</span>
+<span class="n">hqp</span><span class="p">.</span><span class="n">level</span><span class="p">(</span><span class="mi">0</span><span class="p">).</span><span class="n">addConstraint</span><span class="p">(</span><span class="n">torque_limits</span><span class="p">);</span>
+
+<span class="n">hqp</span><span class="p">.</span><span class="n">level</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="n">addTask</span><span class="p">(</span><span class="n">com_task</span><span class="p">);</span>
+<span class="n">hqp</span><span class="p">.</span><span class="n">level</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="n">preserveHigherPriority</span><span class="p">();</span>
+
+<span class="n">hqp</span><span class="p">.</span><span class="n">level</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="n">addTask</span><span class="p">(</span><span class="n">hand_task</span><span class="p">);</span>
+<span class="n">hqp</span><span class="p">.</span><span class="n">level</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="n">preserveHigherPriority</span><span class="p">();</span>
+
+<span class="n">solution</span> <span class="o">=</span> <span class="n">hqp</span><span class="p">.</span><span class="n">solve</span><span class="p">();</span>
+</code></pre></div></div> <p>The hierarchy is represented explicitly in the optimization structure.</p> <p>The task object provides:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Jacobian
+desired acceleration
+priority level
+optional slack behavior
+</code></pre></div></div> <p>The solver must manage priority preservation and constraints across levels.</p> <p>This is powerful, but the software stack becomes more involved.</p> <hr> <h2 id="7-comparison-summary">7. Comparison summary</h2> <table> <thead> <tr> <th>Method</th> <th>Priority type</th> <th>Inequality constraints</th> <th>Main advantage</th> <th>Main limitation</th> </tr> </thead> <tbody> <tr> <td>Weighted QP</td> <td>Soft priority through weights</td> <td>Natural</td> <td>Simple and flexible</td> <td>No strict priority guarantee</td> </tr> <tr> <td>Nullspace Projection</td> <td>Strict priority through motion subspaces</td> <td>Difficult</td> <td>Clear hierarchy and efficient execution</td> <td>Hard to handle friction cones, torque limits, unilateral contacts directly</td> </tr> <tr> <td>HQP</td> <td>Strict priority through optimization levels</td> <td>Natural</td> <td>Strict hierarchy with constraints</td> <td>More complex and potentially expensive</td> </tr> </tbody> </table> <p>A shorter way to remember it:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Weighted QP:
+  easy to formulate, hard to guarantee priority
+
+Nullspace Projection:
+  easy to interpret hierarchy, hard to handle inequalities
+
+HQP:
+  expressive and principled, harder to implement in real time
+</code></pre></div></div> <hr> <h2 id="8-which-one-should-a-wbc-codebase-support">8. Which one should a WBC codebase support?</h2> <p>For a software architecture project, the answer should not be hard-coded too early.</p> <p>Different controllers may need different priority mechanisms.</p> <p>A manipulation controller with soft objectives may be fine with a weighted QP.</p> <p>A classical operational-space controller may benefit from nullspace projection.</p> <p>A humanoid controller with strict contact, torque, and task hierarchy may need HQP or a related prioritized optimization method.</p> <p>So the architecture should separate:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Task representation
+Priority representation
+Constraint representation
+Solver backend
+Command adapter
+</code></pre></div></div> <p>A <code class="language-plaintext highlighter-rouge">Task</code> should not assume whether it will be used inside a weighted QP, nullspace projection controller, or HQP solver.</p> <p>At minimum, a task should expose:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Jacobian
+desired acceleration
+task dimension
+mask
+weight
+priority level
+frame convention
+</code></pre></div></div> <p>Then the solver backend can decide how to use it.</p> <p>For example:</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">TaskSE3Equality</span> <span class="n">hand_task</span><span class="p">;</span>
+<span class="n">TaskCoM</span> <span class="n">com_task</span><span class="p">;</span>
+<span class="n">TaskPosture</span> <span class="n">posture_task</span><span class="p">;</span>
+
+<span class="n">solver</span><span class="p">.</span><span class="n">addTask</span><span class="p">(</span><span class="n">com_task</span><span class="p">);</span>
+<span class="n">solver</span><span class="p">.</span><span class="n">addTask</span><span class="p">(</span><span class="n">hand_task</span><span class="p">);</span>
+<span class="n">solver</span><span class="p">.</span><span class="n">addTask</span><span class="p">(</span><span class="n">posture_task</span><span class="p">);</span>
+</code></pre></div></div> <p>The same task objects could be interpreted differently:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Weighted QP:
+  use task.weight()
+
+Nullspace projection:
+  use task.priority()
+
+HQP:
+  group tasks by priority level
+</code></pre></div></div> <p>This is the software architecture point.</p> <p>The task should describe the control objective.</p> <p>The solver should decide how priority is enforced.</p> <hr> <h2 id="9-summary">9. Summary</h2> <p>Task priority is one of the central problems in WBC.</p> <p>Once multiple tasks share the same robot body, conflicts are inevitable. The controller must decide which objectives are preserved and which objectives are allowed to degrade.</p> <p>Weighted QP, nullspace projection, and HQP answer this question differently.</p> <p>Weighted QP puts all tasks into one optimization and uses weights to shape the tradeoff.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>priority = cost weight
+</code></pre></div></div> <p>Nullspace projection solves tasks sequentially and projects lower-priority tasks into the nullspace of higher-priority tasks.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>priority = allowed motion subspace
+</code></pre></div></div> <p>HQP solves a sequence of optimization problems that preserve higher-priority optimality while optimizing lower-priority objectives.</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>priority = optimization hierarchy
+</code></pre></div></div> <p>None of these is universally best.</p> <p>Weighted QP is simple and handles inequalities naturally, but it does not provide strict hierarchy.</p> <p>Nullspace projection gives a clean strict hierarchy, but inequality constraints are difficult to incorporate directly.</p> <p>HQP can handle both hierarchy and inequalities, but it increases implementation and computational complexity.</p> <p>For real WBC software, the important decision is not only mathematical.</p> <p>It is architectural.</p> <p>A good WBC stack should separate task definition from priority enforcement. A task should define what it wants. The solver backend should decide how that task is combined with other tasks and constraints.</p> <p>In the next post, we will look at the <code class="language-plaintext highlighter-rouge">Task</code> abstraction more directly: what a task object should own, what it should expose, and how it should stay independent of the solver backend.</p> <div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gu">## References</span><span class="sb">
+
+
+</span><span class="p">-</span> Y. Nakamura, H. Hanafusa, and T. Yoshikawa, “Task-Priority Based Redundancy Control of Robot Manipulators,” <span class="ge">*The International Journal of Robotics Research*</span>, vol. 6, no. 2, pp. 3–15, 1987.
+<span class="p">
+-</span> A. Escande, N. Mansard, and P.-B. Wieber, “Hierarchical Quadratic Programming: Fast Online Humanoid-Robot Motion Generation,” <span class="ge">*The International Journal of Robotics Research*</span>, vol. 33, no. 7, pp. 1006–1028, 2014.
+
+<span class="p">```</span><span class="nl">markdown
+</span><span class="p">-</span> D. Kim, J. Lee, J. Ahn, O. Campbell, H. Hwang, and L. Sentis, “Computationally-Robust and Efficient Prioritized Whole-Body Controller with Contact Constraints,” in <span class="ge">*Proceedings of the IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)*</span>, 2018.
+</code></pre></div></div> </body></html>
