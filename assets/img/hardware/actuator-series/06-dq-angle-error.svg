@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 620" role="img" aria-labelledby="title desc">
+  <title id="title">전기각 오차로 인한 d축 q축 혼합</title>
+  <desc id="desc">실제 d q축과 추정 q축이 어긋나 전류 벡터가 실제 d축과 q축 성분으로 나뉘는 벡터 그림</desc>
+  <defs>
+    <style>text{font-family:Pretendard,"Noto Sans KR",sans-serif;fill:#0f172a}.h{font-size:30px;font-weight:700}.m{font-size:22px;font-weight:650}.s{font-size:18px;fill:#475569}.xs{font-size:16px;fill:#475569}</style>
+    <marker id="g" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#16a34a"/></marker>
+    <marker id="b" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#2563eb"/></marker>
+    <marker id="r" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#ef4444"/></marker>
+  </defs>
+  <rect width="1000" height="620" rx="24" fill="#f8fafc"/>
+  <text x="500" y="52" text-anchor="middle" class="h">If the encoder frame is wrong, id = 0 is also wrong</text>
+  <g transform="translate(420 335)">
+    <circle r="205" fill="#fff" stroke="#cbd5e1" stroke-width="3"/>
+    <path d="M-255 0 H255" stroke="#16a34a" stroke-width="5" marker-end="url(#g)"/>
+    <path d="M0 255 V-255" stroke="#16a34a" stroke-width="5" marker-end="url(#g)"/>
+    <text x="170" y="38" class="m" fill="#16a34a">true d-axis</text>
+    <text x="12" y="-265" class="m" fill="#16a34a">true q-axis</text>
+    <path d="M0 0 L115 -215" stroke="#2563eb" stroke-width="8" marker-end="url(#b)"/>
+    <text x="135" y="-210" class="m" fill="#2563eb">command I</text>
+    <path d="M0 0 L115 0" stroke="#ef4444" stroke-width="6" stroke-dasharray="10 8" marker-end="url(#r)"/>
+    <path d="M115 0 V-215" stroke="#ef4444" stroke-width="6" stroke-dasharray="10 8" marker-end="url(#r)"/>
+    <text x="50" y="32" class="s" fill="#ef4444">true id</text>
+    <text x="128" y="-105" class="s" fill="#ef4444">true iq</text>
+    <path d="M0 -75 A75 75 0 0 1 35 -66" fill="none" stroke="#f97316" stroke-width="5"/>
+    <text x="38" y="-48" class="m" fill="#f97316">Δθe</text>
+  </g>
+  <rect x="725" y="170" width="250" height="250" rx="18" fill="#eff6ff" stroke="#2563eb" stroke-width="3"/>
+  <text x="850" y="215" text-anchor="middle" class="m">Effects</text>
+  <text x="850" y="265" text-anchor="middle" class="xs">lower mean torque</text>
+  <text x="850" y="310" text-anchor="middle" class="xs">unwanted d-axis</text>
+  <text x="850" y="355" text-anchor="middle" class="xs">position-synchronous ripple</text>
+  <text x="850" y="395" text-anchor="middle" class="xs">less voltage headroom</text>
+</svg>

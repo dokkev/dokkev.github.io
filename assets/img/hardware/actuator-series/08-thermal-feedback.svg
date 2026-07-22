@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">모터의 열 양의 피드백</title>
+  <desc id="desc">관절 토크가 전류와 손실, 온도, 저항 및 토크 상수 변화를 거쳐 다시 더 큰 전류 요구로 이어지는 순환 구조</desc>
+  <defs><style>text{font-family:Pretendard,"Noto Sans KR",sans-serif;fill:#0f172a}.h{font-size:30px;font-weight:700}.m{font-size:21px;font-weight:650}.s{font-size:17px;fill:#475569}</style><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#64748b"/></marker></defs>
+  <rect width="1200" height="620" rx="24" fill="#f8fafc"/>
+  <text x="600" y="52" text-anchor="middle" class="h">Thermal feedback makes the same torque progressively harder</text>
+  <g transform="translate(55 180)"><rect width="220" height="130" rx="20" fill="#eff6ff" stroke="#2563eb" stroke-width="3"/><text x="110" y="56" text-anchor="middle" class="m">Joint torque demand</text><text x="110" y="92" text-anchor="middle" class="s">low speed · static load</text></g>
+  <g transform="translate(335 180)"><rect width="220" height="130" rx="20" fill="#fff7ed" stroke="#f97316" stroke-width="3"/><text x="110" y="56" text-anchor="middle" class="m">q-axis current</text><text x="110" y="92" text-anchor="middle" class="s">I ≈ τ / NKt</text></g>
+  <g transform="translate(615 180)"><rect width="220" height="130" rx="20" fill="#fef2f2" stroke="#ef4444" stroke-width="3"/><text x="110" y="56" text-anchor="middle" class="m">I²R loss</text><text x="110" y="92" text-anchor="middle" class="s">winding · inverter heat</text></g>
+  <g transform="translate(895 180)"><rect width="250" height="130" rx="20" fill="#fdf2f8" stroke="#db2777" stroke-width="3"/><text x="125" y="50" text-anchor="middle" class="m">Temperature rise</text><text x="125" y="84" text-anchor="middle" class="s">R ↑ · flux/Kt ↓</text><text x="125" y="111" text-anchor="middle" class="s">voltage headroom ↓</text></g>
+  <path d="M275 245 H325 M555 245 H605 M835 245 H885" stroke="#64748b" stroke-width="5" marker-end="url(#a)"/>
+  <path d="M1020 325 V430 H445 V325" fill="none" stroke="#ef4444" stroke-width="5" marker-end="url(#a)"/>
+  <text x="735" y="420" text-anchor="middle" class="m" fill="#ef4444">More current or more torque error for the same demand</text>
+  <rect x="270" y="495" width="660" height="70" rx="18" fill="#0f172a"/>
+  <text x="600" y="540" text-anchor="middle" class="m" style="fill:#fff;font-size:18px">At current / voltage limits, the hidden thermal state becomes joint error</text>
+</svg>
