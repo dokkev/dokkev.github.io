@@ -1,3 +1,4 @@
+<!-- Robot Hardware 05 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
   <title id="title">토크 리플의 네 가지 원인</title>
   <desc id="desc">모터 형상, 자속과 권선 고조파, 인버터 PWM, 센싱과 전기각 오차가 실제 토크에 합쳐지는 구조</desc>

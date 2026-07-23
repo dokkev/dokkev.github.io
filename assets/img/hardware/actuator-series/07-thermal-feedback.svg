@@ -1,3 +1,4 @@
+<!-- Robot Hardware 07 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
   <title id="title">모터의 열 양의 피드백</title>
   <desc id="desc">관절 토크가 전류와 손실, 온도, 저항 및 토크 상수 변화를 거쳐 다시 더 큰 전류 요구로 이어지는 순환 구조</desc>
