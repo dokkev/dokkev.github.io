@@ -9,6 +9,7 @@
         {% if page.lang %}
           {% assign current_series_posts = current_series_posts | where: 'lang', page.lang %}
         {% endif %}
+        {% assign current_series_posts = current_series_posts | where_exp: 'post', 'post.sidebar_hidden != true' %}
         {% assign current_series_posts = current_series_posts | sort: 'series_order' %}
         {% if current_series_posts.size > 0 %}
           <section class="blog-sidebar-section">
