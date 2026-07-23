@@ -4,7 +4,7 @@
 
 ```markdown
 ---
-title: "[로봇 하드웨어 NN] - [소주제 (NN)] : [현상 또는 핵심 질문이 드러나는 제목]"
+title: "[로봇 하드웨어 NN] - [소주제 (NN)] : [짧은 제목]"
 description: [부품명 나열보다 이 글이 설명하는 물리적 문제를 한 문장으로 작성]
 layout: distill
 published: false
