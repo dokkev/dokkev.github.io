@@ -1,3 +1,4 @@
+<!-- Robot Hardware 05 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 580" role="img" aria-labelledby="title desc">
   <title id="title">PWM 전류 샘플링 창</title>
   <desc id="desc">PWM 스위칭 직후의 과도응답과 다음 스위칭 전 변환 시간을 피해 중앙의 유효 구간에서 샘플링하는 개념도</desc>
