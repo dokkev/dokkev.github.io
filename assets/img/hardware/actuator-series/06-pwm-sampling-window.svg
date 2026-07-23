@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 580" role="img" aria-labelledby="title desc">
+  <title id="title">PWM 전류 샘플링 창</title>
+  <desc id="desc">PWM 스위칭 직후의 과도응답과 다음 스위칭 전 변환 시간을 피해 중앙의 유효 구간에서 샘플링하는 개념도</desc>
+  <defs><style>text{font-family:Pretendard,"Noto Sans KR",sans-serif;fill:#0f172a}.h{font-size:30px;font-weight:700}.m{font-size:21px;font-weight:650}.s{font-size:17px;fill:#475569}</style></defs>
+  <rect width="1200" height="580" rx="24" fill="#f8fafc"/>
+  <text x="600" y="52" text-anchor="middle" class="h">Sample inside an observable window, not merely at PWM center</text>
+  <text x="70" y="130" class="m">Gate / vector</text>
+  <path d="M240 145 V95 H510 V145 H690 V95 H960 V145" fill="none" stroke="#2563eb" stroke-width="7"/>
+  <text x="70" y="250" class="m">Shunt signal</text>
+  <path d="M240 245 C260 150 285 320 330 245 C370 205 420 265 500 245 L690 245 C720 155 760 325 810 245 C850 210 900 260 960 245" fill="none" stroke="#0f172a" stroke-width="6"/>
+  <rect x="240" y="300" width="115" height="70" fill="#fee2e2"/>
+  <rect x="355" y="300" width="250" height="70" fill="#dcfce7"/>
+  <rect x="605" y="300" width="85" height="70" fill="#fef3c7"/>
+  <rect x="690" y="300" width="120" height="70" fill="#fee2e2"/>
+  <rect x="810" y="300" width="150" height="70" fill="#dcfce7"/>
+  <text x="298" y="343" text-anchor="middle" class="s">settling</text>
+  <text x="480" y="343" text-anchor="middle" class="m">valid sample window</text>
+  <text x="647" y="343" text-anchor="middle" class="s">convert</text>
+  <text x="750" y="343" text-anchor="middle" class="s">settling</text>
+  <text x="885" y="343" text-anchor="middle" class="m">short window</text>
+  <path d="M470 285 V205" stroke="#16a34a" stroke-width="5"/>
+  <circle cx="470" cy="205" r="11" fill="#16a34a"/>
+  <text x="470" y="405" text-anchor="middle" class="s">ADC trigger</text>
+  <path d="M240 440 H960" stroke="#64748b" stroke-width="3"/>
+  <text x="600" y="485" text-anchor="middle" class="m">Window position and width change with duty and voltage vector</text>
+  <text x="600" y="525" text-anchor="middle" class="s">Single-shunt reconstruction needs two sufficiently long, independent active vectors</text>
+</svg>

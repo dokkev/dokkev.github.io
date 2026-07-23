@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 660" role="img" aria-labelledby="title desc">
+  <title id="title">모터의 개념적 토크 속도 효율 지도</title>
+  <desc id="desc">저속 고토크와 고속 영역에서 효율이 낮고 중간 속도와 토크에 효율 섬이 있으며 로봇의 운전 궤적이 방향을 자주 바꾸는 그림</desc>
+  <defs><style>text{font-family:Pretendard,"Noto Sans KR",sans-serif;fill:#0f172a}.h{font-size:30px;font-weight:700}.m{font-size:21px;font-weight:650}.s{font-size:17px;fill:#475569}</style><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#ef4444"/></marker></defs>
+  <rect width="1100" height="660" rx="24" fill="#f8fafc"/>
+  <text x="550" y="52" text-anchor="middle" class="h">Robot joints repeatedly cross zero speed</text>
+  <g transform="translate(140 95)">
+    <rect width="760" height="460" fill="#fff" stroke="#cbd5e1" stroke-width="3"/>
+    <ellipse cx="470" cy="235" rx="250" ry="165" fill="#dcfce7"/>
+    <ellipse cx="470" cy="235" rx="175" ry="112" fill="#86efac"/>
+    <ellipse cx="470" cy="235" rx="92" ry="58" fill="#16a34a"/>
+    <text x="470" y="242" text-anchor="middle" class="m" fill="#fff">peak η</text>
+    <rect x="0" y="360" width="760" height="100" fill="#fee2e2" opacity=".8"/>
+    <text x="125" y="420" text-anchor="middle" class="m" fill="#ef4444">stall / holding</text>
+    <path d="M0 460 V0 M0 460 H760" stroke="#0f172a" stroke-width="5"/>
+    <path d="M50 380 C150 260 240 440 330 330 S500 420 600 280 S690 360 720 180" fill="none" stroke="#ef4444" stroke-width="7" marker-end="url(#a)"/>
+    <circle cx="50" cy="380" r="9" fill="#ef4444"/><circle cx="240" cy="430" r="9" fill="#ef4444"/><circle cx="500" cy="410" r="9" fill="#ef4444"/>
+    <text x="405" y="90" text-anchor="middle" class="s">개념적 고효율 영역</text>
+    <text x="380" y="485" text-anchor="middle" class="m">motor speed ω</text>
+    <text x="-230" y="-55" transform="rotate(-90)" text-anchor="middle" class="m">motor torque τ</text>
+  </g>
+  <text x="970" y="260" text-anchor="middle" class="m" fill="#ef4444">robot duty</text>
+  <text x="970" y="295" text-anchor="middle" class="s">acceleration</text><text x="970" y="325" text-anchor="middle" class="s">holding</text><text x="970" y="355" text-anchor="middle" class="s">reversal</text><text x="970" y="385" text-anchor="middle" class="s">regeneration</text>
+  <text x="550" y="638" text-anchor="middle" class="s">Quantitative maps require measured motor, inverter, bus-voltage, and temperature data</text>
+</svg>

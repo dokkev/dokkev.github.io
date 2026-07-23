@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 590" role="img" aria-labelledby="title desc">
+  <title id="title">스프링 예압 split gear의 원리와 한계</title>
+  <desc id="desc">두 기어 절반이 스프링 예압으로 반대 치면을 누르며 외력이 예압보다 커지면 접촉이 풀리는 그림</desc>
+  <defs><style>text{font-family:Pretendard,"Noto Sans KR",sans-serif;fill:#0f172a}.h{font-size:30px;font-weight:700}.m{font-size:22px;font-weight:650}.s{font-size:18px;fill:#475569}</style><marker id="o" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#f97316"/></marker></defs>
+  <rect width="1100" height="590" rx="24" fill="#f8fafc"/>
+  <text x="550" y="52" text-anchor="middle" class="h">Preload removes clearance by creating internal load</text>
+  <g transform="translate(80 100)">
+    <rect width="430" height="360" rx="20" fill="#eff6ff" stroke="#2563eb" stroke-width="3"/>
+    <circle cx="215" cy="170" r="95" fill="none" stroke="#2563eb" stroke-width="36" stroke-dasharray="24 10"/>
+    <circle cx="215" cy="170" r="55" fill="none" stroke="#f97316" stroke-width="22" stroke-dasharray="18 9"/>
+    <path d="M155 170 C170 115 195 225 215 170 S260 115 275 170" fill="none" stroke="#ef4444" stroke-width="7"/>
+    <path d="M115 100 A130 130 0 0 1 315 100" fill="none" stroke="#f97316" stroke-width="5" marker-end="url(#o)"/>
+    <path d="M315 240 A130 130 0 0 1 115 240" fill="none" stroke="#f97316" stroke-width="5" marker-end="url(#o)"/>
+    <text x="215" y="310" text-anchor="middle" class="m">Two gear halves press opposite flanks</text>
+  </g>
+  <g transform="translate(570 100)">
+    <rect width="450" height="360" rx="20" fill="#fff7ed" stroke="#f97316" stroke-width="3"/>
+    <path d="M60 95 H185" stroke="#16a34a" stroke-width="14"/>
+    <path d="M60 160 H285" stroke="#f97316" stroke-width="14"/>
+    <path d="M60 225 H390" stroke="#ef4444" stroke-width="14"/>
+    <path d="M225 60 V270" stroke="#0f172a" stroke-width="4" stroke-dasharray="8 8"/>
+    <text x="225" y="305" text-anchor="middle" class="s">preload torque</text>
+    <text x="60" y="78" class="s">small load: dual contact</text>
+    <text x="60" y="143" class="s">near preload: one side unloads</text>
+    <text x="60" y="208" class="s">large load: backlash returns</text>
+  </g>
+  <text x="550" y="515" text-anchor="middle" class="m">More preload → less lost motion, but more friction · wear · bearing load</text>
+  <text x="550" y="552" text-anchor="middle" class="s">The trade-off grows when bidirectional joint torque exceeds preload</text>
+</svg>
