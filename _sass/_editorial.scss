@@ -1,0 +1,607 @@
+/*******************************************************************************
+ * Scientific editorial layer
+ *
+ * Keeps al-folio's structure and behavior while giving the site a distinct
+ * visual system for research writing: paper, ink, graphite, and one diagnostic
+ * accent color.
+ ******************************************************************************/
+
+:root {
+  --font-sans: "Geist", "Noto Sans KR", "Helvetica Neue", Arial, sans-serif;
+  --font-serif: Georgia, "Noto Serif KR", "Times New Roman", serif;
+  --font-mono: "Geist Mono", "SFMono-Regular", Consolas, monospace;
+  --editorial-grid: rgba(23, 22, 18, 0.035);
+  --editorial-surface: rgba(255, 255, 255, 0.22);
+}
+
+html[data-theme="dark"] {
+  --editorial-grid: rgba(236, 231, 222, 0.035);
+  --editorial-surface: rgba(255, 255, 255, 0.035);
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: -0.008em;
+  line-height: 1.65;
+  text-rendering: optimizeLegibility;
+}
+
+body.is-blog-index {
+  background-image: linear-gradient(to right, var(--editorial-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--editorial-grid) 1px, transparent 1px);
+  background-position: center top;
+  background-size: 96px 96px;
+}
+
+::selection {
+  background: var(--global-theme-color);
+  color: var(--global-hover-text-color);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.12;
+}
+
+code,
+kbd,
+pre,
+samp,
+.highlight,
+.post-meta,
+.post-tags,
+.caption,
+.news .table td:first-child,
+.publications .periodical,
+.publications .links {
+  font-family: var(--font-mono);
+}
+
+a {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+hr {
+  margin: 2.5rem 0;
+}
+
+// Navigation
+
+.navbar {
+  background-color: color-mix(in srgb, var(--global-bg-color) 92%, transparent);
+  backdrop-filter: blur(14px);
+  opacity: 1;
+}
+
+.navbar > .container {
+  min-height: 3.6rem;
+}
+
+.navbar .navbar-brand {
+  font-size: 0.96rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.navbar .navbar-nav .nav-link,
+#search-toggle .nav-link {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  padding-right: 0.72rem;
+  padding-left: 0.72rem;
+  text-transform: uppercase;
+}
+
+.navbar.navbar-light .navbar-nav .nav-item.active > .nav-link {
+  font-weight: 600;
+}
+
+.navbar.navbar-light .navbar-nav .nav-item.active > .nav-link::after {
+  color: var(--global-theme-color);
+  content: "•";
+  margin-left: 0.35rem;
+}
+
+// Shared surfaces
+
+.card,
+.cv .card,
+.list-group-item,
+.dropdown-menu {
+  border-color: var(--global-divider-color);
+  border-radius: 2px;
+  box-shadow: none;
+}
+
+.card {
+  background: var(--editorial-surface);
+}
+
+.hoverable {
+  transition:
+    border-color 180ms ease,
+    transform 180ms ease;
+}
+
+.hoverable:hover {
+  border-color: var(--global-theme-color);
+  box-shadow: none;
+  transform: translateY(-3px);
+}
+
+blockquote {
+  background: var(--editorial-surface);
+  border-left: 2px solid var(--global-theme-color);
+  font-family: var(--font-serif);
+  font-size: 1.08rem;
+  line-height: 1.75;
+  padding: 1.25rem 1.5rem;
+}
+
+.caption,
+figcaption {
+  color: var(--global-text-color-light);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.015em;
+  line-height: 1.55;
+  text-align: left;
+}
+
+// Landing page
+
+.page-about .post-header {
+  border-bottom: 1px solid var(--global-divider-color);
+  margin-bottom: 2.5rem;
+  padding: 1.5rem 0 2rem;
+}
+
+.page-about .post-header .post-title {
+  font-size: clamp(2.8rem, 8vw, 5.6rem);
+  letter-spacing: -0.065em;
+  line-height: 0.92;
+  margin-bottom: 1.25rem;
+}
+
+.page-about .post-header .desc {
+  color: var(--global-text-color-light);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.page-about article > .clearfix {
+  font-family: var(--font-serif);
+  font-size: 1.12rem;
+  line-height: 1.8;
+}
+
+.page-about .profile img {
+  border: 1px solid var(--global-divider-color);
+  filter: saturate(0.82) contrast(1.02);
+  padding: 0.35rem;
+}
+
+.page-about article > h2 {
+  border-top: 1px solid var(--global-text-color);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  margin-top: 3.5rem;
+  padding-top: 0.75rem;
+  text-transform: uppercase;
+}
+
+// Blog index
+
+.blog-index-main .header-bar {
+  border-bottom-color: var(--global-text-color);
+  padding: clamp(3.5rem, 10vw, 7rem) 0 clamp(2rem, 6vw, 4rem);
+  text-align: left;
+}
+
+.blog-index-main .header-bar::before {
+  color: var(--global-theme-color);
+  content: "RESEARCH NOTES / DK";
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  margin-bottom: 1.25rem;
+}
+
+.blog-index-main .header-bar h1 {
+  color: var(--global-text-color);
+  font-size: clamp(3.6rem, 10vw, 7.25rem);
+  font-weight: 600;
+  letter-spacing: -0.075em;
+  line-height: 0.86;
+  margin-bottom: 1.5rem;
+}
+
+.blog-index-main .header-bar h2 {
+  color: var(--global-text-color-light);
+  font-family: var(--font-mono);
+  font-size: clamp(0.72rem, 1.7vw, 0.85rem);
+  font-weight: 400;
+  letter-spacing: 0.025em;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 44rem;
+}
+
+.blog-index-main .tag-category-list {
+  padding: 1rem 0;
+  text-align: left;
+}
+
+.blog-index-main .tag-category-list ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  justify-content: flex-start;
+}
+
+.blog-index-main .tag-category-list ul p {
+  display: none;
+}
+
+.blog-index-main .tag-category-list ul li {
+  border: 1px solid var(--global-divider-color);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.025em;
+  padding: 0.32rem 0.55rem;
+}
+
+.blog-index-main .tag-category-list ul li:hover {
+  border-color: var(--global-theme-color);
+}
+
+.featured-posts {
+  margin: 1.5rem 0 2.5rem;
+  padding: 0;
+}
+
+.featured-posts .row {
+  margin-right: -0.5rem;
+  margin-left: -0.5rem;
+}
+
+.featured-posts .col {
+  padding-right: 0.5rem;
+  padding-left: 0.5rem;
+}
+
+.blog-index-main .featured-posts .card {
+  border-top: 2px solid var(--global-text-color);
+  height: 100%;
+}
+
+.blog-index-main .featured-posts .card-body {
+  min-height: 11rem;
+  padding: 1.15rem;
+}
+
+.blog-index-main .featured-posts .card-title {
+  font-size: 1.08rem;
+  letter-spacing: -0.025em;
+  line-height: 1.25;
+  text-transform: none;
+}
+
+.blog-index-main .featured-posts .card-text {
+  color: var(--global-text-color-light);
+  line-height: 1.55;
+}
+
+.blog-index-main .post-list li {
+  border-bottom-color: var(--global-divider-color);
+  padding: 1.7rem 0 1.8rem;
+  position: relative;
+  transition: padding-left 180ms ease;
+}
+
+.blog-index-main .post-list li::before {
+  background: var(--global-theme-color);
+  content: "";
+  height: 0;
+  left: 0;
+  position: absolute;
+  top: 1.9rem;
+  transition: height 180ms ease;
+  width: 2px;
+}
+
+.blog-index-main .post-list li:hover {
+  padding-left: 0.85rem;
+}
+
+.blog-index-main .post-list li:hover::before {
+  height: 2.25rem;
+}
+
+.blog-index-main .post-list li h3 {
+  font-size: clamp(1.18rem, 2.4vw, 1.45rem);
+  letter-spacing: -0.03em;
+}
+
+.blog-index-main .post-list li > p:not(.post-meta):not(.post-tags),
+.blog-index-main .post-list li .col-sm-9 > p:not(.post-meta):not(.post-tags) {
+  color: var(--global-text-color-light);
+  font-family: var(--font-serif);
+  font-size: 0.96rem;
+  line-height: 1.6;
+}
+
+.post-meta,
+.post-tags {
+  color: var(--global-text-color-light);
+  font-size: 0.68rem !important;
+  letter-spacing: 0.015em;
+  line-height: 1.6;
+}
+
+// Long-form posts
+
+body.is-blog-post .post-header {
+  border-bottom: 1px solid var(--global-text-color);
+  margin-bottom: 2.75rem;
+  padding: 2.5rem 0 2rem;
+}
+
+body.is-blog-post .post-header .post-title {
+  font-size: clamp(2.4rem, 6.2vw, 4.9rem);
+  letter-spacing: -0.06em;
+  line-height: 0.98;
+  margin-bottom: 1.5rem;
+}
+
+body.is-blog-post #markdown-content {
+  max-width: 46rem;
+}
+
+body.is-blog-post #markdown-content p,
+body.is-blog-post #markdown-content > ul,
+body.is-blog-post #markdown-content > ol {
+  font-family: var(--font-serif);
+  font-size: 1.08rem;
+  line-height: 1.82;
+}
+
+body.is-blog-post #markdown-content h2 {
+  border-top: 1px solid var(--global-divider-color);
+  font-size: clamp(1.65rem, 3vw, 2.15rem);
+  margin-top: 4rem;
+  padding-top: 1rem;
+}
+
+body.is-blog-post #markdown-content h3 {
+  font-size: 1.32rem;
+  margin-top: 2.75rem;
+}
+
+body.is-blog-post #markdown-content img {
+  background: var(--editorial-surface);
+  border: 1px solid var(--global-divider-color);
+  padding: 0.35rem;
+}
+
+body.is-blog-post #markdown-content pre {
+  border: 1px solid var(--global-divider-color);
+  border-radius: 2px;
+}
+
+// Opt-in visual essays
+//
+// Add `editorial: true` to a post's front matter. The layout drops the blog
+// sidebar and gives evidence figures room to extend beyond the reading column.
+
+body.is-editorial .blog-container {
+  max-width: 1240px;
+}
+
+body.is-editorial .post-header {
+  max-width: 58rem;
+}
+
+body.is-editorial #markdown-content {
+  max-width: none;
+}
+
+body.is-editorial #markdown-content > :not(.editorial-wide, .editorial-full) {
+  margin-right: auto;
+  margin-left: auto;
+  max-width: 46rem;
+}
+
+body.is-editorial .editorial-wide {
+  margin: 3rem auto;
+  max-width: 68rem;
+  width: 100%;
+}
+
+body.is-editorial .editorial-full {
+  margin: 3.5rem auto;
+  width: 100%;
+}
+
+.editorial-kicker,
+.figure-label {
+  color: var(--global-theme-color);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.editorial-note {
+  background: var(--editorial-surface);
+  border-top: 1px solid var(--global-text-color);
+  margin: 2.5rem 0;
+  padding: 1rem 1.2rem 1.15rem;
+}
+
+.editorial-note[data-state="diagnostic"] {
+  border-top-color: var(--global-theme-color);
+}
+
+// Distill posts retain their wide figures while sharing the same typography.
+
+body.page-distill d-title {
+  padding-top: 4rem;
+}
+
+body.page-distill d-title h1 {
+  font-family: var(--font-sans);
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  font-weight: 600;
+  letter-spacing: -0.06em;
+  line-height: 0.96;
+}
+
+body.page-distill d-title p,
+body.page-distill d-byline,
+body.page-distill d-appendix {
+  font-family: var(--font-mono);
+}
+
+body.page-distill d-article > p,
+body.page-distill d-article > ul,
+body.page-distill d-article > ol {
+  font-family: var(--font-serif);
+  font-size: 1.08rem;
+  line-height: 1.82;
+}
+
+// Sidebar and footer
+
+.blog-sidebar {
+  top: 5.5rem;
+}
+
+.blog-sidebar-heading {
+  color: var(--global-theme-color);
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+
+.blog-sidebar-link {
+  font-size: 0.82rem;
+}
+
+.blog-sidebar-date,
+.blog-sidebar-order,
+.blog-sidebar-count {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+}
+
+footer.sticky-bottom {
+  background: var(--global-footer-bg-color);
+  border-top: 0;
+  color: var(--global-footer-text-color);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.015em;
+  margin-top: 6rem !important;
+  padding: 2.25rem 0;
+}
+
+footer.sticky-bottom .container,
+footer.sticky-bottom .container * {
+  color: var(--global-footer-text-color);
+}
+
+footer.sticky-bottom a {
+  color: var(--global-footer-link-color);
+}
+
+@media (max-width: 767.98px) {
+  .navbar .navbar-nav .nav-link,
+  #search-toggle .nav-link {
+    font-size: 0.74rem;
+    padding: 0.55rem 0;
+  }
+
+  .page-about .post-header {
+    padding-top: 0.5rem;
+  }
+
+  .page-about .profile {
+    float: none !important;
+    margin: 0 0 2rem;
+    width: min(72vw, 18rem);
+  }
+
+  .blog-index-main .header-bar {
+    padding-top: 2.75rem;
+  }
+
+  .blog-index-main .featured-posts .row {
+    display: block;
+  }
+
+  .blog-index-main .featured-posts .col {
+    max-width: none;
+    width: 100%;
+  }
+
+  body.is-blog-post .post-header {
+    padding-top: 1rem;
+  }
+
+  body.is-blog-post #markdown-content p,
+  body.is-blog-post #markdown-content > ul,
+  body.is-blog-post #markdown-content > ol,
+  body.page-distill d-article > p,
+  body.page-distill d-article > ul,
+  body.page-distill d-article > ol {
+    font-size: 1.02rem;
+    line-height: 1.75;
+  }
+
+  body.is-editorial .editorial-wide,
+  body.is-editorial .editorial-full {
+    margin: 2rem auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+  }
+}
