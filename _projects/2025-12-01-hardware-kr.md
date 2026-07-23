@@ -69,4 +69,3 @@ redirect: /hardware01/
 27 - 통신 (2) - CAN/RS485/EtherCAT
 
 28 - 제어 시스템 아키텍처 (1) - Real-Time Control
-

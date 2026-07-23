@@ -48,7 +48,6 @@
       "endDate": "2017-07",
       "summary": "Quadcopter UAV control algorithm development for the reservoir flow measurement"
     }
-
   ],
 
   "education": [
@@ -81,7 +80,6 @@
       "startDate": "2016-08",
       "endDate": "2020-05"
     }
-
   ],
 
   "skills": [
@@ -89,7 +87,6 @@
       "name": "Programming and Software Skills",
       "icon": "fa-solid fa-hashtag",
       "keywords": ["C++", "C", "Python", "ROS 1&2", "MATLAB/Simulink", "Linux", "Git"]
-
     },
     {
       "name": "Control Frameworks",
@@ -119,17 +116,15 @@
     {
       "name": "Robot Hardware",
       "icon": "fa-solid fa-hashtag",
-      "keywords": ["Apptronik DRACO3", "Roboligent Optimo", "Franka Emika Research 3 (Panda)"," Boston Dynamics Spot", "Rethink Robotics Baxter & Sawyer", "HDT Adroit A24", "CLEARPATH Robotics Jackal" ]
+      "keywords": [
+        "Apptronik DRACO3",
+        "Roboligent Optimo",
+        "Franka Emika Research 3 (Panda)",
+        " Boston Dynamics Spot",
+        "Rethink Robotics Baxter & Sawyer",
+        "HDT Adroit A24",
+        "CLEARPATH Robotics Jackal"
+      ]
     }
-
-    
-    
-
   ]
-
-  
-
-
-
-
 }

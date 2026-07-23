@@ -7,4 +7,3 @@ redirect: https://platohand.github.io/plato
 importance: 2
 category: robotics
 ---
-

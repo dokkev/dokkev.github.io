@@ -23,10 +23,6 @@ This is a ROS project developed as part of the ME495 - Embedded Systems in Robot
 
 The goal of this project is to use the BAXTER robot to build a "HUGE" tower from plastic cups.
 
-<!-- You can find the Github repository at the following link:
-
-[github_repo](https://github.com/rubberdk/final-project-fast-tower) -->
-
 My role in this project was image processing using AprilTags. I implemented AprilTag detection using the `apriltag_ros` wrapper package and published the cups' transformations so that the Baxter would detect and keep track of the locations of the cups.
 
 # Demonstration
@@ -47,9 +43,6 @@ My role in this project was image processing using AprilTags. I implemented Apri
     <em>10 Cups Tower Demonstration</em>
   </figcaption>
 </figure>
-
-
-
 
 ### 6 Cups Tower
 
@@ -116,7 +109,7 @@ My role in this project was image processing using AprilTags. I implemented Apri
 
 - MoveIt to set the planning scene and Rviz visualizer
 - Set the positions of the cups and tables
-- Add objects to the scene 
+- Add objects to the scene
 - Return information about the scene
 
 ## Robot Control
