@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" role="img" aria-labelledby="title desc">
+  <title id="title">휴머노이드의 긴 운동학 체인에서 누적되는 관절 오차</title>
+  <desc id="desc">발부터 몸통과 팔을 거쳐 손까지 연결된 관절의 작은 오차가 말단 위치와 힘 오차가 되는 그림</desc>
+  <defs><style>text{font-family:Pretendard,"Noto Sans KR",sans-serif;fill:#0f172a}.h{font-size:30px;font-weight:700}.m{font-size:20px;font-weight:650}.s{font-size:17px;fill:#475569}</style><marker id="r" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#ef4444"/></marker></defs>
+  <rect width="1200" height="600" rx="24" fill="#f8fafc"/>
+  <text x="600" y="52" text-anchor="middle" class="h">Small joint errors project differently through a long chain</text>
+  <path d="M100 490 L220 490 L285 385 L360 285 L480 285 L550 190 L650 190 L755 260 L855 220 L960 145" fill="none" stroke="#0f172a" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <g fill="#fff" stroke="#2563eb" stroke-width="8">
+    <circle cx="220" cy="490" r="22"/><circle cx="285" cy="385" r="22"/><circle cx="360" cy="285" r="22"/><circle cx="550" cy="190" r="22"/><circle cx="650" cy="190" r="22"/><circle cx="755" cy="260" r="22"/><circle cx="855" cy="220" r="22"/>
+  </g>
+  <path d="M980 145 C1050 165 1060 105 1120 125" fill="none" stroke="#ef4444" stroke-width="7" marker-end="url(#r)"/>
+  <text x="1060" y="195" text-anchor="middle" class="m" fill="#ef4444">δx, δf</text>
+  <text x="155" y="535" text-anchor="middle" class="s">ground contact</text>
+  <text x="220" y="565" text-anchor="middle" class="s">ankle</text><text x="285" y="350" text-anchor="middle" class="s">knee</text><text x="360" y="255" text-anchor="middle" class="s">hip</text>
+  <text x="550" y="155" text-anchor="middle" class="s">torso</text><text x="650" y="155" text-anchor="middle" class="s">shoulder</text><text x="755" y="310" text-anchor="middle" class="s">elbow</text><text x="855" y="190" text-anchor="middle" class="s">wrist</text>
+  <rect x="430" y="390" width="410" height="120" rx="18" fill="#eff6ff" stroke="#2563eb" stroke-width="3"/>
+  <text x="635" y="433" text-anchor="middle" class="m">δx ≈ J(q) δq</text>
+  <text x="635" y="471" text-anchor="middle" class="s">The same joint clearance maps differently with posture</text>
+  <text x="635" y="498" text-anchor="middle" class="s">into end-effector translation · orientation · force</text>
+</svg>
