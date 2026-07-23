@@ -57,6 +57,7 @@ jobs:
             --exclude-path _pages/blog.md
             --exclude-path _posts/2018-12-22-distill.md
             --exclude-path _posts/2023-04-24-videos.md
+            --exclude-path _posts/hardware/kr/2025-12-03-hardware-03-kr.md
             --exclude 'https://dspace\.mit\.edu/.*'
             --exclude 'https://canable\.io/.*'
             --exclude 'https://nadinazweifel\.com/.*'
