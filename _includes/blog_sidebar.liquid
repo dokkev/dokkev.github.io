@@ -18,7 +18,13 @@
               {% for post in current_series_posts %}
                 {% assign post_href = post.url | relative_url %}
                 <li>
-                  <a class="blog-sidebar-link{% if post_href == current_url %} active{% endif %}" href="{{ post_href }}" {% if post_href == current_url %}aria-current="page"{% endif %}>
+                  <a
+                    class="blog-sidebar-link{% if post_href == current_url %} active{% endif %}"
+                    href="{{ post_href }}"
+                    {% if post_href == current_url %}
+                      aria-current="page"
+                    {% endif %}
+                  >
                     {% assign order_label = post.series_label | default: '' %}
                     {% if order_label == '' and post.series_order %}
                       {% assign order_label = post.series_order | prepend: '0' | slice: -2, 2 %}
@@ -93,7 +99,13 @@
             {% endif %}
             <li class="blog-sidebar-major-series">
               {% if item_href != '' %}
-                <a class="blog-sidebar-link{% if item_href == current_url %} active{% endif %}" href="{{ item_href }}" {% if item_href == current_url %}aria-current="page"{% endif %}>
+                <a
+                  class="blog-sidebar-link{% if item_href == current_url %} active{% endif %}"
+                  href="{{ item_href }}"
+                  {% if item_href == current_url %}
+                    aria-current="page"
+                  {% endif %}
+                >
                   {{ item.title }}
                   {% if series_posts.size > 0 %}
                     <span class="blog-sidebar-count">{{ series_posts.size }} notes</span>
@@ -116,7 +128,13 @@
           {% for post in recent_posts limit: 5 %}
             {% assign post_href = post.url | relative_url %}
             <li>
-              <a class="blog-sidebar-link{% if post_href == current_url %} active{% endif %}" href="{{ post_href }}" {% if post_href == current_url %}aria-current="page"{% endif %}>
+              <a
+                class="blog-sidebar-link{% if post_href == current_url %} active{% endif %}"
+                href="{{ post_href }}"
+                {% if post_href == current_url %}
+                  aria-current="page"
+                {% endif %}
+              >
                 {{ post.title }}
                 <span class="blog-sidebar-date">{{ post.date | date: '%b %-d, %Y' }}</span>
               </a>

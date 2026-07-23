@@ -61,7 +61,12 @@
       document.querySelectorAll('pre.mermaid svg').forEach((svg) => {
         const padding = 24;
         const originalViewBox = svg.dataset.originalViewBox || svg.getAttribute('viewBox');
-        const viewBoxValues = originalViewBox ? originalViewBox.trim().split(/[\s,]+/).map(Number) : [];
+        const viewBoxValues = originalViewBox
+          ? originalViewBox
+              .trim()
+              .split(/[\s,]+/)
+              .map(Number)
+          : [];
 
         if (viewBoxValues.length === 4 && viewBoxValues.every(Number.isFinite)) {
           const [x, y, width, height] = viewBoxValues;

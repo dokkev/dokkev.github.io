@@ -25,8 +25,8 @@ An overview of the finger transmission is shown in Figure 2. The independent act
 
 We characterize the transmission topology from the rotor configuration space of the motor ($\boldsymbol{\psi}$) to actuator output configuration space ($\boldsymbol{\phi}$) and the joint configuration of the finger space($\boldsymbol{\theta}$) using the following expression \cite{Sim2021TheRobots}:
 \begin{align*}
-d\boldsymbol{\psi} \xrightarrow[]{\mathbf{R}} 
-d\boldsymbol{\phi} \xrightarrow[]{\mathbf{D}} 
+d\boldsymbol{\psi} \xrightarrow[]{\mathbf{R}}
+d\boldsymbol{\phi} \xrightarrow[]{\mathbf{D}}
 d\boldsymbol{\theta}
 \end{align*}
 
@@ -113,7 +113,7 @@ D_2 =  \frac{-L_4\sin(\phi_3 - \phi_4)}{L_2\sin(\phi_2 - \phi_3)}
 
 We analyze the dissipative dynamics of a fixed-base robotic finger, incorporating reflected inertias, mechanical losses, and direction-dependent transmission efficiencies. Let the redundant generalized coordinates be:
 \begin{equation}
-\mathbf{q} = 
+\mathbf{q} =
 \begin{bmatrix}
 \boldsymbol{\theta} \\[2pt]
 \boldsymbol{\psi}
@@ -126,7 +126,7 @@ where \(\boldsymbol{\theta}\) are joint-space angles and \(\boldsymbol{\psi}\) a
 
 To compute the constraint Jacobian \(\mathbf{A}\), we take the partial derivative of \(\mathbf{h}(\mathbf{q})\) with respect to the generalized coordinates, $\mathbf{q}$
 \begin{equation}
-\mathbf{A} = \frac{\partial \mathbf{h}}{\partial \mathbf{q}} = 
+\mathbf{A} = \frac{\partial \mathbf{h}}{\partial \mathbf{q}} =
 \left[\frac{\partial \mathbf{h}}{\partial \boldsymbol{\theta}}, \frac{\partial \mathbf{h}}{\partial \boldsymbol{\psi}} \right]
 \end{equation}
 
@@ -143,12 +143,12 @@ the constraint Jacobian becomes:
 
 where \(\mathbf{D}\) is the linkage transmission matrix and \(\mathbf{R}\) is the gear reduction matrix. The constraint Jacobian and its nullspace basis are:
 \begin{equation}
-\mathbf{N} = 
+\mathbf{N} =
 \begin{bmatrix}
 \mathbf{I} \\[2pt]
 (\mathbf{D}\mathbf{R})^{-1}
-\end{bmatrix}, 
-\quad 
+\end{bmatrix},
+\quad
 \dot{\mathbf{q}} = \mathbf{N} \dot{\boldsymbol{\theta}}
 \end{equation}
 \subsection{Directional Efficiency Modeling}
@@ -160,7 +160,7 @@ To model transmission losses, we use direction-dependent efficiencies for each a
 
 The diagonal efficiency matrix \(\boldsymbol{\eta} \in \mathbb{R}^{n \times n}\) is constructed such that:
 \begin{equation}
-\eta_i = 
+\eta_i =
 \begin{cases}
 \eta_i^+ & \text{if } \tau_i \dot{\psi}_i \geq 0 \quad \text{(forward-driving)} \\
 \eta_i^- & \text{if } \tau_i \dot{\psi}_i < 0 \quad \text{(back-driving)}
@@ -169,7 +169,7 @@ The diagonal efficiency matrix \(\boldsymbol{\eta} \in \mathbb{R}^{n \times n}\)
 
 The full block-diagonal efficiency matrix \(\mathbf{E} \in \mathbb{R}^{2n \times 2n}\) is then defined as:
 \begin{equation}
-\mathbf{E} = 
+\mathbf{E} =
 \begin{bmatrix}
 \mathbf{I} & \mathbf{0} \\[2pt]
 \mathbf{0} & \boldsymbol{\eta}
@@ -186,7 +186,7 @@ The equations of motion in redundant coordinates are:
 \end{equation}
 where \(\mathbf{H}_q, \mathbf{b}_q, \mathbf{g}_q\) are the inertia, Coriolis, and gravity terms, respectively; \(\boldsymbol{\tau}_q\) are the actuation torques; \(\boldsymbol{\tau}_{d,q}\) are the dissipative torques; and \(\mathbf{J}_q\) maps external forces \(\mathbf{f}\). We define the internal meshing force vector:
 \begin{equation}
-\mathbf{r} = \mathbf{A}^\top \boldsymbol{\lambda} + \boldsymbol{\tau}_{d,q} 
+\mathbf{r} = \mathbf{A}^\top \boldsymbol{\lambda} + \boldsymbol{\tau}_{d,q}
 = \mathbf{H}_q\ddot{\mathbf{q}} + \mathbf{b}_q + \mathbf{g}_q - \boldsymbol{\tau}_q - \mathbf{J}_q^\top \mathbf{f}
 \end{equation}
 
@@ -197,7 +197,7 @@ To enforce energy consistency in the presence of direction-dependent dissipation
 \begin{equation}
 \mathbf{N}^\top \mathbf{E} \mathbf{r} = \mathbf{0},
 \end{equation}
-where \(\mathbf{r}\) is the internal meshing force, and \(\mathbf{N}\) is the null-space basis of the holonomic constraint. This constraint ensures that internal forces do not generate net power when projected through the physically dissipative directions defined by \(\mathbf{E}\). Mathematically, it enforces passivity: no internal meshing force \(\mathbf{r}\) may violate the direction-dependent energy loss modeled by \(\boldsymbol{\eta}\). 
+where \(\mathbf{r}\) is the internal meshing force, and \(\mathbf{N}\) is the null-space basis of the holonomic constraint. This constraint ensures that internal forces do not generate net power when projected through the physically dissipative directions defined by \(\mathbf{E}\). Mathematically, it enforces passivity: no internal meshing force \(\mathbf{r}\) may violate the direction-dependent energy loss modeled by \(\boldsymbol{\eta}\).
 
 \subsection{Reduced Dissipative Equation of Motion}
 
@@ -218,7 +218,7 @@ This final expression captures joint-space dynamics under directional energy dis
 \section{Hybrid Contact Mechanism}
 \subsection{Local Contact Models}
 The hybrid contact mechanism of the \emph{PLATO Hand} follows two
-distinct mechanics.  
+distinct mechanics.
 A rigid fingernail transmits force with negligible compliance, whereas a
 soft pad spreads the load and widens the admissible friction cone.
 Both contacts are described by their \textit{micro‑displacements}—the
@@ -237,7 +237,7 @@ tiny compressions, slips, and twists that appear as forces build.
 \]
 
 where $\delta n_{r_j}$ is normal compression and
-$\delta t_{r_j}$ is in‑plane slip.  
+$\delta t_{r_j}$ is in‑plane slip.
 These deflections are almost imperceptible, but are kept in the model to follow the linear spring law.
 
 \[
@@ -265,7 +265,7 @@ No torsional moment is transmitted with a rigid point contact
 
 
 The huge stiffness makes the nail \emph{sensitive}. However, it contributes
-little to grasp \emph{stability} without torsional support.  
+little to grasp \emph{stability} without torsional support.
 
 
 %-------------------------------------------------

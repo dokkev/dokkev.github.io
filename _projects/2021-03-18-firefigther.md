@@ -1,7 +1,7 @@
 ---
 layout: distill
 title: Autonomous Fire Fighting Robot Arm
-description: Sensing and Localization of Fire & Manipulation of Fire Extinguisher 
+description: Sensing and Localization of Fire & Manipulation of Fire Extinguisher
 permalink: /projects/firefighter/
 img: assets/img/adroit/fire.jpg
 importance: 11
@@ -11,11 +11,12 @@ related_publications: false
 
 HDT Adroit 6DOF A24 Pincer Manipulation of a fire extinguisher using a thermal camera
 
-This is a Winter Project of MSR Program at Northwestern University. 
+This is a Winter Project of MSR Program at Northwestern University.
 
 **Code: [[GitHub](https://github.com/dokkev/Firefighting_Robot_Arm)]**
 
 # Background
+
 The idea of a firefighting robot is not a new concept, and there have been many proposals for using firefighting robots. In fact, a robot called Colossus helped save much of the historic structure by braving conditions deemed too dangerous for human firefighters after Notre Dame Cathedral in Paris caught fire in 2019 [1], and the LA Fire Department tested autonomous firefighting robots in a major downtown blaze in 2020 [2].
 
 <div class="row">
@@ -53,7 +54,7 @@ Therefore, I implemented a firefighting mechanism using HDT Adroit 6 DOF A24 Pin
 
 # SYSTEM OVERVIEW
 
-The Adroit operates on ROS. I used `ROS-noetic` version for this project. 
+The Adroit operates on ROS. I used `ROS-noetic` version for this project.
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
@@ -67,6 +68,7 @@ The Adroit operates on ROS. I used `ROS-noetic` version for this project.
 # ROS Packages Overview
 
 ## Package: `thermal_image_processing`
+
 This package takes care of detecting the hottest spot in the camera view and reading its temperature from the thermal camera. I implemented the package from the PureThermal 1 / PureThermal 2 FLIR Lepton Dev Kit (https://github.com/groupgets/purethermal1-uvc-capture).
 
 ### Thermal Image Processing
@@ -140,6 +142,7 @@ To evaluate depth sensing, the result was compared to measurements with a ruler.
 When it comes to combining two cameras, the thermal image and depth image are offset from each other. Therefore, it is important to align the two cameras properly. `rostopic` `combined_image2` provides combined images of the color image and thermal image to show how well the two cameras are aligned while `combined_image` provides combined images of color aligned to the depth image and the thermal image. The thermal camera and Realsense camera should be calibrated to avoid errors due to camera misalignment.
 
 ### Testing with Electric Heater
+
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
         {% include figure.liquid loading="eager" path="assets/img/adroit/eh1.png" title="heater1" class="img-fluid rounded z-depth-1" %}
@@ -242,10 +245,12 @@ When it comes to combining two cameras, the thermal image and depth image are of
 </div>
 
 ## Package: `control`
+
 This package controls the Adroit's arm joints through MoveIt and the pincer through the pincer joint controller.
 I have implemented the node `arm_control` for Adroit to detect the fire, grab the fire extinguisher, aim it to the fire, and press the lever.
 
 ### Fire Detection
+
 `arm_control` node subscribes to the temperature value and x-y coordinates that `thermal_detection` is publishing.
 
 <div class="row">
@@ -331,9 +336,9 @@ I installed a laser pointer to accurately evaluate the Adroit's aim to the heat 
 
 - Testing with a real fire
 - Publishing transformation of the fire
-    - Separating the thermal camera from the robot's pincer
-    - Implementing depth sensing of the fire
+  - Separating the thermal camera from the robot's pincer
+  - Implementing depth sensing of the fire
 - Mounting the Adroit on a wheeled mobile robot
-    - Applying SLAM to the mobile robot
+  - Applying SLAM to the mobile robot
 - Using a fire extinguisher with a flexible hose
 - Picking up a fire extinguisher using object detection

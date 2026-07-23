@@ -86,22 +86,22 @@ layout: default
   if (easterEggImage) {
     easterEggImage.addEventListener('click', (e) => {
       const currentTime = new Date().getTime();
-      
+
       // Reset if more than 1 second passed since last click
       if (currentTime - easterEggLastClickTime > 1000) {
         easterEggClicks = 0;
       }
-      
+
       easterEggClicks++;
       easterEggLastClickTime = currentTime;
-      
+
       if (easterEggClicks >= 5) {
         easterEggClicks = 0;
         // Redirect to a specific page
-        window.location.href = "{{ '/projects/' | relative_url }}"; 
+        window.location.href = "{{ '/projects/' | relative_url }}";
       }
     });
     // Optional: indicate clickable
-    easterEggImage.style.cursor = "pointer";
+    easterEggImage.style.cursor = 'pointer';
   }
 </script>
