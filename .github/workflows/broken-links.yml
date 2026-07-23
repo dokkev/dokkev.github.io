@@ -60,6 +60,7 @@ jobs:
             --exclude 'https://dspace\.mit\.edu/.*'
             --exclude 'https://canable\.io/.*'
             --exclude 'https://nadinazweifel\.com/.*'
+            --exclude 'https://www\.tec-science\.com/.*'
             --verbose
             --no-progress
             './**/*.md'
