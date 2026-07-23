@@ -2,7 +2,8 @@
 layout: page
 title: projects
 permalink: /projects/
-description: Robotics Portfolio
+description: Selected robotic systems, mechanisms, and controller-facing hardware.
+kicker: Selected systems / embodied intelligence
 nav: true
 nav_order: 3
 display_categories: [robotics, other]
@@ -29,7 +30,7 @@ horizontal: false
     </div>
   </div>
   {% else %}
-  <div class="row row-cols-1 row-cols-md-3">
+  <div class="row row-cols-1 row-cols-md-2">
     {% for project in sorted_projects %}
       {% include projects.liquid %}
     {% endfor %}
@@ -55,7 +56,7 @@ horizontal: false
     </div>
   </div>
   {% else %}
-  <div class="row row-cols-1 row-cols-md-3">
+  <div class="row row-cols-1 row-cols-md-2">
     {% for project in sorted_projects %}
       {% include projects.liquid %}
     {% endfor %}

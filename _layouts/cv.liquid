@@ -4,6 +4,7 @@ layout: default
 {% unless site.data.resume %}
   <div class="post">
     <header class="post-header">
+      <p class="page-kicker">{{ page.kicker | default: 'DK / CURRICULUM VITAE' }}</p>
       <h1 class="post-title">
         {{ page.title }}
         {% if page.cv_pdf %}
@@ -50,6 +51,7 @@ layout: default
 {% else %}
   <div class="post">
     <header class="post-header">
+      <p class="page-kicker">{{ page.kicker | default: 'DK / CURRICULUM VITAE' }}</p>
       <h1 class="post-title">
         {{ page.title }}
         {% if page.cv_pdf %}

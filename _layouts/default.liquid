@@ -16,12 +16,15 @@
   </head>
 
   <!-- Body -->
-  <body class="page-{{ page.layout | default: 'default' }}{% if page.url == '/blog/' %} is-blog-index{% endif %}{% if page.collection == 'posts' %} is-blog-post{% endif %} {% if site.navbar_fixed %}fixed-top-nav{% endif %} {% unless site.footer_fixed %}sticky-bottom-footer{% endunless %}">
+  <body class="page-{{ page.layout | default: 'default' }} page-key-{{ page.title | default: 'untitled' | slugify }}{% if page.url == '/blog/' %} is-blog-index{% endif %}{% if page.collection == 'posts' %} is-blog-post{% endif %}{% if page.editorial %} is-editorial{% endif %} {% if site.navbar_fixed %}fixed-top-nav{% endif %} {% unless site.footer_fixed %}sticky-bottom-footer{% endunless %}">
     <!-- Header -->
     {% include header.liquid %}
 
     <!-- Content -->
-    <div class="container mt-5{% if page.url == '/blog/' or page.collection == 'posts' %} blog-container{% endif %}{% if page.url == '/blog/' %} blog-index-container{% endif %}" role="main">
+    <div
+      class="container mt-5{% if page.url == '/blog/' or page.collection == 'posts' %} blog-container{% endif %}{% if page.url == '/blog/' %} blog-index-container{% endif %}"
+      role="main"
+    >
       {% if page.toc and page.toc.sidebar %}
         {% if page.toc.sidebar == 'right' %}
           <div class="row">

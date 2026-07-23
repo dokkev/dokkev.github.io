@@ -34,16 +34,16 @@ pagination:
 {% assign sorted_tags = site.tags | sort %}
 {% assign visible_tag_count = 0 %}
 {% for tag in sorted_tags %}
-  {% assign show_tag = false %}
-  {% for post in tag[1] %}
-    {% if post.lang == "ko" %}
-      {% continue %}
-    {% endif %}
-    {% assign show_tag = true %}
-  {% endfor %}
-  {% if show_tag %}
-    {% assign visible_tag_count = visible_tag_count | plus: 1 %}
-  {% endif %}
+{% assign show_tag = false %}
+{% for post in tag[1] %}
+{% if post.lang == "ko" %}
+{% continue %}
+{% endif %}
+{% assign show_tag = true %}
+{% endfor %}
+{% if show_tag %}
+{% assign visible_tag_count = visible_tag_count | plus: 1 %}
+{% endif %}
 {% endfor %}
 
 {% if visible_tag_count > 0 or site.display_categories and site.display_categories.size > 0 %}

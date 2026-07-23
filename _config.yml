@@ -4,15 +4,16 @@
 
 title: blank # the website title (if blank, full name will be used instead)
 first_name: Dong Ho
-middle_name: 
+middle_name:
 last_name: Kang
 email: dongho.robot@gmail.com
 description: > # the ">" symbol means to ignore newlines until "footer_text:"
-  Robotics researcher designing contact morphology, mechanisms, sensing, and control for dexterous manipulation.
+  A simple, whitespace theme for academics. Based on [*folio](https://github.com/bogoli/-folio) design.
 footer_text: >
-  Built with <a href="https://jekyllrb.com/" target="_blank">Jekyll</a> and <a href="https://github.com/alshedivat/al-folio">al-folio</a>.
-  Hosted on <a href="https://pages.github.com/" target="_blank">GitHub Pages</a>.
-keywords: robotics, contact morphology, dexterous manipulation, robot hands, whole-body control, UT Austin
+  Powered by <a href="https://jekyllrb.com/" target="_blank">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio">al-folio</a> theme.
+  Hosted by <a href="https://pages.github.com/" target="_blank">GitHub Pages</a>.
+  Photos from <a href="https://unsplash.com" target="_blank">Unsplash</a>.
+keywords: jekyll, jekyll-theme, academic-website, portfolio-website # add your own keywords or leave empty
 lang: en # the language of your site (for example: en, fr, cn, ru, etc.)
 icon: favicon.ico # the emoji used as the favicon (alternatively, provide image name in /assets/img/)
 
@@ -112,7 +113,6 @@ youtube_id: # your youtube channel id (youtube.com/@<youtube_id>)
 zotero_username: # your zotero username
 
 contact_note: >
-  
 
 # -----------------------------------------------------------------------------
 # Analytics and search engine verification
@@ -133,7 +133,7 @@ bing_site_verification: # out your bing-site-verification ID (Bing Webmaster)
 # -----------------------------------------------------------------------------
 
 blog_name: Robotics # blog_name will be displayed in your blog page
-blog_description: Hardware Development, Design, Control, Manipulation, Locomotion
+blog_description: Hardware Development, Design,  Control,  Manipulation, Locomotion
 permalink: /blog/:year/:title/
 lsi: false # produce an index for related posts
 
@@ -487,7 +487,7 @@ third_party_libraries:
     version: "5.5.0"
   google_fonts:
     url:
-      fonts: "https://fonts.googleapis.com/css?family=Geist:300,400,500,600,700|Geist+Mono:400,500,600|Material+Icons&display=swap"
+      fonts: "https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@400;600&family=Material+Icons&display=swap"
   highlightjs:
     integrity:
       css:

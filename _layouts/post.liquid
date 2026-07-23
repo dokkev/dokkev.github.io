@@ -5,7 +5,7 @@ layout: default
 {% assign tags = page.tags | join: '' %}
 {% assign categories = page.categories | join: '' %}
 {% assign show_blog_sidebar = false %}
-{% if page.collection == 'posts' %}
+{% if page.collection == 'posts' and page.editorial != true %}
   {% assign show_blog_sidebar = true %}
 {% endif %}
 
@@ -109,9 +109,9 @@ layout: default
 </div>
 
 {% if show_blog_sidebar %}
-    </div>
-    <aside class="col-lg-3 blog-sidebar-column">
-      {% include blog_sidebar.liquid %}
-    </aside>
+  </div>
+  <aside class="col-lg-3 blog-sidebar-column">
+    {% include blog_sidebar.liquid %}
+  </aside>
   </div>
 {% endif %}
