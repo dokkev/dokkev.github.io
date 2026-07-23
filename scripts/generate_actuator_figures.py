@@ -5,49 +5,129 @@ Each plot states the assumptions needed to interpret the result.
 """
 
 from pathlib import Path
+import tempfile
+from urllib.request import urlretrieve
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.font_manager import FontProperties, fontManager
 
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "assets" / "img" / "hardware" / "models"
 
-PAPER = "#f4f0e8"
-INK = "#181714"
-MUTED = "#777168"
-GRID = "#d8d1c5"
-ORANGE = "#ef5b2a"
-TEAL = "#287b82"
-BLUE = "#4169a1"
+PAPER = "#f3efe6"
+INK = "#171612"
+MUTED = "#6d6961"
+GRID = "#d8d2c7"
+ORANGE = "#ed4b2f"
+TEAL = "#356f73"
+BLUE = "#4c5968"
+FONT_SANS = "DejaVu Sans"
+FONT_MONO = "DejaVu Sans Mono"
+PORTFOLIO_CMAP = LinearSegmentedColormap.from_list(
+    "portfolio",
+    ("#ded8ce", "#aaa49a", "#6d6961", "#e98a76", ORANGE),
+)
+EFFICIENCY_CMAP = LinearSegmentedColormap.from_list(
+    "portfolio_efficiency",
+    ("#6d6961", "#918c83", "#b7b0a5", "#d8d2c7", "#f3efe6"),
+)
+
+FONT_URLS = {
+    "sans": "https://raw.githubusercontent.com/google/fonts/main/ofl/geist/Geist%5Bwght%5D.ttf",
+    "mono": "https://raw.githubusercontent.com/google/fonts/main/ofl/geistmono/GeistMono%5Bwght%5D.ttf",
+}
+
+
+def load_portfolio_fonts() -> tuple[str, str]:
+    """Load the same Geist families used by the portfolio, with safe fallbacks."""
+    cache = Path(tempfile.gettempdir()) / "dokkev-actuator-figure-fonts"
+    cache.mkdir(parents=True, exist_ok=True)
+    families: dict[str, str] = {}
+
+    for role, url in FONT_URLS.items():
+        font_path = cache / f"Geist{'Mono' if role == 'mono' else ''}.ttf"
+        try:
+            if not font_path.exists():
+                urlretrieve(url, font_path)
+            fontManager.addfont(font_path)
+            families[role] = FontProperties(fname=font_path).get_name()
+        except (OSError, ValueError):
+            families[role] = "DejaVu Sans Mono" if role == "mono" else "DejaVu Sans"
+
+    return families["sans"], families["mono"]
 
 
 def configure_style() -> None:
+    global FONT_SANS, FONT_MONO
+    FONT_SANS, FONT_MONO = load_portfolio_fonts()
     mpl.rcParams.update(
         {
             "figure.facecolor": PAPER,
             "axes.facecolor": PAPER,
             "savefig.facecolor": PAPER,
+            "savefig.edgecolor": PAPER,
             "axes.edgecolor": INK,
             "axes.labelcolor": INK,
             "axes.titlecolor": INK,
+            "axes.titlelocation": "left",
+            "axes.titlepad": 16,
+            "axes.titlesize": 13,
+            "axes.titleweight": 600,
+            "axes.labelsize": 9,
+            "axes.linewidth": 0.8,
             "text.color": INK,
             "xtick.color": MUTED,
             "ytick.color": MUTED,
+            "xtick.labelsize": 8,
+            "ytick.labelsize": 8,
+            "xtick.major.size": 3.5,
+            "ytick.major.size": 3.5,
+            "xtick.major.width": 0.7,
+            "ytick.major.width": 0.7,
             "grid.color": GRID,
-            "grid.linewidth": 0.7,
-            "font.family": "DejaVu Sans",
-            "font.size": 10,
+            "grid.linewidth": 0.6,
+            "grid.alpha": 0.75,
+            "font.family": [FONT_SANS, "DejaVu Sans"],
+            "font.size": 9,
+            "legend.fontsize": 8,
+            "legend.labelspacing": 0.45,
+            "legend.handlelength": 2.2,
+            "legend.columnspacing": 1.4,
+            "lines.solid_capstyle": "round",
             "axes.spines.top": False,
             "axes.spines.right": False,
+            "figure.constrained_layout.h_pad": 0.08,
+            "figure.constrained_layout.w_pad": 0.08,
         }
     )
 
 
 def finish(fig: plt.Figure, filename: str) -> None:
+    for ax in fig.axes:
+        ax.title.set_fontfamily([FONT_SANS, "DejaVu Sans"])
+        ax.title.set_fontweight(600)
+        ax.xaxis.label.set_fontfamily([FONT_MONO, "DejaVu Sans"])
+        ax.yaxis.label.set_fontfamily([FONT_MONO, "DejaVu Sans"])
+        ax.xaxis.get_offset_text().set_fontfamily([FONT_MONO, "DejaVu Sans"])
+        ax.yaxis.get_offset_text().set_fontfamily([FONT_MONO, "DejaVu Sans"])
+        for tick in (*ax.get_xticklabels(), *ax.get_yticklabels()):
+            tick.set_fontfamily([FONT_MONO, "DejaVu Sans"])
+        legend = ax.get_legend()
+        if legend is not None:
+            for text in legend.get_texts():
+                text.set_fontfamily([FONT_MONO, "DejaVu Sans"])
+        for spine in ax.spines.values():
+            spine.set_linewidth(0.8)
+            spine.set_color(INK)
+    if fig._suptitle is not None:
+        fig._suptitle.set_fontfamily([FONT_MONO, "DejaVu Sans"])
+
     OUTPUT.mkdir(parents=True, exist_ok=True)
-    fig.savefig(OUTPUT / filename, dpi=220, bbox_inches="tight", pad_inches=0.18)
+    fig.savefig(OUTPUT / filename, dpi=220, bbox_inches="tight", pad_inches=0.22)
     plt.close(fig)
 
 
@@ -80,7 +160,6 @@ def torque_ripple_model() -> None:
     ax.set(xlim=(0, 120), xlabel="Mechanical angle [deg]", ylabel="Torque error [Nm]")
     ax.grid(True)
     ax.legend(frameon=False, ncol=3, loc="upper right")
-    fig.suptitle("ILLUSTRATIVE PMSM RIPPLE MODEL", x=0.01, ha="left", fontsize=11, fontweight="bold")
     finish(fig, "05-torque-ripple-model.png")
 
 
@@ -216,12 +295,19 @@ def cartesian_error_propagation() -> None:
     offset_mm = 1000.0 * (points - nominal)
     magnitude = np.linalg.norm(offset_mm, axis=1)
 
-    fig, ax = plt.subplots(figsize=(7.4, 6.2), constrained_layout=True)
-    scatter = ax.scatter(offset_mm[:, 0], offset_mm[:, 1], c=magnitude, cmap="magma", s=7, alpha=0.65)
+    fig, ax = plt.subplots(figsize=(9.2, 3.3), constrained_layout=True)
+    scatter = ax.scatter(
+        offset_mm[:, 1],
+        offset_mm[:, 0],
+        c=magnitude,
+        cmap=PORTFOLIO_CMAP,
+        s=8,
+        alpha=0.72,
+    )
     ax.scatter([0], [0], marker="+", s=130, linewidth=2.0, color=TEAL, label="nominal endpoint")
     ax.set(
-        xlabel="Endpoint x error [mm]",
-        ylabel="Endpoint y error [mm]",
+        xlabel="Endpoint y error [mm]",
+        ylabel="Endpoint x error [mm]",
         title="Small joint lost motion becomes a pose-dependent endpoint error cloud",
         aspect="equal",
     )
@@ -310,7 +396,7 @@ def efficiency_map() -> None:
 
     fig, ax = plt.subplots(figsize=(9.2, 6.0), constrained_layout=True)
     levels = np.arange(0.1, 1.0, 0.1)
-    contour = ax.contourf(speed, torque, efficiency, levels=levels, cmap="YlOrBr")
+    contour = ax.contourf(speed, torque, efficiency, levels=levels, cmap=EFFICIENCY_CMAP)
     lines = ax.contour(speed, torque, efficiency, levels=(0.5, 0.7, 0.8, 0.9), colors=INK, linewidths=0.65)
     ax.clabel(lines, inline=True, fontsize=8, fmt=lambda value: f"{value:.0%}")
     phase = np.linspace(0.0, 2.0 * np.pi, 500)
