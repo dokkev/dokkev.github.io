@@ -250,7 +250,7 @@ title: "[로봇 하드웨어 00] - 제목"
 description: Physical AI 관점에서 본 다관절 로봇 하드웨어 - 주제
 layout: distill
 published: true
-hidden: true
+hidden: false
 date: YYYY-MM-DD 00:00:00
 permalink: /hardware00-kr/
 series: "[EN/KR] Robot Hardware"
