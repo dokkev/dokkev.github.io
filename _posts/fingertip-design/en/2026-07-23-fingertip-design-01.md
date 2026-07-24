@@ -4,7 +4,7 @@ description: Why the contact behavior of a robotic fingertip cannot be specified
 layout: distill
 editorial: true
 published: true
-hidden: false
+hidden: true
 date: 2026-07-23 08:01:00
 permalink: /fingertip-design/01-not-a-rubber-cap/
 img: assets/img/plato/hybrid.png

@@ -4,7 +4,7 @@ description: Nearly incompressible elastomers expose volumetric locking, unstabl
 layout: distill
 editorial: true
 published: true
-hidden: false
+hidden: true
 date: 2026-07-23 08:04:00
 permalink: /fingertip-design/04-silicone-fem/
 img: assets/img/fingertip-design/medium-mixed-t3-mesh.webp

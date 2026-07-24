@@ -4,7 +4,7 @@ description: The no-void external-contact baseline establishes a trustworthy def
 layout: distill
 editorial: true
 published: true
-hidden: false
+hidden: true
 date: 2026-07-23 08:06:00
 permalink: /fingertip-design/06-solid-fingertip/
 img: assets/img/fingertip-design/solid-indentation-1p5mm.webp

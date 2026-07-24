@@ -4,7 +4,7 @@ description: Contact validation requires active-set stability, force closure, po
 layout: distill
 editorial: true
 published: true
-hidden: false
+hidden: true
 date: 2026-07-23 08:05:00
 permalink: /fingertip-design/05-contact-solver/
 img: assets/img/fingertip-design/solid-indentation-1p5mm.webp

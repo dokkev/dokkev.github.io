@@ -4,7 +4,7 @@ description: CODTM measures how contact location and indentation become paired s
 layout: distill
 editorial: true
 published: true
-hidden: false
+hidden: true
 date: 2026-07-23 08:07:00
 permalink: /fingertip-design/07-contact-location/
 img: assets/img/fingertip-design/codtm-overview.webp

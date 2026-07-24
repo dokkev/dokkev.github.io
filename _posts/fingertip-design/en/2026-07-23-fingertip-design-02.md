@@ -4,7 +4,7 @@ description: A half-ellipse pad, a bonded plate, a rigid stem, and two clearance
 layout: distill
 editorial: true
 published: true
-hidden: false
+hidden: true
 date: 2026-07-23 08:02:00
 permalink: /fingertip-design/02-parametric-fingertip/
 img: assets/img/fingertip-design/geometry-four-cases.webp

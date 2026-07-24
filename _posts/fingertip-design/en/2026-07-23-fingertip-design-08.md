@@ -4,7 +4,7 @@ description: An internal void changes a single-domain deformation problem into z
 layout: distill
 editorial: true
 published: true
-hidden: false
+hidden: true
 date: 2026-07-23 08:08:00
 permalink: /fingertip-design/08-added-a-hole/
 img: assets/img/fingertip-design/geometry-four-cases.webp

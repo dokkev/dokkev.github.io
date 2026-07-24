@@ -4,7 +4,7 @@ description: A useful objective must combine noise-aware observability with cont
 layout: distill
 editorial: true
 published: true
-hidden: false
+hidden: true
 date: 2026-07-23 08:10:00
 permalink: /fingertip-design/10-optimization-objective/
 img: assets/img/fingertip-design/codtm-overview.webp

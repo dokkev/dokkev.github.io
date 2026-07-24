@@ -4,7 +4,7 @@ description: Why a bonded dorsal plate and internal stem change the deformation 
 layout: distill
 editorial: true
 published: true
-hidden: false
+hidden: true
 date: 2026-07-23 08:03:00
 permalink: /fingertip-design/03-deformation-path/
 img: assets/img/fingertip-design/displacement-vector-atlas.webp

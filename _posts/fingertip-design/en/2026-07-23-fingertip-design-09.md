@@ -4,7 +4,7 @@ description: Distinct FEM deformation fields become a tactile signal only after 
 layout: distill
 editorial: true
 published: true
-hidden: false
+hidden: true
 date: 2026-07-23 08:09:00
 permalink: /fingertip-design/09-mechanics-vs-sensing/
 img: assets/img/fingertip-design/location-distance-matrices.webp
