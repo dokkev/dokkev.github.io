@@ -14,18 +14,18 @@ tags: [Hardware Development]
 
 Previous Post:
 
-- [What is CAN?](/can01/)
+- [What Is CAN?](/can01/)
 
-In the previous post, we discussed the basics of CAN bus and its applications in robotics. In this post, we will learn how to set up SocketCAN on Ubuntu computers to set up CAN communication.
+The previous post introduced CAN and its use in robotic systems. This post shows how to configure a USB-to-CAN adapter as a SocketCAN interface on Ubuntu.
 
 ## Hardware
 
-I have tested the following USB-CAN adapters with SocketCAN on Ubuntu 22.04 with 6.8.0-48-generic kerneal and 5.15.129-rt67 real-time kernel.
+I tested the following USB-to-CAN adapters with SocketCAN on Ubuntu 22.04 using the 6.8.0-48-generic kernel and a 5.15.129-rt67 real-time kernel:
 
 - [Makerbase CANable 2.0 USB to CAN adapter](https://makerbase3d.com/product/makerbase-canable-v2/?srsltid=AfmBOoo8SgfMBKoPkINomkXkyG8g6XlvwngQso5DAq0qLKPFEoTqkcba)
 - [USB CAN Converter Module](https://www.amazon.com/dp/B07P9JGXXB?ref=ppx_yo2ov_dt_b_product_details&th=1)
 - [DSD TECH USB to CAN Adapter](https://a.co/d/6rcsDxE)
-- [PCAN-USB FD](https://www.peak-system.com/PCAN-USB-FD.365.0.html?&L=1) - make sure to compile the driver with `netdev` option. The default is `chardev` which is not compatible with SocketCAN.
+- [PCAN-USB FD](https://www.peak-system.com/PCAN-USB-FD.365.0.html?&L=1) — normally supported by the mainline `peak_usb` SocketCAN driver; PEAK's optional out-of-tree driver must be built in `netdev` mode for SocketCAN
 
 ## Setting up SocketCAN
 
@@ -35,9 +35,9 @@ Install [`can-utils`](https://github.com/linux-can/can-utils) by running:
 sudo apt install can-utils
 ```
 
-The `can-utils` repository allows user to debug and test the CAN bus via terminal commands.
+The `can-utils` package provides command-line tools for configuring, monitoring, and testing CAN interfaces.
 
-Plug the USB-CAN device into the computer, and you can check the device by running:
+Connect the USB-to-CAN adapter and confirm that the USB device is visible:
 
 ```
 lsusb
@@ -49,10 +49,10 @@ lsusb
     </div>
 </div>
 <div class="caption">
-    Output of `lsusb` command. You can see that I have two USB-CAN devices connected to my computer.
+    The `lsusb` output shows two connected USB-to-CAN adapters.
 </div>
 
-Based on the what frimware in installed in our USB-CAN adapter, we may need to manually load your device. Since SocketCAN is network interface, we can use `ip` command to check the status of CAN bus if the firmware is `Candlelight` assuming it's a [CANable](https://canable.io/) device. Run the following command:
+The next step depends on the firmware running on the adapter. With `candleLight` firmware, a compatible CANable device appears directly as a native SocketCAN network interface through the Linux `gs_usb` driver. Check the available interfaces with:
 
 ```
 ip link ls
@@ -64,30 +64,28 @@ ip link ls
     </div>
 </div>
 <div class="caption">
-    Output of `ip link ls` command. You can see that my SockteCAN device `can0` is at `DOWN` state. Since my PCAN-USB FD driver is compiled with `chardev`, you won't see the PCAN device in the network interface.
+    Output of `ip link ls`. The SocketCAN interface `can0` is in the `DOWN` state. A PCAN device using the proprietary `chardev` interface does not appear as a SocketCAN network interface.
 </div>
-If you see your CAN bus like `can0`, follow the Option 1.
 
-If you don't see your can bus like `can0`, you have to manually load it by `slcan` (CAN over serial line interfaces) by following the Option 2.
+If an interface such as `can0` is present, continue with Option 1. If the adapter instead appears as a serial device such as `/dev/ttyACM0`, attach it through `slcan` as described in Option 2.
 
-### Changing USB-CAN device firmware
+### Changing USB-to-CAN Adapter Firmware
 
-If your device is compatible with CANable firmware, you can [change the frimware](https://canable.io/updater/) to either `candlelight` or `slcan`.
-with `candlelight` the usb-can device shows up as a native CAN device with SocketCAN and has higher performance than `slcan`. However, `candlelight` frimware is not compatible with CAN-FD.
+If the adapter is compatible with CANable firmware, the [CANable updater](https://canable.io/updater/) can switch between `candleLight` and `slcan`.
 
-Most CANable devices come with `slcan` firmware, and `slcan enumerates as a serial device with CAN-FD support.
+With `candleLight`, the adapter appears as a native SocketCAN interface and avoids the serial-line overhead of `slcan`. CAN FD support is firmware- and hardware-specific: the CANable 2.0 documentation currently notes that its `candleLight` build does not support FD frames, while its stock `slcan` firmware provides initial CAN FD support. Verify the exact adapter and firmware version before enabling CAN FD.
 
-### Option 1: Using `candlelight` to set up CAN bus
+### Option 1: Configure a Native `candleLight` Interface
 
-To set the CAN bus to `UP` state with 500 kpbs baudrate, run:
+To configure `can0` for 500 kbit/s and bring it up:
 
 ```
-sudo ip link set up can0 type can bitrate 500000
+sudo ip link set can0 up type can bitrate 500000
 ```
 
-And you can adjust the baudrate by changing the `bitrate` argument.
+Change the `bitrate` value to match every other node on the bus.
 
-Run `ip link ls` to check the status of the CAN bus.
+Use `ip -details -statistics link show can0` to verify the state, configured bit rate, and error counters.
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
@@ -95,25 +93,24 @@ Run `ip link ls` to check the status of the CAN bus.
     </div>
 </div>
 <div class="caption">
-    Output of `ip link ls` command. You can see that my SockteCAN device `can0` is at `UP` state.
+    The SocketCAN interface `can0` is in the `UP` state.
 </div>
 
-### Option 2: Using `slcan` to set up CAN bus
+### Option 2: Attach an `slcan` Serial Interface
 
-check the USB port number of the USB-CAN device by running:
+Find the serial device created by the adapter:
 
 ```
 ls /dev/ttyACM*
 ```
 
-Then your device may show up as `/dev/ttyACMx`. While x is an arbitrary number depending on other USB devices connected to your computer.
-You can run the following command to load the device (make sure to replace `x` with the number you found):
+The adapter may appear as `/dev/ttyACMx`, where `x` depends on the order in which USB devices were detected. Replace `x` in the following command with the correct number:
 
 ```
 sudo slcand -o -c -s6 /dev/ttyACMx can0
 ```
 
-`-s6` argument determines the baudrate of the CAN bus. The options are:
+The `-s6` argument selects the CAN bit rate. Common `slcan` values are:
 
 ```
 -s0 = 10k
@@ -127,12 +124,12 @@ sudo slcand -o -c -s6 /dev/ttyACMx can0
 -s8 = 1M
 ```
 
-Then you can check the status of the CAN bus from `ip link ls` command. You should see the `can0` device is at `DOWN` state.
+After `slcand` starts, check `ip link ls`. The new `can0` interface should initially be in the `DOWN` state.
 
-In order to read and write to CAN bus, you have to bring the `can0` device `UP` state by running:
+Bring the interface up before sending or receiving frames:
 
 ```
-sudo ifconfig can0 up
+sudo ip link set can0 up
 ```
 
 <div class="row">
@@ -141,67 +138,72 @@ sudo ifconfig can0 up
     </div>
 </div>
 <div class="caption">
-    Output of `ip link ls` command. You can see that my SockteCAN device `can0` is at `UP` state.
+    The SocketCAN interface `can0` is in the `UP` state.
 </div>
 
-> IMPORTANT: If you unplug the USB-CAN device and plug it back in, your USB port number may change (x in `/dev/ttyACMx`). To avoid checking the USB port number every time create a symlink in `/dev` using `/etc/udev/rules`. To do that you need to know your vendor and product ID of the USB-CAN device.
+> **Important:** After reconnecting the adapter, its `/dev/ttyACMx` number may change. A udev rule can assign a stable symlink based on the device vendor and product IDs.
 
-#### Setting up udev rules to create symlink for `slcan`
+#### Create a Stable udev Symlink for `slcan`
 
-I am testing this with Makerbase CANable 2.0 USB to CAN adapter.
-Run the following command to get the vendor and product ID of the USB-CAN device:
+The following example uses a Makerbase CANable 2.0. Find the adapter's vendor and product IDs:
 
 ```
 lsusb
 ```
 
-then you will see the output like:
+A matching line looks similar to:
 
 ```
 ==> Bus 001 Device 042: ID 16d0:117e MCS CANable2 b158aa7 GitHub - normaldotcom/canable2-fw
 ```
 
-16d0 is your ATTRS{idVendor}, and 117e is your ATTRS{idProduct}
+Here, `16d0` is `ATTRS{idVendor}` and `117e` is `ATTRS{idProduct}`.
 
-Now create a new rule by this command:
+Create a udev rule:
 
 ```
 sudo nano /etc/udev/rules.d/99-usb-serial.rules
 ```
 
-use 99 ~ 90 to prevent override
-
-and add the following to the rules file:
+Add the following line, substituting the IDs reported by your adapter:
 
 ```
 ACTION=="add", SUBSYSTEM=="tty", ATTRS{idVendor}=="16d0", ATTRS{idProduct}=="117e", SYMLINK+="ttycan"
 ```
 
-ctrl + x and y to save and exit. `ttycan` can be replaced your desired symlink name (for me, SYMLINK name had to be all lowercase in order to work).
+Save the file and exit. Replace `ttycan` with another lowercase symlink name if desired.
 
-reload the udev/rules.d by:
-`sudo udevadm control --reload-rules`
+Reload the rules:
 
-Unplug and plug back in the USB-CAN module just in case, and run:
+```
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+```
+
+Reconnect the adapter and inspect the symlink:
 
 ```
 ls -l /dev/ttycan
 ```
 
-Then it should output:
+The output should resemble:
 
 ```
 ==> lrwxrwxrwx 1 root root 7 Sep 12 14:01 /dev/ttycan -> ttyACM5
 ```
 
-You can see that ttycan is linked to ttyACMx
-Lastly, compare `udevadm info -a /dev/ttyACM5 and udevadm info -a /dev/ttycan` to make sure they output the same result.
+This shows that `/dev/ttycan` points to the detected `/dev/ttyACMx` device. If needed, compare `udevadm info -a /dev/ttyACM5` with `udevadm info -a /dev/ttycan` to confirm that both paths resolve to the same hardware.
 
-You can now use `/dev/ttycan` instead of `/dev/ttyACMx` in the `slcand` command.
+Use `/dev/ttycan` instead of a changing `/dev/ttyACMx` path:
 
 ```
-sudo slcand -o -c -s6 /dev/ttycan can
-sudo ip link set up can0 type can
+sudo slcand -o -c -s6 /dev/ttycan can0
+sudo ip link set can0 up
 ```
 
-Netx Post: [Communicating to ESP32 with SocketCAN](/can03/)
+## References
+
+- [Linux kernel documentation: SocketCAN](https://www.kernel.org/doc/html/latest/networking/can.html)
+- [CANable documentation: SocketCAN and firmware options](https://canable.io/getting-started.html)
+
+Next Post: [Communicating with an ESP32 Using SocketCAN](/can03/)
