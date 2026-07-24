@@ -6,6 +6,7 @@ permalink: /projects/firefighter/
 img: assets/img/adroit/fire.jpg
 importance: 11
 category: robotics
+project_group: earlier
 related_publications: false
 ---
 

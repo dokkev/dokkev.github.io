@@ -6,61 +6,49 @@ description: Selected robotic systems, mechanisms, and controller-facing hardwar
 kicker: Selected systems / embodied intelligence
 nav: true
 nav_order: 3
-display_categories: [robotics, other]
-horizontal: false
+project_sections:
+  - key: research
+    label: Current work
+    title: Research Systems
+    description: Current research platforms that integrate mechanism design, sensing, control, and human–robot interaction.
+    grid_class: row-cols-1 row-cols-md-2 project-grid--featured
+  - key: technical
+    label: Shared foundations
+    title: Technical Writing & Infrastructure
+    description: Technical series and reusable infrastructure for building, integrating, and controlling robot systems.
+    grid_class: row-cols-1 row-cols-sm-2 row-cols-lg-3 project-grid--technical
+  - key: earlier
+    label: Foundations
+    title: Earlier Projects
+    description: Coursework and early prototypes that trace the path into robotic systems research.
+    grid_class: row-cols-1 row-cols-sm-2 row-cols-lg-4 project-grid--archive
 ---
 
 <!-- pages/projects.md -->
 <div class="projects">
-{% if site.enable_project_categories and page.display_categories %}
-  <!-- Display categorized projects -->
-  {% for category in page.display_categories %}
-  <a id="{{ category }}" href=".#{{ category }}">
-    <h2 class="category">{{ category }}</h2>
-  </a>
-  {% assign categorized_projects = site.projects | where: "category", category %}
-  {% assign sorted_projects = categorized_projects | sort: "importance" %}
-  <!-- Generate cards for each project -->
-  {% if page.horizontal %}
-  <div class="container">
-    <div class="row row-cols-1 row-cols-md-2">
-    {% for project in sorted_projects %}
-      {% include projects_horizontal.liquid %}
-    {% endfor %}
-    </div>
-  </div>
-  {% else %}
-  <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 project-grid">
+  <p class="projects-intro">
+    A layered view of my work—from current research systems, through the technical foundations that support them, to the earlier projects that shaped my practice.
+  </p>
+
+  {% for section in page.project_sections %}
+    {% assign section_projects = site.projects | where: "project_group", section.key %}
+    {% assign sorted_projects = section_projects | sort: "importance" %}
+    {% if sorted_projects.size > 0 %}
+    <section class="project-section project-section--{{ section.key }}" aria-labelledby="projects-{{ section.key }}">
+      <header class="project-section__header">
+        <div>
+          <p class="project-section__label">{{ section.label }}</p>
+          <h2 id="projects-{{ section.key }}" class="project-section__title">{{ section.title }}</h2>
+        </div>
+        <p class="project-section__description">{{ section.description }}</p>
+      </header>
+
+      <div class="row project-grid {{ section.grid_class }}">
     {% for project in sorted_projects %}
       {% include projects.liquid %}
     {% endfor %}
-  </div>
-  {% endif %}
+      </div>
+    </section>
+    {% endif %}
   {% endfor %}
-
-{% else %}
-
-<!-- Display projects without categories -->
-
-{% assign sorted_projects = site.projects | sort: "importance" %}
-
-  <!-- Generate cards for each project -->
-
-{% if page.horizontal %}
-
-  <div class="container">
-    <div class="row row-cols-1 row-cols-md-2">
-    {% for project in sorted_projects %}
-      {% include projects_horizontal.liquid %}
-    {% endfor %}
-    </div>
-  </div>
-  {% else %}
-  <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 project-grid">
-    {% for project in sorted_projects %}
-      {% include projects.liquid %}
-    {% endfor %}
-  </div>
-  {% endif %}
-{% endif %}
 </div>

@@ -5,6 +5,7 @@ description: Baxter stacks tower of cups with MoveIt, AprilTag, and OpenCV
 img: assets/img/baxter/fasttower.gif
 importance: 13
 category: robotics
+project_group: earlier
 related_publications: false
 ---
 

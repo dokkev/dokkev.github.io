@@ -296,18 +296,57 @@ figcaption {
   counter-reset: project-card;
 }
 
-.page-key-projects .projects h2.category {
+.page-key-projects .projects-intro {
+  color: var(--global-text-color-light);
+  font-family: var(--font-serif);
+  font-size: clamp(1.05rem, 1.8vw, 1.3rem);
+  line-height: 1.65;
+  margin: 0;
+  max-width: 46rem;
+}
+
+.page-key-projects .project-section {
+  margin-top: 4.75rem;
+}
+
+.page-key-projects .project-section + .project-section {
+  margin-top: 5.75rem;
+}
+
+.page-key-projects .project-section__header {
   border-top: 1px solid var(--global-text-color);
-  border-bottom: 0;
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: minmax(0, 1.1fr) minmax(16rem, 0.9fr);
+  margin-bottom: 1.7rem;
+  padding-top: 0.8rem;
+}
+
+.page-key-projects .project-section__label {
   color: var(--global-theme-color);
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.64rem;
   font-weight: 600;
   letter-spacing: 0.1em;
-  margin: 4rem 0 1.5rem;
-  padding-top: 0.75rem;
-  text-align: left;
+  margin: 0 0 0.45rem;
   text-transform: uppercase;
+}
+
+.page-key-projects .project-section__title {
+  font-size: clamp(1.55rem, 3vw, 2.35rem);
+  letter-spacing: -0.045em;
+  line-height: 1.05;
+  margin: 0;
+}
+
+.page-key-projects .project-section__description {
+  align-self: end;
+  color: var(--global-text-color-light);
+  font-family: var(--font-serif);
+  font-size: 0.86rem;
+  line-height: 1.55;
+  margin: 0 0 0.1rem;
+  max-width: 32rem;
 }
 
 .page-key-projects .projects .project-grid {
@@ -373,6 +412,23 @@ figcaption {
 .page-key-projects .projects .github-icon {
   font-family: var(--font-mono);
   font-size: 0.72rem;
+}
+
+.page-key-projects .projects .project-grid--featured .card-img-top {
+  aspect-ratio: 16 / 10;
+}
+
+.page-key-projects .projects .project-grid--featured .card-body {
+  min-height: 8.5rem;
+}
+
+.page-key-projects .projects .project-grid--featured .card-title {
+  font-size: clamp(1.25rem, 2.4vw, 1.7rem);
+}
+
+.page-key-projects .projects .project-grid--featured .card-text {
+  font-size: 0.92rem;
+  max-width: 34rem;
 }
 
 // Publications
@@ -902,6 +958,22 @@ footer.sticky-bottom a {
   .blog-index-main .featured-posts .col {
     max-width: none;
     width: 100%;
+  }
+
+  .page-key-projects .project-section {
+    margin-top: 3.75rem;
+  }
+
+  .page-key-projects .project-section + .project-section {
+    margin-top: 4.5rem;
+  }
+
+  .page-key-projects .project-section__header {
+    display: block;
+  }
+
+  .page-key-projects .project-section__description {
+    margin-top: 0.85rem;
   }
 
   .page-key-projects .projects .project-grid {

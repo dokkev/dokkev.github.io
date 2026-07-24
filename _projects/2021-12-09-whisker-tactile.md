@@ -5,6 +5,7 @@ description: active vibrissal sensing to classify concave and convex objects usi
 img: assets/img/whisker/thumbnail.gif
 importance: 10
 category: other
+project_group: earlier
 related_publications: false
 ---
 
