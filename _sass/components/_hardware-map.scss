@@ -1,0 +1,198 @@
+.hardware-map {
+  border: 1px solid var(--global-text-color);
+  margin: 2rem 0 2.5rem;
+}
+
+.hardware-map__tabs {
+  display: grid;
+  grid-template-columns: repeat(var(--hardware-map-columns, 4), minmax(0, 1fr));
+}
+
+.hardware-map__tab {
+  align-items: center;
+  background: color-mix(in srgb, var(--global-bg-color) 92%, transparent);
+  border: 0;
+  border-bottom: 1px solid var(--global-divider-color);
+  border-right: 1px solid var(--global-divider-color);
+  color: var(--global-text-color);
+  cursor: pointer;
+  display: grid;
+  font: inherit;
+  gap: 0.65rem;
+  grid-template-columns: 1.3rem minmax(0, 1fr);
+  min-height: 5rem;
+  padding: 0.8rem;
+  text-align: left;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.hardware-map__tab--row-end {
+  border-right: 0;
+}
+
+.hardware-map .hardware-map__tab.active,
+.hardware-map .hardware-map__tab[aria-selected="true"] {
+  background: #111;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff;
+}
+
+.hardware-map .hardware-map__tab.active *,
+.hardware-map .hardware-map__tab[aria-selected="true"] * {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff;
+}
+
+.hardware-map__index,
+.hardware-map__tab small {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.04em;
+}
+
+.hardware-map__tab small {
+  display: block;
+  margin-top: 0.2rem;
+  opacity: 0.72;
+  text-transform: uppercase;
+}
+
+.hardware-map__preview {
+  background-image:
+    linear-gradient(var(--editorial-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--editorial-grid) 1px, transparent 1px);
+  background-size: 3rem 3rem;
+  margin: 0;
+  padding: 1.5rem;
+}
+
+.hardware-map__preview img {
+  background: #fff;
+  border: 1px solid var(--global-divider-color);
+  display: block;
+  height: 28rem;
+  object-fit: contain;
+  width: 100%;
+}
+
+.hardware-map__caption {
+  color: var(--global-text-color-light);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  padding-top: 0.9rem;
+  text-align: left;
+}
+
+.hardware-map--split {
+  background-color: var(--global-bg-color);
+  background-image:
+    linear-gradient(var(--global-divider-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--global-divider-color) 1px, transparent 1px);
+  background-size: 2.5rem 2.5rem;
+  display: grid;
+  grid-template-columns: minmax(13rem, 0.34fr) minmax(0, 1fr);
+  min-height: 27rem;
+}
+
+.hardware-map--split .hardware-map__tabs {
+  border-right: 1px solid var(--global-text-color);
+  display: flex;
+  flex-direction: column;
+}
+
+.hardware-map--split .hardware-map__tab {
+  border-right: 0;
+  gap: 1rem;
+  grid-template-columns: 1.5rem 1fr;
+  min-height: 6.2rem;
+  padding: 1rem;
+  width: 100%;
+}
+
+.hardware-map--split .hardware-map__preview {
+  color: var(--global-text-color);
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-width: 0;
+  padding: 2rem;
+  position: relative;
+}
+
+.hardware-map--split a.hardware-map__preview:hover {
+  color: var(--global-theme-color);
+  text-decoration: none;
+}
+
+.hardware-map--split .hardware-map__preview img {
+  align-self: center;
+  background: var(--global-bg-color);
+  height: 20rem;
+  justify-self: center;
+}
+
+.hardware-map--split .hardware-map__caption {
+  color: inherit;
+  font-family: var(--font-serif);
+  font-size: 0.86rem;
+  padding-top: 1rem;
+}
+
+.hardware-map__link {
+  bottom: 2rem;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  position: absolute;
+  right: 2rem;
+  text-transform: uppercase;
+}
+
+@media (max-width: 767px) {
+  .hardware-map__tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hardware-map__tab--row-end {
+    border-right: 1px solid var(--global-divider-color);
+  }
+
+  .hardware-map__tab:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .hardware-map__preview {
+    padding: 1rem;
+  }
+
+  .hardware-map__preview img {
+    height: 18rem;
+  }
+
+  .hardware-map--split {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .hardware-map--split .hardware-map__tabs {
+    border-bottom: 1px solid var(--global-text-color);
+    border-right: 0;
+  }
+
+  .hardware-map--split .hardware-map__tab {
+    min-height: 4.5rem;
+  }
+
+  .hardware-map--split .hardware-map__preview {
+    padding: 1rem;
+  }
+
+  .hardware-map--split .hardware-map__preview img {
+    height: 15rem;
+  }
+
+  .hardware-map__link {
+    bottom: 1rem;
+    right: 1rem;
+  }
+}
