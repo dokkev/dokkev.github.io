@@ -207,3 +207,97 @@
 .highlight .il {
   color: #009999;
 } /* Literal.Number.Integer.Long */
+
+/* VS Code Light+ */
+.highlight .c,
+.highlight .cm,
+.highlight .c1,
+.highlight .cs {
+  color: #008000;
+  font-style: italic;
+}
+.highlight .cp {
+  color: #0000ff;
+  font-weight: normal;
+  font-style: normal;
+}
+.highlight .k,
+.highlight .kc,
+.highlight .kd,
+.highlight .kn,
+.highlight .kp,
+.highlight .kr {
+  color: #0000ff;
+  font-weight: normal;
+}
+.highlight .o,
+.highlight .ow {
+  color: #000000;
+  font-weight: normal;
+}
+.highlight .m,
+.highlight .mf,
+.highlight .mh,
+.highlight .mi,
+.highlight .mo,
+.highlight .il {
+  color: #098658;
+}
+.highlight .s,
+.highlight .sb,
+.highlight .sc,
+.highlight .sd,
+.highlight .s1,
+.highlight .s2,
+.highlight .se,
+.highlight .sh,
+.highlight .si,
+.highlight .sx,
+.highlight .ss {
+  color: #a31515;
+}
+.highlight .sr {
+  color: #811f3f;
+}
+.highlight .na,
+.highlight .nd,
+.highlight .nf,
+.highlight .nl {
+  color: #795e26;
+  font-weight: normal;
+}
+.highlight .nb,
+.highlight .bp,
+.highlight .nc,
+.highlight .nn {
+  color: #267f99;
+  font-weight: normal;
+}
+.highlight .no,
+.highlight .nv,
+.highlight .vc,
+.highlight .vg,
+.highlight .vi {
+  color: #001080;
+}
+.highlight .ne {
+  color: #a31515;
+  font-weight: normal;
+}
+.highlight .nt {
+  color: #800000;
+}
+.highlight .err,
+.highlight .gr,
+.highlight .gt {
+  color: #cd3131;
+  background-color: transparent;
+}
+.highlight .g,
+.highlight .l,
+.highlight .n,
+.highlight .p,
+.highlight .w,
+.highlight .x {
+  color: #000000;
+}

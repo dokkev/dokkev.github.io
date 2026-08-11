@@ -6,7 +6,8 @@
 
 :root {
   --global-bg-color: #f3efe6;
-  --global-code-bg-color: #e9e3d8;
+  --global-code-bg-color: #ffffff;
+  --global-code-text-color: #000000;
   --global-text-color: #171612;
   --global-text-color-light: #6d6961;
   --global-theme-color: #ed4b2f;
@@ -76,7 +77,8 @@
 
 html[data-theme="dark"] {
   --global-bg-color: #191815;
-  --global-code-bg-color: #272520;
+  --global-code-bg-color: #1e1e1e;
+  --global-code-text-color: #d4d4d4;
   --global-text-color: #ece7de;
   --global-text-color-light: #aaa49a;
   --global-theme-color: #ff684b;

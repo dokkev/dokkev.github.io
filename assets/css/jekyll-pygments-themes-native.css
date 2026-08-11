@@ -230,3 +230,93 @@
 .highlight .il {
   color: #3677a9;
 } /* Literal.Number.Integer.Long */
+
+/* VS Code Dark+ */
+.highlight pre {
+  background-color: #1e1e1e;
+}
+.highlight .c,
+.highlight .cm,
+.highlight .c1,
+.highlight .cs {
+  color: #6a9955;
+  font-style: italic;
+}
+.highlight .cp {
+  color: #c586c0;
+  font-weight: normal;
+}
+.highlight .k,
+.highlight .kc,
+.highlight .kd,
+.highlight .kn,
+.highlight .kp,
+.highlight .kr,
+.highlight .kt,
+.highlight .nt,
+.highlight .ow {
+  color: #569cd6;
+  font-weight: normal;
+}
+.highlight .o,
+.highlight .g,
+.highlight .l,
+.highlight .n,
+.highlight .nx,
+.highlight .p,
+.highlight .py,
+.highlight .ni,
+.highlight .nl {
+  color: #d4d4d4;
+}
+.highlight .m,
+.highlight .mf,
+.highlight .mh,
+.highlight .mi,
+.highlight .mo,
+.highlight .il {
+  color: #b5cea8;
+}
+.highlight .s,
+.highlight .sb,
+.highlight .sc,
+.highlight .sd,
+.highlight .s1,
+.highlight .s2,
+.highlight .se,
+.highlight .sh,
+.highlight .si,
+.highlight .sx,
+.highlight .ss {
+  color: #ce9178;
+}
+.highlight .sr {
+  color: #d16969;
+}
+.highlight .na,
+.highlight .nv,
+.highlight .vc,
+.highlight .vg,
+.highlight .vi {
+  color: #9cdcfe;
+}
+.highlight .nb,
+.highlight .bp,
+.highlight .nc,
+.highlight .no,
+.highlight .ne,
+.highlight .nn {
+  color: #4ec9b0;
+  font-weight: normal;
+}
+.highlight .nd,
+.highlight .nf {
+  color: #dcdcaa;
+  font-weight: normal;
+}
+.highlight .err,
+.highlight .gr,
+.highlight .gt {
+  color: #f44747;
+  background-color: transparent;
+}
