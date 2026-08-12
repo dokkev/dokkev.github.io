@@ -3,7 +3,7 @@ layout: page
 title: projects
 permalink: /projects/
 description: Selected robotic systems, mechanisms, and controller-facing hardware.
-kicker: Selected systems / embodied intelligence
+hide_kicker: true
 nav: true
 nav_order: 3
 project_sections:

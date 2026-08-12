@@ -3,7 +3,7 @@ layout: page
 permalink: /publications/
 title: publications
 description: Publications are listed by category in reverse chronological order.
-kicker: Research record / peer-reviewed work
+hide_kicker: true
 nav: true
 nav_order: 2
 ---

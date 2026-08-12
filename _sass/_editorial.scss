@@ -604,17 +604,6 @@ figcaption {
   text-align: left;
 }
 
-.blog-index-main .header-bar::before {
-  color: var(--global-theme-color);
-  content: "RESEARCH NOTES / DK";
-  display: block;
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  margin-bottom: 1.25rem;
-}
-
 .blog-index-main .header-bar h1 {
   color: var(--global-text-color);
   font-size: clamp(3.6rem, 10vw, 7.25rem);
