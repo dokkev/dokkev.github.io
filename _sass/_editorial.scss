@@ -10,13 +10,13 @@
   --font-sans: "Geist", "Noto Sans KR", "Helvetica Neue", Arial, sans-serif;
   --font-serif: Georgia, "Noto Serif KR", "Times New Roman", serif;
   --font-mono: "Geist Mono", "SFMono-Regular", Consolas, monospace;
-  --editorial-grid: rgba(23, 22, 18, 0.035);
-  --editorial-surface: rgba(255, 255, 255, 0.22);
+  --editorial-grid: rgba(0, 0, 0, 0.035);
+  --editorial-surface: var(--global-card-bg-color);
 }
 
 html[data-theme="dark"] {
-  --editorial-grid: rgba(236, 231, 222, 0.035);
-  --editorial-surface: rgba(255, 255, 255, 0.035);
+  --editorial-grid: rgba(255, 255, 255, 0.035);
+  --editorial-surface: var(--global-card-bg-color);
 }
 
 html {
