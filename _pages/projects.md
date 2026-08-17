@@ -1,33 +1,33 @@
 ---
 layout: page
-title: projects
+title: Projects
 permalink: /projects/
-description: Selected robotic systems, mechanisms, and controller-facing hardware.
+description:
 hide_kicker: true
 nav: true
 nav_order: 3
 project_sections:
   - key: research
-    label: Current work
-    title: Research Systems
-    description: Current research platforms that integrate mechanism design, sensing, control, and human–robot interaction.
+    label: 
+    title: Research
+    description: 
     grid_class: row-cols-1 row-cols-md-2 project-grid--featured
   - key: technical
-    label: Shared foundations
-    title: Technical Writing & Infrastructure
-    description: Technical series and reusable infrastructure for building, integrating, and controlling robot systems.
+    label: 
+    title: DevLog
+    description: 
     grid_class: row-cols-1 row-cols-sm-2 row-cols-lg-3 project-grid--technical
   - key: earlier
-    label: Foundations
+    label: 
     title: Earlier Projects
-    description: Coursework and early prototypes that trace the path into robotic systems research.
+    description: 
     grid_class: row-cols-1 row-cols-sm-2 row-cols-lg-4 project-grid--archive
 ---
 
 <!-- pages/projects.md -->
 <div class="projects">
   <p class="projects-intro">
-    A layered view of my work—from current research systems, through the technical foundations that support them, to the earlier projects that shaped my practice.
+    <!-- A layered view of my work—from current research systems, through the technical foundations that support them, to the earlier projects that shaped my practice. -->
   </p>
 
   {% for section in page.project_sections %}

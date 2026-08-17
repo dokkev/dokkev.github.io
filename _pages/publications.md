@@ -1,8 +1,8 @@
 ---
 layout: page
 permalink: /publications/
-title: publications
-description: Publications are listed by category in reverse chronological order.
+title: Publications
+description: Peer-reviewed publications, preprints, and technical reports.
 hide_kicker: true
 nav: true
 nav_order: 2
