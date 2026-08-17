@@ -5,7 +5,7 @@ layout: distill
 published: true
 hidden: true
 date: 2026-08-17 00:00:00
-permalink: /blog/2026/what-is-contact-morphology-design/
+permalink: /whatiscmd/
 tags: [Robotics, Hardware Development, Contact Morphology Design]
 ---
 
