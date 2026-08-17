@@ -10,12 +10,10 @@
   --font-sans: "Geist", "Noto Sans KR", "Helvetica Neue", Arial, sans-serif;
   --font-serif: Georgia, "Noto Serif KR", "Times New Roman", serif;
   --font-mono: "Geist Mono", "SFMono-Regular", Consolas, monospace;
-  --editorial-grid: rgba(0, 0, 0, 0.035);
   --editorial-surface: var(--global-card-bg-color);
 }
 
 html[data-theme="dark"] {
-  --editorial-grid: rgba(255, 255, 255, 0.035);
   --editorial-surface: var(--global-card-bg-color);
 }
 
@@ -31,14 +29,6 @@ body {
   letter-spacing: -0.008em;
   line-height: 1.65;
   text-rendering: optimizeLegibility;
-}
-
-body {
-  background-image: linear-gradient(to right, var(--editorial-grid) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--editorial-grid) 1px, transparent 1px);
-  background-position: center top;
-  background-size: 96px 96px;
-  background-attachment: fixed;
 }
 
 ::selection {

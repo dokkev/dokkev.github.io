@@ -34,15 +34,15 @@
 
 .hardware-map .hardware-map__tab.active,
 .hardware-map .hardware-map__tab[aria-selected="true"] {
-  background: #111;
-  color: #fff !important;
-  -webkit-text-fill-color: #fff;
+  background: var(--global-theme-color);
+  color: var(--global-hover-text-color) !important;
+  -webkit-text-fill-color: var(--global-hover-text-color);
 }
 
 .hardware-map .hardware-map__tab.active *,
 .hardware-map .hardware-map__tab[aria-selected="true"] * {
-  color: #fff !important;
-  -webkit-text-fill-color: #fff;
+  color: var(--global-hover-text-color) !important;
+  -webkit-text-fill-color: var(--global-hover-text-color);
 }
 
 .hardware-map__index,
@@ -60,10 +60,6 @@
 }
 
 .hardware-map__preview {
-  background-image:
-    linear-gradient(var(--editorial-grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--editorial-grid) 1px, transparent 1px);
-  background-size: 3rem 3rem;
   margin: 0;
   padding: 1.5rem;
 }
@@ -87,10 +83,6 @@
 
 .hardware-map--split {
   background-color: var(--global-bg-color);
-  background-image:
-    linear-gradient(var(--global-divider-color) 1px, transparent 1px),
-    linear-gradient(90deg, var(--global-divider-color) 1px, transparent 1px);
-  background-size: 2.5rem 2.5rem;
   display: grid;
   grid-template-columns: minmax(13rem, 0.34fr) minmax(0, 1fr);
   min-height: 27rem;

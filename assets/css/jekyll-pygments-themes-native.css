@@ -320,3 +320,118 @@
   color: #f44747;
   background-color: transparent;
 }
+
+/* Vim dark theme */
+.highlight,
+.highlight pre {
+  background-color: #1e1e1e;
+  color: #d4d4d4;
+}
+.highlight .hll {
+  background-color: #665c00;
+}
+.highlight .c,
+.highlight .cm,
+.highlight .c1,
+.highlight .cs {
+  color: #80a0ff;
+  font-style: italic;
+}
+.highlight .err {
+  color: #ffffff;
+  background-color: #ff0000;
+}
+.highlight .g,
+.highlight .l,
+.highlight .n,
+.highlight .o,
+.highlight .p,
+.highlight .w,
+.highlight .x,
+.highlight .nx,
+.highlight .py,
+.highlight .ni,
+.highlight .nl {
+  color: #d4d4d4;
+}
+.highlight .k,
+.highlight .kc,
+.highlight .kd,
+.highlight .kn,
+.highlight .kp,
+.highlight .kr,
+.highlight .kt,
+.highlight .nt,
+.highlight .ow {
+  color: #ffff60;
+  font-weight: bold;
+}
+.highlight .m,
+.highlight .mf,
+.highlight .mh,
+.highlight .mi,
+.highlight .mo,
+.highlight .il {
+  color: #ffcd00;
+}
+.highlight .s,
+.highlight .sb,
+.highlight .sc,
+.highlight .sd,
+.highlight .s1,
+.highlight .s2,
+.highlight .se,
+.highlight .sh,
+.highlight .si,
+.highlight .sx,
+.highlight .sr,
+.highlight .ss,
+.highlight .ld {
+  color: #ffa0a0;
+}
+.highlight .na,
+.highlight .no,
+.highlight .nv,
+.highlight .vc,
+.highlight .vg,
+.highlight .vi {
+  color: #40ffff;
+}
+.highlight .nb,
+.highlight .bp {
+  color: #87ffaf;
+}
+.highlight .nc,
+.highlight .nf,
+.highlight .nn {
+  color: #87ffaf;
+  font-weight: bold;
+}
+.highlight .nd {
+  color: #ffa500;
+}
+.highlight .ne,
+.highlight .gt,
+.highlight .gr {
+  color: #ff6060;
+}
+.highlight .ge {
+  color: #d4d4d4;
+  font-style: italic;
+}
+.highlight .gh {
+  color: #ffffff;
+  font-weight: bold;
+}
+.highlight .gi {
+  color: #60ff60;
+}
+.highlight .go,
+.highlight .gp,
+.highlight .gu {
+  color: #aaaaaa;
+}
+.highlight .gs {
+  color: #d4d4d4;
+  font-weight: bold;
+}
