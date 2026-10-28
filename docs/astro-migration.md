@@ -1,15 +1,15 @@
 # Astro portfolio prototype
 
-This app lives on `codex/astro-portfolio`. It builds independently of the existing
-Jekyll site. The production deployment workflow still builds Jekyll from `main`.
-The Astro workflow checks this branch; it does not publish to GitHub Pages.
+This app lives on `codex/astro-portfolio`. It runs from the repository root.
+The live Jekyll deployment continues from `main`; the old engine and workflows
+are archived under `legacy/jekyll/` on this migration branch. The active Astro
+workflow checks this branch and does not publish to GitHub Pages.
 
 ## Run locally
 
 Use Node.js 24 and pnpm 11.25.0:
 
 ```sh
-cd astro
 pnpm install --frozen-lockfile
 pnpm dev
 ```
@@ -24,14 +24,14 @@ pnpm preview
 
 ## Content and rendering
 
-- `_bibliography/papers.bib` remains the publication source, including custom
+- `content/publications/papers.bib` remains the publication source, including custom
   preview, contribution, selected, PDF, and website fields.
-- `_posts/` and `_projects/` remain the article sources. Published articles keep
+- `content/blog/` and `content/projects/` remain the article sources. Published articles keep
   their frontmatter permalinks. Drafts and template files are excluded. Hidden
   posts retain direct URLs and series links but do not enter the main blog list.
-- `_pages/about.md` and `_news/` supply the existing introduction and news.
-- `public/assets` is a relative symlink to the existing repository assets, so
-  images, videos, and downloads are not duplicated in Git.
+- `content/about.md` and `content/news/` supply the existing introduction and news.
+- `public/assets/` holds the original images, videos, and downloads. Public URLs
+  remain `/assets/...`. The archived Jekyll tree links to this directory.
 - `src/lib/content.ts` translates existing Liquid figure includes and selective
   figure galleries to static HTML. Selective galleries currently show all cards;
   the original gallery interaction is not ported.
@@ -52,8 +52,8 @@ on Jekyll until an explicit production switch.
 
 Before a production switch, port and verify any legacy archive/tag/year URLs,
 RSS, the standalone News archive, coauthor profile links, syntax highlighting,
-and site-specific article widgets that should be retained. Add the `CNAME` and
-GitHub Pages deployment configuration for the Astro output at that point.
+and site-specific article widgets that should be retained. The `CNAME` is already in `public/`; add the GitHub Pages deployment
+configuration for the Astro output at that point.
 
 Two old project sources reference images absent from the repository:
 `assets/img/mec/4demo.gif` and `assets/img/whisker/fig12.png`. They remain source

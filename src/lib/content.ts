@@ -10,7 +10,7 @@ import rehypeRaw from "rehype-raw";
 import rehypeKatex from "rehype-katex";
 import rehypeStringify from "rehype-stringify";
 
-const root = path.resolve("..");
+const root = path.resolve("content");
 const escape = (s: string) => s.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 const attributes = (s: string) => Object.fromEntries([...s.matchAll(/([\w-]+)\s*=\s*["']([^"']*)["']/g)].map((m) => [m[1], m[2]]));
 
@@ -77,14 +77,14 @@ function files(directory: string): string[] {
     return entry.isDirectory() ? files(filename) : /\.md$/.test(filename) ? [filename] : [];
   });
 }
-function documents(folder: "_posts" | "_projects"): Document[] {
+function documents(folder: "blog" | "projects"): Document[] {
   return files(path.join(root, folder)).flatMap((filename) => {
     const { data, content } = matter(fs.readFileSync(filename, "utf8"));
     const basename = path.basename(filename, ".md");
     if (!data.title || data.published === false || !/^\d{4}-\d{2}-\d{2}-/.test(basename)) return [];
     const date = basename.slice(0, 10);
     const slug = basename.slice(11);
-    const url = data.permalink || (folder === "_projects" ? `/projects/${slug}/` : `/blog/${date.slice(0, 4)}/${slug}/`);
+    const url = data.permalink || (folder === "projects" ? `/projects/${slug}/` : `/blog/${date.slice(0, 4)}/${slug}/`);
     return [
       {
         title: data.title,
@@ -105,12 +105,12 @@ function documents(folder: "_posts" | "_projects"): Document[] {
     ];
   });
 }
-export const posts = documents("_posts").sort((a, b) => b.date.localeCompare(a.date));
-export const projects = documents("_projects").sort((a, b) => a.importance - b.importance);
+export const posts = documents("blog").sort((a, b) => b.date.localeCompare(a.date));
+export const projects = documents("projects").sort((a, b) => a.importance - b.importance);
 export const listedPosts = posts.filter((p) => !p.hidden && p.lang !== "ko");
 export const seriesNames = [...new Set(posts.filter((p) => p.lang !== "ko" && p.series).map((p) => p.series!))];
-export const about = matter(fs.readFileSync(path.join(root, "_pages/about.md"), "utf8")).content;
-export const news = files(path.join(root, "_news"))
+export const about = matter(fs.readFileSync(path.join(root, "about.md"), "utf8")).content;
+export const news = files(path.join(root, "news"))
   .map((filename) => {
     const { data, content } = matter(fs.readFileSync(filename, "utf8"));
     return { date: String(data.date).slice(0, 10), body: content };

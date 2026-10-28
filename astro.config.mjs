@@ -12,5 +12,4 @@ export default defineConfig({
   trailingSlash: "always",
   integrations: [react(), mdx(), sitemap()],
   markdown: { processor: unified({ remarkPlugins: [remarkMath], rehypePlugins: [rehypeKatex] }) },
-  vite: { server: { fs: { allow: [".."] } } },
 });

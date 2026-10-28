@@ -1,6 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap");
 :root {
-  --bg: #faf9f6;
+  --bg: #fff;
   --surface: #fff;
   --text: #202725;
   --muted: #68716d;
@@ -234,7 +234,7 @@ h3 {
   padding-bottom: 0;
 }
 .publication-image {
-  background: var(--soft);
+  background: var(--surface);
   border-radius: 4px;
   overflow: hidden;
   align-self: start;
@@ -420,7 +420,7 @@ h3 {
   border-color: var(--accent);
 }
 .project-image {
-  background: #eceee9;
+  background: var(--surface);
   overflow: hidden;
 }
 .project-image img {

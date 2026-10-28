@@ -1,18 +1,19 @@
-name: Astro preview build
+name: Astro build
 
 on:
   push:
     branches: [codex/astro-portfolio]
   pull_request:
     paths:
-      - "astro/**"
-      - "_posts/**"
-      - "_projects/**"
-      - "_bibliography/**"
-      - "_news/**"
-      - "_pages/about.md"
-      - "assets/**"
-      - ".github/workflows/astro-preview.yml"
+      - "src/**"
+      - "content/**"
+      - "public/**"
+      - "astro.config.mjs"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "tsconfig.json"
+      - ".github/workflows/astro.yml"
 
 permissions:
   contents: read
@@ -29,8 +30,6 @@ jobs:
         with:
           node-version: "24"
           cache: pnpm
-          cache-dependency-path: astro/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
-        working-directory: astro
       - run: pnpm check && pnpm build
-        working-directory: astro

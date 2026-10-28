@@ -1,18 +1,20 @@
-_site
-.bundle
-.sass-cache
-.jekyll-cache
-.jekyll-metadata
-.DS_store
-.ruby-version
-.tweet-cache
-Gemfile.lock
-assets/libs/
+# Node / Astro
 node_modules/
-vendor
-.idea
-.qodo
+dist/
+.astro/
 
-# Astro development/build output
-astro/.astro/
-astro/dist/
+# Archived Jekyll build output and local dependencies
+_site/
+.bundle/
+.sass-cache/
+.jekyll-cache/
+.jekyll-metadata
+.tweet-cache/
+vendor/
+public/assets/libs/
+
+# Local tools
+.DS_store
+.idea/
+.qodo/
+__pycache__/
