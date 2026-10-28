@@ -1,0 +1,36 @@
+name: Astro preview build
+
+on:
+  push:
+    branches: [codex/astro-portfolio]
+  pull_request:
+    paths:
+      - "astro/**"
+      - "_posts/**"
+      - "_projects/**"
+      - "_bibliography/**"
+      - "_news/**"
+      - "_pages/about.md"
+      - "assets/**"
+      - ".github/workflows/astro-preview.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.25.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+          cache-dependency-path: astro/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: astro
+      - run: pnpm check && pnpm build
+        working-directory: astro

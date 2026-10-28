@@ -12,3 +12,7 @@ node_modules/
 vendor
 .idea
 .qodo
+
+# Astro development/build output
+astro/.astro/
+astro/dist/

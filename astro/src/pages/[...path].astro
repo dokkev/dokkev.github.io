@@ -1,0 +1,54 @@
+---
+import Base from "../layouts/Base.astro";
+import { posts, projects, markdown } from "../lib/content";
+export function getStaticPaths() {
+  return [...posts, ...projects].map((doc) => ({ params: { path: doc.url.replace(/^\//, "").replace(/\/$/, "") }, props: { doc } }));
+}
+const { doc } = Astro.props;
+const html = await markdown(doc.body);
+const siblings = posts.filter((p) => doc.series && p.series === doc.series && p.lang === doc.lang).sort((a, b) => a.seriesOrder - b.seriesOrder);
+---
+
+<Base title={doc.title} description={doc.description} lang={doc.lang} article>
+  <div class="article-container">
+    <header class="article-heading">
+      <a class="back-link" href={doc.url.startsWith("/projects/") ? "/projects/" : "/blog/"}>
+        ← {doc.url.startsWith("/projects/") ? "Projects" : "All writing"}
+      </a>
+      <p class="eyebrow">
+        {doc.series || "Research notes"} · {doc.date}
+      </p>
+      <h1>{doc.title}</h1>
+      {doc.description && <p class="article-description">{doc.description}</p>}
+      {doc.translations.length > 0 && (
+        <nav class="language-links" aria-label="Article language">
+          {doc.translations.map((t) => (
+            <a href={t.url} aria-current={t.lang === doc.lang ? "page" : undefined}>
+              {t.label}
+            </a>
+          ))}
+        </nav>
+      )}
+    </header>
+    {doc.redirect && (
+      <p>
+        This project is available at <a href={doc.redirect}>{doc.redirect} ↗</a>.
+      </p>
+    )}
+    <article class="prose article-body" set:html={html} />
+    {siblings.length > 1 && (
+      <aside class="article-series">
+        <h2>In this series</h2>
+        <ol>
+          {siblings.map((p) => (
+            <li>
+              <a href={p.url} aria-current={p.url === doc.url ? "page" : undefined}>
+                {p.title}
+              </a>
+            </li>
+          ))}
+        </ol>
+      </aside>
+    )}
+  </div>
+</Base>

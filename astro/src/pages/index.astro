@@ -1,0 +1,85 @@
+---
+import Base from "../layouts/Base.astro";
+import Publication from "../components/Publication.astro";
+import { about, markdown, news, listedPosts } from "../lib/content";
+import { publications } from "../lib/publications";
+const intro = await markdown(about);
+const selected = publications.filter((p: any) => String(p.custom.selected) === "true");
+---
+
+<Base>
+  <section class="hero">
+    <div class="hero-copy">
+      <p class="eyebrow">Robotics · The University of Texas at Austin</p>
+      <h1>Dong Ho Kang</h1>
+      <p class="hero-role">Robotics PhD Student</p>
+      <div class="intro prose" set:html={intro} />
+      <div class="hero-links">
+        <a class="button" href="/publications/">
+          Explore my research <span>↗</span>
+        </a>
+        <a href="mailto:dongho.robot@gmail.com">Get in touch ↗</a>
+      </div>
+    </div>
+    <figure class="portrait">
+      <img src="/assets/img/prof_pic.jpg" alt="Dong Ho Kang" width="440" height="520" />
+      <figcaption>
+        Contact Morphology Design
+        <br />
+        Dexterous manipulation · Robot control
+      </figcaption>
+    </figure>
+  </section>
+  <section class="home-section">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Research</p>
+        <h2>Selected publications</h2>
+      </div>
+      <a href="/publications/">All publications ↗</a>
+    </div>
+    <div class="publication-list">
+      {selected.map((paper: any) => (
+        <Publication paper={paper} />
+      ))}
+    </div>
+  </section>
+  <section class="home-section home-bottom">
+    <div>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Updates</p>
+          <h2>News</h2>
+        </div>
+      </div>
+      <ul class="news-list">
+        {await Promise.all(
+          news.slice(0, 3).map(async (item) => (
+            <li>
+              <time>{item.date}</time>
+              <div set:html={await markdown(item.body)} />
+            </li>
+          ))
+        )}
+      </ul>
+    </div>
+    <div>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Notes from research</p>
+          <h2>Latest writing</h2>
+        </div>
+        <a href="/blog/">Blog ↗</a>
+      </div>
+      <div class="writing-list">
+        {listedPosts.slice(0, 3).map((post) => (
+          <a href={post.url}>
+            <time>{post.date}</time>
+            <h3>{post.title}</h3>
+            <span>Read article ↗</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+</Base>

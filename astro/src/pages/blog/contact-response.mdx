@@ -1,0 +1,31 @@
+---
+layout: ../../layouts/Article.astro
+title: "A spring at the contact interface"
+description: "An interactive introduction to stiffness and indentation using a simple linear spring model."
+---
+
+import ContactDemo from "../../components/ContactDemo";
+
+A contact interface turns deformation into force. A simple place to begin is a linear spring:
+
+$$F = k\delta$$
+
+Here, $k$ is stiffness in N/mm and $\delta$ is indentation in mm. Increasing stiffness increases the slope of the force–indentation relationship.
+
+<ContactDemo client:visible />
+
+## What changes when stiffness increases?
+
+At the same indentation, a stiffer spring produces a larger force. At a fixed target force, a stiffer spring requires less indentation.
+
+| Stiffness | Indentation | Predicted force |
+| --------- | ----------- | --------------- |
+| 1 N/mm    | 3 mm        | 3 N             |
+| 2 N/mm    | 3 mm        | 6 N             |
+| 4 N/mm    | 3 mm        | 12 N            |
+
+The initial setting above is **2 N/mm**, **3 mm**, and **6 N**.
+
+## Where this model stops
+
+This is an illustrative model, not an experimental result or a calibrated model of PLATO, LUMO, or CMD. Real compliant contacts can be nonlinear and depend on geometry, friction, material behavior, and loading history. The demo omits those effects so that the meaning of stiffness is easy to inspect.
