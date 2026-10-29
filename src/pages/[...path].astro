@@ -1,12 +1,17 @@
 ---
+import type { MDXInstance } from "astro";
 import Base from "../layouts/Base.astro";
 import { posts, projects, markdown } from "../lib/content";
 export function getStaticPaths() {
   return [...posts, ...projects].map((doc) => ({ params: { path: doc.url.replace(/^\//, "").replace(/\/$/, "") }, props: { doc } }));
 }
 const { doc } = Astro.props;
-const html = await markdown(doc.body);
+const mdxPosts = import.meta.glob<MDXInstance<Record<string, unknown>>>("../../content/blog/**/*.mdx", { eager: true });
+const Content = doc.mdx ? mdxPosts[`../../content/${doc.mdx}`]?.default : undefined;
+if (doc.mdx && !Content) throw new Error(`Missing MDX article: ${doc.mdx}`);
+const html = Content ? "" : await markdown(doc.body);
 const siblings = posts.filter((p) => doc.series && p.series === doc.series && p.lang === doc.lang).sort((a, b) => a.seriesOrder - b.seriesOrder);
+const parent = posts.find((p) => p.url === doc.parent);
 ---
 
 <Base title={doc.title} description={doc.description} lang={doc.lang} article>
@@ -15,6 +20,11 @@ const siblings = posts.filter((p) => doc.series && p.series === doc.series && p.
       <a class="back-link" href={doc.url.startsWith("/projects/") ? "/projects/" : "/blog/"}>
         ← {doc.url.startsWith("/projects/") ? "Projects" : "All writing"}
       </a>
+      {parent && (
+        <p class="subpost-parent">
+          Part of <a href={parent.url}>{parent.title}</a>
+        </p>
+      )}
       <p class="eyebrow">
         {doc.series || "Research notes"} · {doc.date}
       </p>
@@ -35,18 +45,33 @@ const siblings = posts.filter((p) => doc.series && p.series === doc.series && p.
         This project is available at <a href={doc.redirect}>{doc.redirect} ↗</a>.
       </p>
     )}
-    <article class="prose article-body" set:html={html} />
+    <article class="prose article-body">{Content ? <Content /> : <Fragment set:html={html} />}</article>
     {siblings.length > 1 && (
       <aside class="article-series">
         <h2>In this series</h2>
         <ol>
-          {siblings.map((p) => (
-            <li>
-              <a href={p.url} aria-current={p.url === doc.url ? "page" : undefined}>
-                {p.title}
-              </a>
-            </li>
-          ))}
+          {siblings
+            .filter((p) => !p.parent)
+            .map((p) => (
+              <li>
+                <a href={p.url} aria-current={p.url === doc.url ? "page" : undefined}>
+                  {p.title}
+                </a>
+                {siblings.some((child) => child.parent === p.url) && (
+                  <ul>
+                    {siblings
+                      .filter((child) => child.parent === p.url)
+                      .map((child) => (
+                        <li>
+                          <a href={child.url} aria-current={child.url === doc.url ? "page" : undefined}>
+                            {child.title}
+                          </a>
+                        </li>
+                      ))}
+                  </ul>
+                )}
+              </li>
+            ))}
         </ol>
       </aside>
     )}

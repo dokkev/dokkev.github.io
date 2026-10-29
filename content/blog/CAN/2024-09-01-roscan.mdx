@@ -1,0 +1,232 @@
+---
+title: "[CAN 05] - Five ROS 2 Commands in One MIT CAN Frame"
+description: "Map effort, position, velocity, stiffness, and damping to an eight-byte motor impedance command."
+published: true
+lang: en
+date: 2024-09-01 00:00:00
+img: /assets/img/can/socketcan.jpg
+permalink: /can05/
+series: "CAN Bus for Robotic Hardware"
+series_order: 5
+tags: [Hardware Development, CAN, ROS]
+---
+
+import MitCanDemo from '../../../src/components/demos/MitCanDemo';
+
+A joint controller produces position, velocity, feedforward torque, stiffness, and damping commands. A Classical CAN data frame supports up to eight payload bytes; this command uses all eight. Sending five 32-bit floats would take twenty bytes, so the motor protocol must choose another representation.
+
+This post assumes a ROS 2 Control system with five command interfaces per joint: `effort`, `position`, `velocity`, `stiffness`, and `damping`. We will encode them into the packed command often called the **MIT CAN protocol**, or MIT motor impedance control mode. CubeMars documents this format for its AK-series actuators. It is a manufacturer-supported command format, not a universal CAN standard. Check the model, firmware, and selected mode before using its byte layout. [CubeMars AK-series driver manual v1.0.14, §5.3](https://img.cubemars.com/products/cubemars-product-parameter/AK-Series-Driver-and-Control-Manual-v1.0.14.pdf)
+
+## The motor closes the impedance loop
+
+The driver uses its local position and velocity measurements to evaluate a joint PD law with feedforward torque:
+
+$$
+\tau_{\mathrm{cmd}} = \tau_{\mathrm{ff}}
++ k_p(q_{\mathrm{des}}-q)
++ k_d(\dot q_{\mathrm{des}}-\dot q).
+$$
+
+Here `effort` supplies $\tau_{\mathrm{ff}}$, rather than the final sum. `stiffness` and `damping` supply $k_p$ and $k_d$. The motor keeps evaluating the feedback terms between host command updates. Its current controller then attempts to produce the requested torque within the actuator's limits.
+
+Kim et al.'s *Highly Dynamic Quadruped Locomotion via Whole-Body Impulse Control and Model Predictive Control* explains this separation. Section IV describes joint position feedback as useful because the control input is collocated and the update frequency is high. Mini-Cheetah's joint PD runs at **40 kHz**, while its whole-body controller runs at **500 Hz**. Position and velocity commands supplement the torque command to stabilize motion. [Kim et al., Fig. 2 and §IV](https://arxiv.org/html/1909.06586#S4)
+
+For this ROS 2 system, the implication is that local feedback can react to a joint error without another host computation and CAN exchange. That is an architectural inference, not a measured performance result for our adapter. The paper also favors operational-space impedance for Mini-Cheetah and warns that relying on joint impedance can delay operational-space control. Its result does not justify arbitrarily increasing joint gains or assuming every QDD driver runs at 40 kHz.
+
+The host still chooses targets and gains at a rate the bus can support. Local feedback cannot refresh an obsolete target. A command timeout and the driver's behavior after communication loss remain part of the motor configuration.
+
+## Give the five interfaces an explicit meaning
+
+The following contract uses joint coordinates and SI units. The hardware plugin and controller must agree on these meanings:
+
+| ROS 2 command interface | Motor command | Meaning | Unit |
+| --- | --- | --- | --- |
+| `effort` | `tau_ff` | Feedforward torque added to local PD | N·m |
+| `position` | `q_des` | Desired joint position | rad |
+| `velocity` | `qdot_des` | Desired joint velocity | rad/s |
+| `stiffness` | `kp` | Position-error gain | N·m/rad |
+| `damping` | `kd` | Velocity-error gain | N·m·s/rad |
+
+For example, $q_{\mathrm{des}}=1$ rad, $q=0.9$ rad, $k_p=20$ N·m/rad, and $\tau_{\mathrm{ff}}=0.5$ N·m give 2.5 N·m when velocity error is zero. This is the requested torque before saturation, not a measured output.
+
+A controller that already computes the complete PD torque needs a different contract. Sending that complete torque as `effort` while also enabling the same local PD terms would count the feedback twice. For the five-interface contract here, the controller sends feedforward effort and leaves this joint PD calculation to the motor.
+
+These units must match the coordinate convention used by the motor firmware. A QDD actuator's integrated gearbox does not establish whether a particular register reports rotor or output position. Resolve direction, zero offset, and any transmission conversion before encoding the five values. Gains also depend on that coordinate choice; converting only position and torque is insufficient.
+
+## Allocate 64 payload bits
+
+The packed layout gives position 16 bits and each remaining field 12 bits:
+
+$$
+16 + 12 + 12 + 12 + 12 = 64\text{ bits} = 8\text{ bytes}.
+$$
+
+Fields are concatenated in the order `q_des`, `qdot_des`, `kp`, `kd`, `tau_ff`. The nibble boundaries make two bytes contain parts of different fields:
+
+| Payload byte | Bits 7–4 | Bits 3–0 |
+| --- | --- | --- |
+| 0 | `q[15:12]` | `q[11:8]` |
+| 1 | `q[7:4]` | `q[3:0]` |
+| 2 | `v[11:8]` | `v[7:4]` |
+| 3 | `v[3:0]` | `kp[11:8]` |
+| 4 | `kp[7:4]` | `kp[3:0]` |
+| 5 | `kd[11:8]` | `kd[7:4]` |
+| 6 | `kd[3:0]` | `tau[11:8]` |
+| 7 | `tau[7:4]` | `tau[3:0]` |
+
+This is a payload definition. The CAN identifier, frame fields, and any stuffed bits are outside these eight bytes. The identifier and mode-entry commands must follow the selected driver's documentation. Feedback is a separate packet definition; do not decode a received frame using this command layout. [CubeMars GLⅡ driver manual, MIT mode packet tables](https://www.cubemars.com/images/file/20250401/1743497608964879.pdf)
+
+## Map a physical range to an unsigned integer
+
+A 12-bit field contains unsigned codes from 0 to 4095. To represent a signed physical value, the protocol maps its permitted range $[x_{\min},x_{\max}]$ across those codes:
+
+$$
+u = \left\lfloor
+\frac{\operatorname{clamp}(x,x_{\min},x_{\max})-x_{\min}}
+{x_{\max}-x_{\min}}(2^n-1)
+\right\rfloor.
+$$
+
+The receiver reconstructs an approximate value with the inverse mapping:
+
+$$
+\hat x = x_{\min} + \frac{u}{2^n-1}(x_{\max}-x_{\min}).
+$$
+
+The mapping here preserves both endpoints with `2^n − 1`. Some CubeMars reference snippets print `2^n` in the encoder while using `2^n − 1` in the decoder. That encoder would map the maximum to a code outside the field. Before using this teaching encoder on hardware, confirm that the firmware decodes with this denominator and the same limits. [AK v1.0.14 reference code](https://img.cubemars.com/products/cubemars-product-parameter/AK-Series-Driver-and-Control-Manual-v1.0.14.pdf)
+
+The minus sign of a negative torque is encoded through its location in this range. It is not a two's-complement signed integer or an IEEE-754 float. The endpoints and bit width are necessary to interpret the integer.
+
+For the teaching profile below, torque spans −10 to +10 N·m. A −10 N·m command maps to 0, and +10 N·m maps to 4095. Zero maps to 2047 with truncation and decodes to approximately −0.002442 N·m. The symmetric range has an even number of codes, so it cannot represent its midpoint exactly.
+
+| Field | Teaching range | Bits | Physical increment per code |
+| --- | --- | ---: | ---: |
+| Position | −12.5 to +12.5 rad | 16 | 0.000381 rad |
+| Velocity | −30 to +30 rad/s | 12 | 0.014652 rad/s |
+| Stiffness | 0 to 500 N·m/rad | 12 | 0.122100 N·m/rad |
+| Damping | 0 to 5 N·m·s/rad | 12 | 0.001221 N·m·s/rad |
+| Feedforward torque | −10 to +10 N·m | 12 | 0.004884 N·m |
+
+These are illustrative encoding ranges, not an actuator rating. The increment is $(x_{\max}-x_{\min})/(2^n-1)$; it describes quantization, not sensor accuracy or torque accuracy.
+
+<MitCanDemo client:visible />
+
+Move velocity while watching byte 3, or damping while watching byte 6. Each shares a byte with the next field. Edit the shared min/max limits below the byte diagram. The same range is used for encoding and decoding; each row shows the resulting integer code and decoded value.
+
+**A wider range gives coarser resolution at the same bit width.** For a 12-bit torque field, widening both encoding and decoding ranges from ±10 to ±20 N·m doubles the step from about 0.004884 to 0.009768 N·m/code. Shifting both endpoints by the same amount leaves the width and step unchanged. The range width, rather than the magnitude of either endpoint alone, determines the resolution.
+
+The resolution readout shows the physical increment per code for the field you last adjusted. Changing its limits updates that increment; the number of available codes stays fixed by the bit width.
+
+A range mismatch can corrupt a command even when every bit arrives correctly. For example, the same 12-bit torque code means a different torque under ±10 N·m and ±18 N·m mappings. Store the exact motor's ranges in its protocol configuration. Keep operating limits separate: an encodable position can still exceed the robot's travel limit.
+
+## Pack the integer fields with shifts and masks
+
+The encoder below uses C++17 and truncates after clamping. It rejects non-finite inputs and invalid range definitions. Physical operating-limit checks belong before this encoding step.
+
+```cpp
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
+#include <optional>
+
+std::optional<std::uint16_t> encode(
+    double x, double lo, double hi, unsigned bits) {
+  if (!std::isfinite(x) || !std::isfinite(lo) ||
+      !std::isfinite(hi) || !std::isfinite(hi - lo) ||
+      hi <= lo || bits == 0 || bits > 16) {
+    return std::nullopt;
+  }
+  const auto max_code = (std::uint32_t{1} << bits) - 1;
+  const double bounded = std::clamp(x, lo, hi);
+  return static_cast<std::uint16_t>(
+      (bounded - lo) / (hi - lo) * max_code);
+}
+
+double decode(std::uint16_t raw, double lo, double hi, unsigned bits) {
+  const auto max_code = (std::uint32_t{1} << bits) - 1;
+  return lo + static_cast<double>(raw) / max_code * (hi - lo);
+}
+```
+
+`decode()` assumes a valid range, bit width, and masked raw field. If `encode()` returns no value, the hardware plugin must take its defined command-error path instead of transmitting a replacement integer silently.
+
+After encoding position with 16 bits and the remaining fields with 12 bits, pack the validated codes into a zero-initialized Classical CAN frame:
+
+```cpp
+#include <linux/can.h>
+#include <optional>
+
+bool is_ak_control_payload(const can_frame &frame) {
+  for (int i = 0; i < 7; ++i) {
+    if (frame.data[i] != 0xFF) return false;
+  }
+  return frame.data[7] >= 0xFC && frame.data[7] <= 0xFE;
+}
+
+// AK-style command layout, including its reserved control payloads.
+std::optional<can_frame> pack_command(canid_t command_id, std::uint16_t q,
+                       std::uint16_t v, std::uint16_t kp,
+                       std::uint16_t kd, std::uint16_t tau) {
+  if (command_id > CAN_SFF_MASK || v > 0xFFF || kp > 0xFFF ||
+      kd > 0xFFF || tau > 0xFFF) return std::nullopt;
+  can_frame frame{};
+  frame.can_id = command_id;  // Validated standard-frame command ID.
+  frame.can_dlc = 8;
+  frame.data[0] = q >> 8;
+  frame.data[1] = q & 0xFF;
+  frame.data[2] = v >> 4;
+  frame.data[3] = ((v & 0x0F) << 4) | (kp >> 8);
+  frame.data[4] = kp & 0xFF;
+  frame.data[5] = kd >> 4;
+  frame.data[6] = ((kd & 0x0F) << 4) | (tau >> 8);
+  frame.data[7] = tau & 0xFF;
+  if (is_ak_control_payload(frame)) return std::nullopt;
+  return frame;
+}
+```
+
+The cited AK protocol reserves `FF FF FF FF FF FF FF FC` for entering control mode, the same prefix ending in `FD` for exiting, and `FE` for setting the current position to zero. Valid individual field codes can collide with these patterns. For example, `q=65535`, `v=kp=kd=4095`, and `tau=4094` produce the zero-setting command. The function rejects all three patterns as ordinary setpoints; a missing result must take the command-error path rather than be transmitted. Use a separate, deliberate mode-command path for the selected firmware. [AK v1.0.14, §5.3](https://img.cubemars.com/products/cubemars-product-parameter/AK-Series-Driver-and-Control-Manual-v1.0.14.pdf)
+
+The demo still displays the raw bit pattern for teaching and marks these collisions. It sends no CAN traffic. Other MIT-style firmware can define different special commands, so this AK-specific check is part of the device codec.
+
+In byte 3, `v & 0x0F` keeps velocity's four lowest bits. Shifting left puts them in the byte's upper nibble. `kp >> 8` supplies stiffness's four highest bits, and bitwise OR combines the two non-overlapping pieces.
+
+For a known command payload, recover the two fields without changing their unsigned interpretation:
+
+```cpp
+const std::uint16_t v = (data[2] << 4) | (data[3] >> 4);
+const std::uint16_t kp = ((data[3] & 0x0F) << 8) | data[4];
+```
+
+Matching the field boundaries is as necessary as matching the numeric ranges. A one-nibble shift can turn part of a velocity command into a gain command.
+
+## Connect the five fields to ROS 2 Control
+
+For a multi-joint robot, a `hardware_interface::SystemInterface` plugin can own the CAN connection. Its `read()` updates joint state, while `write()` converts the controller's commands into device frames. The controller manager runs the read–update–write cycle. [ROS 2 Control Jazzy hardware components](https://control.ros.org/jazzy/doc/ros2_control/hardware_interface/doc/writing_new_hardware_component.html)
+
+Declare the five command interfaces for each joint in the `ros2_control` description. This is a joint fragment, not a complete robot description or plugin:
+
+```xml
+<joint name="joint1">
+  <command_interface name="effort"/>
+  <command_interface name="position"/>
+  <command_interface name="velocity"/>
+  <command_interface name="stiffness"/>
+  <command_interface name="damping"/>
+  <state_interface name="position"/>
+  <state_interface name="velocity"/>
+  <state_interface name="effort"/>
+</joint>
+```
+
+`stiffness` and `damping` are custom interface names in this design. The controller must claim and populate all five joint command interfaces. Merely listing them in XML does not make a stock controller produce the five-field command. ROS 2 Control permits named interfaces; controller compatibility still depends on the combinations that each controller implements. [Hardware interface types](https://control.ros.org/jazzy/doc/ros2_control/hardware_interface/doc/hardware_interface_types_userdoc.html)
+
+The Jazzy joint trajectory controller, for example, documents specific interface combinations rather than this five-interface contract. Use a controller that implements our contract, including feedforward `effort`, instead of assuming that controller can forward all five fields. [Jazzy joint trajectory controller](https://control.ros.org/jazzy/doc/ros2_controllers/joint_trajectory_controller/doc/userdoc.html)
+
+Within `write()`, take one coherent command set for the joint, check validity and operating limits, and convert into the firmware's coordinate convention. Encode each field using its configured range, pack eight bytes, then submit the frame to the CAN transport. A successful submission does not establish that the actuator has applied it.
+
+Within `read()`, validate the feedback identifier and payload length before decoding the device's feedback format. Convert to joint units and update state with its freshness information. An `effort` state should describe the documented feedback quantity, such as a current-based torque estimate; do not echo `tau_ff` as measured torque.
+
+Activation must establish a valid initial command and the driver's required mode. A zero-filled payload maps to the minimum of every range, including negative position and torque. Sending all-zero bytes is therefore not a generic stop command. Likewise, `tau_ff = 0` alone leaves the local stiffness and damping terms active.
+
+Before connecting this plugin to a controller, compare encoder output with the device manual at minimum, midpoint, and maximum field values. Check the split nibbles and quantization error offline. Then define activation, feedback timeout, and disable behavior for that motor; the [CAN I/O timing post](/can06/) addresses the receive and transmit scheduling that the codec alone cannot provide.

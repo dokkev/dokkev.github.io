@@ -1,0 +1,140 @@
+---
+title: "[CAN 06] - Scheduling CAN I/O in ROS 2 Control"
+description: "Watch queues, blocking reads, stale feedback, command latency, and watchdogs interact on an animated control timeline."
+published: true
+lang: en
+date: 2024-09-08 00:00:00
+img: /assets/img/can/socketcan.jpg
+permalink: /can06/
+series: "CAN Bus for Robotic Hardware"
+series_order: 6
+tags: [Hardware Development, CAN, ROS]
+---
+
+import CanSchedulerDemo from '../../../src/components/demos/CanSchedulerDemo';
+
+A motor can receive a correctly packed command that is already too old to use. The bytes from [CAN 05](/can05/) have to pass through pending work, the transport, and the driver's receive path. Feedback travels back through another queue before the controller sees it.
+
+The hardware plugin must manage the time spent on both paths. ROS 2 Control's controller manager calls hardware `read()`, updates controllers, and calls `write()` in its update loop. A blocking operation or an expanding backlog consumes time that belongs to the next update. [Controller Manager, Jazzy](https://control.ros.org/jazzy/doc/ros2_control/controller_manager/doc/userdoc.html)
+
+## Watch a command move through the queues
+
+The laboratory below models one actuator. It separates the periodic control thread from a transport worker and the motor's local command watchdog. The initial case uses a 2 ms control period, 1 ms feedback sampling, and 0.6 ms TX service time. These are teaching inputs, not measurements from an adapter.
+
+Press **Play** to animate the packet paths, or scrub the clock to inspect an instant. Start with **RX backlog**, then change `read()` to bounded draining. Try **TX backlog** and switch its pending-command policy from FIFO to replacement. **TX burst** releases a batch into a finite motor receive buffer; compare it with 1 ms TX pacing. **RX burst** batches feedback before host delivery. For **Feedback loss** or **Host stall**, advance beyond 20 ms and watch which timeout reacts.
+
+<CanSchedulerDemo client:visible />
+
+The colored packet moves along the transport path while the queue boxes show pending work. The timeline shows what the control thread spends time doing. The two age traces answer different questions: how old the cached measurement is, and how long ago the applied command was generated.
+
+The model knows every sample time and command delivery time. A real driver needs timestamp support or device instrumentation to observe those quantities. Its RX and TX paths also share a physical CAN bus, while the model treats them independently. It demonstrates queue and timeout policies without predicting bus capacity, control stability, or a particular USB adapter's latency.
+
+## Define which event each timestamp describes
+
+For a feedback sample, distinguish sensor sampling, kernel or adapter reception, and application decoding. An old packet can sit in the RX queue before a fresh call to `read()` removes it. Giving it the dequeue time would make that old measurement appear new.
+
+For a command, distinguish generation, socket acceptance, transport completion, and application by the motor firmware. A successful socket write reports local acceptance; it does not establish the time when the motor used that command. [Linux `send(2)`](https://man7.org/linux/man-pages/man2/send.2.html)
+
+| Quantity | Interval | What it tells the controller |
+| --- | --- | --- |
+| Sample age | Now − sensor sample time | How old the represented physical state is |
+| Receive age | Now − packet reception time | How long since that packet reached the receive path |
+| Pending-command age | Now − command generation time | How much delay the command has accumulated before delivery |
+| Command silence | Now − last accepted command time | Whether the motor's command stream has stopped |
+
+A receive timestamp does not reveal sensor sampling time unless the protocol supplies that relationship. Linux supports receive and transmit timestamps through socket options and ancillary data, with software and hardware support depending on the driver. [Kernel timestamping documentation](https://docs.kernel.org/networking/timestamping.html)
+
+Use compatible clock domains for differences. Host timeout intervals can use a monotonic clock; a socket timestamp reported in system time cannot be subtracted from an unrelated monotonic value. Device clocks need their own alignment before comparing them to host time. [Linux `clock_gettime(2)`](https://man7.org/linux/man-pages/man2/clock_gettime.2.html)
+
+In the model, the host gate checks the cached packet's **reception age**. The green trace displays its **sample age**. Without batching, feedback has a fixed 0.6 ms transit delay, so those ages differ even without a queue backlog. RX batching adds holding time before host reception.
+
+## A non-blocking call does not empty the queue
+
+A blocking `recv()` waits when no packet is available. Non-blocking reception returns `EAGAIN` or `EWOULDBLOCK` instead. It prevents waiting for a future packet; it does not automatically consume the packets already queued. [Linux `recv(2)`](https://man7.org/linux/man-pages/man2/recv.2.html)
+
+The **RX backlog** case produces two feedback packets per millisecond and starts one control cycle every two milliseconds. Reading one packet per cycle removes only 0.5 packets/ms. The oldest queued packets accumulate, and the finite queue eventually drops new arrivals. A busy device can therefore produce increasingly old controller state.
+
+Switch to **drain up to 8**. The reader processes available packets and keeps the newest valid state for this actuator. Queue depth and cached-state age fall because the reader can now remove more than one packet per cycle.
+
+Draining also consumes execution time. A loop that runs until the socket becomes empty has no useful time bound if traffic continually replenishes it. The demo charges 0.1 ms per decoded frame and limits each drain to eight frames. Those costs are deliberately visible so increasing receive work can cause a deadline miss.
+
+A bounded receive path can use both a frame-count limit and a time budget. The following is control-path pseudocode; timestamp extraction, identifier checks, and device decoding are helper contracts rather than a complete ROS 2 plugin:
+
+```cpp
+const auto deadline = steady_clock::now() + rx_time_budget;
+
+for (std::size_t attempt = 0; attempt < max_rx_attempts; ++attempt) {
+  if (steady_clock::now() >= deadline) break;
+
+  auto result = receive_timestamped_frame(MSG_DONTWAIT);
+  if (result.would_block()) break;
+  if (result.interrupted()) continue;
+  if (result.failed()) return transport_error();
+
+  if (!matches_expected_id_and_length(result.frame)) continue;
+  if (!decode_valid_feedback(result.frame, decoded)) continue;
+
+  update_device_cache(decoded, result.receive_stamp);
+}
+```
+
+The cache update belongs to the decoded device, not to a single bus-wide “last RX” timestamp. Traffic from a healthy motor must not refresh another motor's freshness state. Report when the receive budget is exhausted so a bounded loop does not quietly conceal a growing backlog.
+
+Use this replacement policy for state snapshots whose newest value supersedes older samples. Fault transitions, calibration replies, and ordered transactions may need every event preserved. A non-blocking reader can dispatch those separately while maintaining a latest-state cache for control.
+
+## A blocking read can prevent the next write
+
+Choose **Feedback loss** and set the reader to **blocking**. Feedback stops being generated between 20 and 36 ms. Once the RX queue empties, the control thread waits inside `read()` and cannot reach the next controller update or write. The orange timeline segment grows across missed release times.
+
+With non-blocking reception, the cycle continues and can detect that cached feedback has expired. It must then execute its defined fault policy. In the demo, a host freshness gate withholds new commands. It does not synthesize a zero-torque or hold-position command.
+
+A blocking wait can belong in a dedicated I/O worker that wakes for data and has a shutdown path. Putting it there still requires bounded handoff to the control thread. Moving an indefinite wait into a helper called from `read()` leaves the control-loop problem unchanged.
+
+For query-response devices, schedule the query and track its response deadline without waiting inside the periodic cycle. Match each response using the fields the protocol actually provides. A command-triggered reply can contain a cached measurement; its arrival alone does not prove the state was sampled after that command.
+
+## Replace obsolete pending setpoints before transport acceptance
+
+Choose **TX backlog**. The host generates a command roughly every millisecond, while the modeled transport completes one every two milliseconds. FIFO keeps commands in generation order, so the motor receives an increasingly delayed sequence. The purple age trace grows even while commands continue arriving.
+
+Select **replace pending setpoint with latest**. The application retains only the newest unsent command, while the packet already accepted by the transport finishes normally. This bounds this application's pending queue to one. It cannot remove older frames already held in a kernel, USB adapter, or motor queue.
+
+The replacement applies to a coherent five-field setpoint from CAN 05. Taking position from one update and gains from another would create a command the controller never produced. Ordered enable, calibration, parameter, and mode transactions require their own policy; replacing those with a newer packet can discard required steps.
+
+On a real non-blocking transmit path, handle `EAGAIN`, `EWOULDBLOCK`, and other reported failures according to the socket and device backend. Count rejected writes, retain generation times, and expire unsent commands before retrying. Increasing queue capacity can postpone overflow while increasing the age of the commands eventually delivered. [Linux `send(2)`](https://man7.org/linux/man-pages/man2/send.2.html)
+
+A pacing requirement should come from the device or measured transport behavior. Adding `sleep_for()` between motors inside the periodic `write()` spends control-thread time and does not guarantee wire-level spacing after adapter buffering. An I/O worker can schedule eligible transmissions against explicit deadlines, with aggregate traffic kept within the bus budget from [CAN 01](/can01/).
+
+## A TX burst can arrive faster than firmware can consume it
+
+**TX burst** holds the host's pending commands until each 4 ms boundary, then releases them with 0.2 ms transport service per frame. The host still generates roughly one command per millisecond. The motor parser needs 0.8 ms per command and has two waiting slots in addition to the command being processed. These are explicit teaching assumptions.
+
+The parser can keep up with the average rate, but the burst fills its waiting buffer before processing frees another slot. The driver-drop counter increases even though the host transport completes each delivery. This models a loss between transport reception and firmware command acceptance. It does not model an electrical transmission error or assert that a particular motor uses this buffer size. A CAN ACK establishes link-layer reception by another participating node; it does not prove the intended actuator firmware parsed or applied the setpoint. [CiA, Classical CAN ACK field](https://www.can-cia.org/can-knowledge/can-cc)
+
+Press **Space TX frames by 1 ms**. The same pending commands are delivered with enough spacing for this parser to consume them. Buffer loss disappears in this example. Pacing must fit the command deadlines and the actual driver's documented behavior; extending a queue only trades overflow for latency.
+
+**RX burst** demonstrates the opposite direction. Feedback sampled every millisecond reaches the host in a batch every 4 ms. Average sampling rate is unchanged, while reception is bursty. Compare reading one packet per cycle with bounded draining, and watch sample age separately from receive age.
+
+## Host freshness and a motor watchdog cover different failures
+
+A **host receive-freshness check** detects that expected feedback has stopped arriving recently enough. It can reject stale state, withdraw pending application commands, and request a defined fault transition. It only runs while the host logic gets CPU time.
+
+A **motor command watchdog** runs in the drive and monitors its configured command-refresh event. It can act even when the host's control thread stalls. Which packets refresh it, whether expiry disables output or enters another mode, and how it rearms are firmware-specific. ODrive, for example, documents the commands that refresh its watchdog; that is evidence for one implementation, not an extension of the MIT packet layout. [ODrive CAN protocol, watchdog](https://docs.odriverobotics.com/v/latest/manual/can-protocol.html#watchdog)
+
+Choose **Host stall** and advance beyond 20 ms. The host control thread stops executing until 36 ms, while the transport worker and motor clock continue. Once the motor sees no accepted command for the configured eight milliseconds, the model latches output disabled. Rewind or reset the scenario to re-arm it. No automatic re-enable is modeled.
+
+In **TX backlog**, obsolete commands can keep resetting a reception-based watchdog. Command silence remains short while the applied command's generation age grows. A watchdog for missing packets therefore does not establish that the arriving setpoints are current.
+
+The feedback-loss case also illustrates delayed fault action: withholding new writes leaves previously queued packets in flight. A real fault policy must account for those packets and the device's local behavior. Sending `tau_ff = 0` leaves the local PD terms from CAN 05 active, and zero bytes encode field minima. Neither is a generic stop instruction.
+
+## Put a time budget around the whole update
+
+For a synchronous hardware component, account for the complete execution path:
+
+$$
+T_{\mathrm{read}} + T_{\mathrm{controller}} + T_{\mathrm{write}}
++ T_{\mathrm{scheduling\ margin}} \le T_{\mathrm{period}}.
+$$
+
+The margin covers the timing variation expected on the actual host. A non-blocking socket call only bounds one kind of wait. Decoder work, locks, allocations, logging, and transmit retries can still lengthen the cycle. ROS 2 Control exposes loop and component timing diagnostics; use the APIs and execution model of the deployed distribution. [Jazzy Controller Manager diagnostics](https://control.ros.org/jazzy/doc/ros2_control/controller_manager/doc/userdoc.html)
+
+Record receive age per actuator, command generation and acceptance times, queue pressure, budget exhaustion, missed releases, and watchdog events under the intended full-robot traffic. Then inject a missing feedback stream and a stopped control thread. Check the observed fault transition and rearming procedure against the motor's documentation before raising command rate or gains.

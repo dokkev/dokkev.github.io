@@ -9,19 +9,6 @@ import { listedPosts, posts, seriesNames } from "../../lib/content";
     <h1>Ideas, explained.</h1>
     <p>Notes on designing, building, and controlling robots.</p>
   </header>
-  <a class="demo-feature" href="/blog/contact-response/">
-    <div>
-      <p class="eyebrow">Interactive example</p>
-      <h2>A spring at the contact interface</h2>
-      <p>Adjust stiffness and indentation. See how a simple contact model responds.</p>
-      <span>Explore the demo →</span>
-    </div>
-    <div class="demo-thumbnail" aria-hidden="true">
-      <span class="demo-line"></span>
-      <span class="demo-dot"></span>
-      <span>F = kδ</span>
-    </div>
-  </a>
   <div class="blog-layout">
     <section>
       <h2 class="list-heading">Latest articles</h2>
@@ -50,11 +37,22 @@ import { listedPosts, posts, seriesNames } from "../../lib/content";
           <summary>{name}</summary>
           <ol>
             {posts
-              .filter((p) => p.series === name && p.lang !== "ko")
+              .filter((p) => p.series === name && p.lang !== "ko" && !p.parent)
               .sort((a, b) => a.seriesOrder - b.seriesOrder)
               .map((post) => (
                 <li>
                   <a href={post.url}>{post.title.replace(/^\[[^\]]+\]\s*-?\s*/, "")}</a>
+                  {posts.some((child) => child.parent === post.url) && (
+                    <ul>
+                      {posts
+                        .filter((child) => child.parent === post.url)
+                        .map((child) => (
+                          <li>
+                            <a href={child.url}>{child.title.replace(/^\[[^\]]+\]\s*-?\s*/, "")}</a>
+                          </li>
+                        ))}
+                    </ul>
+                  )}
                 </li>
               ))}
           </ol>

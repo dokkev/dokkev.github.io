@@ -54,11 +54,17 @@ legacy/jekyll/            Archived Jekyll theme, tooling, and documentation
   Existing frontmatter permalinks keep their public URLs after files move.
 - Use `/assets/...` in web links and images; the `public/` directory is not part
   of a public URL.
-- Add interactive MDX posts under `src/pages/blog/`. The working example is
-  `src/pages/blog/contact-response.mdx`, with a React island in
-  `src/components/ContactDemo.tsx`.
+- Add interactive series articles as `.mdx` files in `content/blog/`, with the
+  same frontmatter and permalink as Markdown articles. Import React demos from
+  `src/components/demos/` and activate them with `client:visible`. CAN 01 is the
+  first example. Omit the old Jekyll `layout: distill` field in MDX; the article
+  route supplies its layout. Route-specific MDX pages can also live under
+  `src/pages/blog/`.
 - Keep essential explanations, equations, and representative results in HTML.
   JavaScript adds interaction to the article.
+
+All blog posts, project descriptions, documentation, and website copy follow the
+[shared writing style guide](docs/writing/style-guide.md).
 
 See [migration status](docs/astro-migration.md) for remaining work before a
 production switch. Archived Jekyll files are retained for reference and share

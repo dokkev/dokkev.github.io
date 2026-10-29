@@ -28,6 +28,11 @@ const pdf = c.pdf;
       {pdf && <a href={pdf}>PDF ↗</a>}
       {c.website && <a href={c.website}>Website ↗</a>}
     </div>
+    {c.media_url && (
+      <p class="publication-media">
+        <span>Media coverage:</span> <a href={c.media_url}>{c.media_label} ↗</a>
+      </p>
+    )}
     {c.contribution && (
       <details class="contribution">
         <summary>My contribution</summary>

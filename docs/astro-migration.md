@@ -38,16 +38,28 @@ pnpm preview
 - Markdown, equations (KaTeX), bibliographies, and article text render at build
   time. Canonical URLs, Open Graph tags, structured data, robots.txt, and a sitemap
   are generated. Search indexing and AI citations are not guaranteed by this.
-- Only `/blog/contact-response/` hydrates React, with `client:visible`. Its initial
-  chart, output, explanation, and table are present in HTML without JavaScript.
-  It is an illustrative linear spring model, not measured research data.
-- New interactive posts can be authored as MDX under `src/pages/blog/`, using
-  `src/layouts/Article.astro` and importing React components as needed.
+- React islands use `client:visible` on `/can01/`, `/can05/`, and `/can06/`.
+  Their initial charts, outputs, explanations, and tables are present in HTML
+  without JavaScript. These are teaching models, not measured research data.
+- Interactive series posts can be authored as MDX in `content/blog/`, preserving
+  their frontmatter permalinks and series navigation. CAN 01 imports four React
+  demos from `src/components/demos/` and hydrates them with `client:visible`.
+  CAN 06 runs a deterministic queue and timeout model with animated playback,
+  scrubbing, and I/O policy controls. It does not model physical bus arbitration
+  or actuator dynamics.
+  Route-specific examples can also live under `src/pages/blog/`.
+- Optional series sub-posts declare `parent` with the parent article URL. They
+  appear beneath that article in series navigation and link back to it in their
+  header. CAN 02A lives at `/can02/pcan/`; `/can05/` now holds the
+  renumbered command-packing article. The I/O scheduling article is `/can06/`,
+  with `/can07/` redirecting there. Sub-posts
+  are reached through their parent or series navigation rather than the latest
+  articles list.
 
 ## Prototype scope and remaining migration work
 
-The first build has 61 HTML pages, including About, Publications, Projects, Blog,
-the existing published article routes, and one MDX demo. The live domain remains
+The current build has 60 HTML pages, including About, Publications, Projects, Blog,
+and the existing published article routes. The live domain remains
 on Jekyll until an explicit production switch.
 
 Before a production switch, port and verify any legacy archive/tag/year URLs,

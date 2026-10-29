@@ -9,6 +9,7 @@ import remarkRehype from "remark-rehype";
 import rehypeRaw from "rehype-raw";
 import rehypeKatex from "rehype-katex";
 import rehypeStringify from "rehype-stringify";
+import { rehypeShiki } from "@astrojs/markdown-remark";
 
 const root = path.resolve("content");
 const escape = (s: string) => s.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
@@ -50,6 +51,7 @@ const processor = unified()
   .use(remarkRehype, { allowDangerousHtml: true })
   .use(rehypeRaw)
   .use(rehypeKatex)
+  .use(rehypeShiki, { theme: "github-light" })
   .use(rehypeStringify);
 export async function markdown(source: string) {
   return String(await processor.process(legacyMarkdown(source)));
@@ -61,9 +63,12 @@ export interface Document {
   url: string;
   body: string;
   date: string;
+  updated?: string;
+  mdx?: string;
   lang: string;
   hidden: boolean;
   series?: string;
+  parent?: string;
   seriesOrder: number;
   image?: string;
   group?: string;
@@ -74,13 +79,13 @@ export interface Document {
 function files(directory: string): string[] {
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const filename = path.join(directory, entry.name);
-    return entry.isDirectory() ? files(filename) : /\.md$/.test(filename) ? [filename] : [];
+    return entry.isDirectory() ? files(filename) : /\.mdx?$/.test(filename) ? [filename] : [];
   });
 }
 function documents(folder: "blog" | "projects"): Document[] {
   return files(path.join(root, folder)).flatMap((filename) => {
     const { data, content } = matter(fs.readFileSync(filename, "utf8"));
-    const basename = path.basename(filename, ".md");
+    const basename = path.basename(filename).replace(/\.mdx?$/, "");
     if (!data.title || data.published === false || !/^\d{4}-\d{2}-\d{2}-/.test(basename)) return [];
     const date = basename.slice(0, 10);
     const slug = basename.slice(11);
@@ -92,9 +97,12 @@ function documents(folder: "blog" | "projects"): Document[] {
         url,
         body: content,
         date,
+        updated: data.updated,
+        mdx: filename.endsWith(".mdx") ? path.relative(root, filename) : undefined,
         lang: data.lang || "en",
         hidden: data.hidden === true,
         series: data.series,
+        parent: data.parent,
         seriesOrder: data.series_order || 0,
         image: data.img ? "/" + data.img.replace(/^\//, "") : undefined,
         group: data.project_group,
@@ -107,7 +115,7 @@ function documents(folder: "blog" | "projects"): Document[] {
 }
 export const posts = documents("blog").sort((a, b) => b.date.localeCompare(a.date));
 export const projects = documents("projects").sort((a, b) => a.importance - b.importance);
-export const listedPosts = posts.filter((p) => !p.hidden && p.lang !== "ko");
+export const listedPosts = posts.filter((p) => !p.hidden && !p.parent && p.lang !== "ko");
 export const seriesNames = [...new Set(posts.filter((p) => p.lang !== "ko" && p.series).map((p) => p.series!))];
 export const about = matter(fs.readFileSync(path.join(root, "about.md"), "utf8")).content;
 export const news = files(path.join(root, "news"))

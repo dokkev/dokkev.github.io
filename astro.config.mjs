@@ -11,5 +11,8 @@ export default defineConfig({
   output: "static",
   trailingSlash: "always",
   integrations: [react(), mdx(), sitemap()],
-  markdown: { processor: unified({ remarkPlugins: [remarkMath], rehypePlugins: [rehypeKatex] }) },
+  markdown: {
+    shikiConfig: { theme: "github-light" },
+    processor: unified({ remarkPlugins: [remarkMath], rehypePlugins: [rehypeKatex] }),
+  },
 });
