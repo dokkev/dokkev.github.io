@@ -1,0 +1,47 @@
+---
+import Base from "../layouts/Base.astro";
+import { projects } from "../lib/content";
+const groups = [
+  ["research", "Research", "Robotic hands and the mechanics of interaction."],
+  ["technical", "DevLog", "Systems, hardware, and control behind the experiments."],
+  ["earlier", "Earlier projects", "Selected work across robotics and embedded systems."],
+];
+---
+
+<Base title="Projects">
+  <header class="page-heading">
+    <p class="eyebrow">Building and exploring</p>
+    <h1>Projects</h1>
+    <p>From contact interfaces to complete robotic systems.</p>
+  </header>
+  {groups.map(([key, title, description]) => (
+    <section class="project-section">
+      <div class="section-heading">
+        <div>
+          <h2>{title}</h2>
+          <p>{description}</p>
+        </div>
+      </div>
+      <div class:list={["project-grid", { "project-grid-small": key === "earlier" }]}>
+        {projects
+          .filter((p) => p.group === key)
+          .map((project) => (
+            <a class="project-card" href={project.redirect || project.url}>
+              {project.image && (
+                <div class="project-image">
+                  <img src={project.image} alt={project.title} loading="lazy" />
+                </div>
+              )}
+              <div class="project-copy">
+                <h3>
+                  {project.title}
+                  <span>↗</span>
+                </h3>
+                <p>{project.description}</p>
+              </div>
+            </a>
+          ))}
+      </div>
+    </section>
+  ))}
+</Base>

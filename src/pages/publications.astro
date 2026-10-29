@@ -1,0 +1,26 @@
+---
+import Base from "../layouts/Base.astro";
+import Publication from "../components/Publication.astro";
+import { publications } from "../lib/publications";
+const years = [...new Set(publications.map((p: any) => p.issued?.["date-parts"]?.[0]?.[0]))].sort((a: any, b: any) => b - a);
+---
+
+<Base title="Publications" description="Research publications by Dong Ho Kang in contact morphology, dexterous manipulation, and robot control.">
+  <header class="page-heading">
+    <p class="eyebrow">Research</p>
+    <h1>Publications</h1>
+    <p>Peer-reviewed publications, workshop papers, and preprints.</p>
+  </header>
+  {years.map((year) => (
+    <section class="publication-year">
+      <h2>{year}</h2>
+      <div class="publication-list">
+        {publications
+          .filter((p: any) => p.issued?.["date-parts"]?.[0]?.[0] === year)
+          .map((paper: any) => (
+            <Publication paper={paper} />
+          ))}
+      </div>
+    </section>
+  ))}
+</Base>

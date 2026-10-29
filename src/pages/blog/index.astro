@@ -1,0 +1,63 @@
+---
+import Base from "../../layouts/Base.astro";
+import { listedPosts, posts, seriesNames } from "../../lib/content";
+---
+
+<Base title="Blog" description="Notes on robotics, contact morphology, whole-body control, and building robot hardware.">
+  <header class="page-heading">
+    <p class="eyebrow">Research notebook</p>
+    <h1>Blog</h1>
+    <p>Notes on designing, building, and controlling robots.</p>
+  </header>
+  <div class="blog-layout">
+    <section>
+      <h2 class="list-heading">Latest articles</h2>
+      <div class="article-list">
+        {listedPosts.map((post) => (
+          <article>
+            <p class="eyebrow">
+              {post.date}
+              {post.series ? ` · ${post.series}` : ""}
+            </p>
+            <h3>
+              <a href={post.url}>{post.title}</a>
+            </h3>
+            <p>{post.description}</p>
+            <a class="text-link" href={post.url}>
+              Read article ↗
+            </a>
+          </article>
+        ))}
+      </div>
+    </section>
+    <aside class="series-sidebar">
+      <h2>Series</h2>
+      {seriesNames.map((name) => (
+        <details open>
+          <summary>{name}</summary>
+          <ol>
+            {posts
+              .filter((p) => p.series === name && p.lang !== "ko" && !p.parent)
+              .sort((a, b) => a.seriesOrder - b.seriesOrder)
+              .map((post) => (
+                <li>
+                  <a href={post.url}>{post.title.replace(/^\[[^\]]+\]\s*-?\s*/, "")}</a>
+                  {posts.some((child) => child.parent === post.url) && (
+                    <ul>
+                      {posts
+                        .filter((child) => child.parent === post.url)
+                        .map((child) => (
+                          <li>
+                            <a href={child.url}>{child.title.replace(/^\[[^\]]+\]\s*-?\s*/, "")}</a>
+                          </li>
+                        ))}
+                    </ul>
+                  )}
+                </li>
+              ))}
+          </ol>
+        </details>
+      ))}
+    </aside>
+  </div>
+</Base>

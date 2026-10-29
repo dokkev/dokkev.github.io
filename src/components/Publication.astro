@@ -1,0 +1,43 @@
+---
+const { paper } = Astro.props;
+const c = paper.custom;
+const year = paper.issued?.["date-parts"]?.[0]?.[0];
+const title = String(paper.title || "").replace(/[{}]/g, "");
+const authors = paper.author?.map((a: any) => `${a.given || ""} ${a.family || ""}`.trim()).join(", ");
+const venue = paper["container-title"];
+const preview = c.preview;
+const pdf = c.pdf;
+---
+
+<article class:list={["publication", { "publication-no-image": !preview }]} id={paper.id}>
+  {preview && (
+    <div class="publication-image">
+      <img src={`/assets/img/publication_preview/${preview}`} alt={`${title} research preview`} loading="lazy" />
+    </div>
+  )}
+  <div>
+    <p class="eyebrow">
+      {year}
+      {c.note ? ` · ${c.note}` : ""}
+    </p>
+    <h3>{title}</h3>
+    <p class="authors">{authors}</p>
+    {venue && <p class="venue">{venue}</p>}
+    <div class="paper-links">
+      {paper.DOI && <a href={`https://doi.org/${paper.DOI}`}>{c.doi_label || "DOI"} ↗</a>}
+      {pdf && <a href={pdf}>PDF ↗</a>}
+      {c.website && <a href={c.website}>Website ↗</a>}
+    </div>
+    {c.media_url && (
+      <p class="publication-media">
+        <span>Media coverage:</span> <a href={c.media_url}>{c.media_label} ↗</a>
+      </p>
+    )}
+    {c.contribution && (
+      <details class="contribution">
+        <summary>My contribution</summary>
+        <p>{c.contribution}</p>
+      </details>
+    )}
+  </div>
+</article>

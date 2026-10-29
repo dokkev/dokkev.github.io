@@ -1,0 +1,139 @@
+---
+title: "[CAN 01] - From Voltage to a Working CAN Bus"
+description: "Read CAN payloads in hex, wire a terminated twisted pair, and budget command and feedback traffic for robot actuators."
+published: true
+lang: en
+date: 2023-09-01 00:00:00
+updated: "2026-10-28"
+permalink: /can01/
+series: "CAN Bus for Robotic Hardware"
+series_order: 1
+tags: [Hardware Development, CAN, Electronics]
+---
+
+import VoltageSignalDemo from '../../../src/components/demos/VoltageSignalDemo';
+import CanDifferentialDemo from '../../../src/components/demos/CanDifferentialDemo';
+import HexByteDemo from '../../../src/components/demos/HexByteDemo';
+import CanBusBudgetDemo from '../../../src/components/demos/CanBusBudgetDemo';
+
+An actuator can have the correct CAN identifier and still fail to receive a command. The receiver must first recover the bits from a cable shared with other devices. Cable layout and available bus time therefore belong in the same design as the command format.
+
+At the bench, an oscilloscope shows voltages while a CAN logger shows identifiers and payload bytes. Connecting those views helps separate a wiring problem from a payload interpretation problem. We will use high-speed Classical CAN, the kind of link used by many robot actuators.
+
+## High and Low are voltage ranges
+
+The TI SN74LVC1G125 gives a concrete example. With a 3.0–3.6 V supply, it guarantees Low inputs up to 0.8 V and High inputs from 2.0 V. The table below uses a 3.3 V supply. [SN74LVC1G125 datasheet, recommended operating conditions](https://www.ti.com/lit/ds/symlink/sn74lvc1g125.pdf)
+
+| Input relative to receiver ground | Guaranteed input interpretation |
+| --- | --- |
+| 0 to 0.8 V | Low |
+| Above 0.8 V and below 2.0 V | No guaranteed logic classification |
+| 2.0 to 3.3 V | High |
+
+In the positive-logic example below, Low represents 0 and High represents 1. An input at 2.6 V can therefore represent the same logic 1 as an input at 3.3 V. The receiver does not need the voltage to equal the supply exactly.
+
+The intermediate range is not an extra symbol that the hardware transmits. A particular input may resolve to Low or High there; its behavior is outside the guaranteed classification used here. The actual switching threshold, hysteresis, input transition requirements, and allowed voltage range belong to the selected device's specification.
+
+Use the waveform controls below to change the bit sequence, edge duration, and sampling time. The colored bands show the input ranges from the table.
+
+<VoltageSignalDemo client:visible />
+
+## A sequence needs a bit duration
+
+A receiver observing a steady High voltage cannot tell whether the transmitter intended one 1 or several consecutive 1s. A sequence requires an agreed bit duration and a way to align the receiver's reading times with the transmitter. If each interval lasts 1 μs, two consecutive High intervals can represent `11` even though there is no voltage transition between them.
+
+The waveform above assumes that the interval boundaries are already known. It assigns one requested level to each interval and samples once within it. With the initial sequence `10110010`, a 0.25 μs edge duration, and sampling halfway through each interval, every sample falls in its intended voltage range.
+
+Move the sample time earlier or make the edges slower. A sample can now land in the intermediate range or still be inside the previous bit's range. The first case appears as `?`; the second can produce a definite classification that differs from the requested bit. This model isolates settling time. It does not model clock recovery or predict a particular receiver's error rate.
+
+A real protocol must define how receivers establish timing and identify a frame. CAN controllers implement protocol-specific synchronization and frame decoding. The voltage alone does not say where an identifier or a payload begins.
+
+A loaded cable takes time to change voltage. At a higher bitrate, that settling time occupies more of each bit interval. A sample that works on a short bench connection can fail after the cable becomes longer or branches to more actuators. A real CAN controller handles synchronization; every node still needs compatible bit timing and the same nominal bitrate.
+
+## CAN compares CANH with CANL
+
+High-speed CAN uses a differential voltage:
+
+$$
+V_{\mathrm{diff}} = V_{\mathrm{CANH}} - V_{\mathrm{CANL}}.
+$$
+
+A representative 5 V transceiver produces levels near the values below. They illustrate two bus states, rather than exact voltages guaranteed for every transceiver. [TI, Introduction to CAN, Figure 7](https://www.ti.com/lit/an/sloa101b/sloa101b.pdf)
+
+| Bus state | CANH | CANL | Difference | CAN bit |
+| --- | ---: | ---: | ---: | ---: |
+| Recessive | About 2.5 V | About 2.5 V | About 0 V | 1 |
+| Dominant | About 3.5 V | About 1.5 V | About 2 V | 0 |
+
+**A larger positive differential voltage represents the dominant bit, 0.** CANH and CANL name the two lines. They do not independently carry a logic 1 and a logic 0.
+
+The SN65HVD1050 receiver provides a concrete range example: a differential input at or below 0.5 V is recessive, while an input at or above 0.9 V is dominant. The demo leaves the region between those limits unspecified. Real switching within that region can depend on device variation and hysteresis. [SN65HVD1050 datasheet, receiver characteristics and threshold tests](https://www.ti.com/lit/ds/symlink/sn65hvd1050.pdf)
+
+<CanDifferentialDemo client:visible />
+
+## Twist CANH and CANL together
+
+A disturbance that adds the same voltage to both lines leaves their difference unchanged. In the demo, the shared-shift slider moves both voltages while keeping the recovered bit fixed. The CANH-only slider changes the difference and can change the bit. Real receivers only reject common-mode disturbances within their specified operating range. [TI SN65HVD1050 datasheet](https://www.ti.com/lit/ds/symlink/sn65hvd1050.pdf)
+
+Twisting CANH and CANL helps the pair experience similar interference and reduces magnetic pickup through successive, oppositely oriented loops. This reduces electromagnetic interference (EMI); it does not make the cable immune to motor-drive switching noise. Keep the pair twisted close to its connectors and route it away from switching power wiring where practical. [Kvaser, termination and cable geometry](https://kvaser.com/using-termination-ensure-recessive-bit-transmission/)
+
+The receiver also needs its allowed common-mode range respected. Follow the adapter and actuator documentation for CAN reference ground, shielding, and isolation. A two-wire differential signal does not imply that arbitrary ground differences are acceptable.
+
+The controller reaches this pair through a **CAN transceiver**. Its TXD and RXD pins use local logic levels; its bus pins drive and sense CANH and CANL. A microcontroller CAN peripheral supplies frame handling, so its presence alone does not provide the electrical bus interface. [TI, Introduction to CAN](https://www.ti.com/lit/an/sloa101b/sloa101b.pdf)
+
+## Put 120 Ω at each physical end
+
+A cable carries a voltage transition as a traveling wave. An impedance mismatch reflects part of that wave, producing ringing that can disturb the voltage at the sampling point. A conventional high-speed CAN bus uses a nominal 120 Ω twisted pair with a matching termination across CANH and CANL at each end. [NI, CAN physical layer and termination guide](https://www.ni.com/en/support/documentation/supplemental/09/can-physical-layer-and-termination-guide.html)
+
+For an adapter followed by two daisy-chained actuators, the termination locations are:
+
+```text
+             main bus, CANH / CANL pair
+   120 Ω ================================== 120 Ω
+          |                |            |
+       adapter          motor A      motor B
+```
+
+Each resistor bridges CANH and CANL. The drawing shows topology, not cable lengths; reference-ground and power connections are omitted. Keep connections from the main bus to each transceiver short. Long branches create additional reflection paths. [TI, CAN physical layer requirements](https://www.ti.com/lit/an/slla270/slla270.pdf)
+
+Termination belongs at the **two physical ends**, so adding a motor in the middle does not call for another resistor. Check for built-in termination switches or resistors in the adapter and actuators before adding external ones. [NI termination guide](https://www.ni.com/en/support/documentation/supplemental/09/can-physical-layer-and-termination-guide.html)
+
+With power removed, two passive 120 Ω terminators in parallel give approximately **60 Ω between CANH and CANL**. This is a useful wiring check when those resistors remain connected without power. It does not measure the cable's characteristic impedance or prove signal quality. Electronically switched termination and other connected circuitry require the device-specific procedure.
+
+## The logger displays bits as hex bytes
+
+After recovering bits, the CAN controller groups them into frames. A frame carries an identifier and a payload; Classical CAN allows up to eight payload bytes. The identifier also participates in arbitration. Its meaning as a command type or node address comes from the device protocol. [CAN in Automation, Classical CAN](https://www.can-cia.org/can-knowledge/can-cc)
+
+A logger commonly displays the identifier and payload in **hexadecimal**, or hex. One hex digit represents four bits, with digits `0`–`9` followed by `A`–`F` for values ten through fifteen. A byte contains eight bits, so two hex digits cover `00` through `FF`, or decimal 0 through 255.
+
+For example, the same byte can be written as binary `0011 0100`, hex `34`, or decimal `52`. Hex changes how we read the bits. The transceiver still sends the corresponding dominant and recessive bus states.
+
+<HexByteDemo client:visible />
+
+Consider this illustrative `candump`-style output, rather than a recording from a motor:
+
+```text
+can0  123   [2]  34 12
+```
+
+Here `can0` names the interface, `123` is the hexadecimal CAN identifier, and `[2]` gives the payload length in bytes. The payload bytes are `34` and `12`. Tools such as [`candump` from can-utils](https://github.com/linux-can/can-utils) display decoded frames so software can inspect them without an oscilloscope.
+
+If a device defines these two bytes as a little-endian unsigned integer, they encode `0x1234`, or 4660. A big-endian interpretation gives `0x3412`, or 13330. Neither number has a physical unit yet. The actuator's protocol must specify byte order, signedness, scale, and units before software can call it position or torque.
+
+Switch byte order in the demo: the payload stays `34 12`, while the interpreted value changes. Valid CAN reception can therefore coexist with an incorrect motor value. Check the payload definition before changing wiring to fix a value that decodes incorrectly.
+
+## A 1 Mbit/s bus is shared by every motor
+
+Bus bitrate counts transmitted bits per second, including frame fields. It is not the update frequency available to each actuator. Commands, feedback, and other traffic all consume time on the same pair.
+
+For an 11-bit identifier and an eight-byte Classical CAN data frame, the frame fields total 108 bits before bit stuffing. Including the three-bit intermission gives **111 bit times**. Bit stuffing inserts additional bits in eligible parts of the frame after five identical bits; error recovery can consume further bus time. This budget follows the [Classical CAN frame fields described by CAN in Automation](https://www.can-cia.org/can-knowledge/can-cc).
+
+Suppose each motor needs one eight-byte command and one eight-byte feedback frame per update. At 1,000 updates/s, one motor needs at least `2 × 1,000 × 111 = 222,000` bit times per second. Three motors already consume **66.6% of a 1 Mbit/s bus before bit stuffing**, despite carrying only 48 payload bytes per update across the bus.
+
+<CanBusBudgetDemo client:visible />
+
+The calculator assumes this particular two-frame exchange. A motor protocol that packs several commands into one frame, uses different payload lengths, or sends feedback independently needs a different count. At six motors and 1 kHz, this example requires 133.2% of the bus before stuffing, so the schedule cannot fit. Reducing the rate to 500 Hz brings the same lower-bound load to 66.6%.
+
+A load below 100% still does not guarantee an on-time feedback message. Among the 11-bit data frames used in this example, lower identifiers have higher arbitration priority. The traffic schedule therefore affects latency. Keep capacity for additional traffic and retransmissions, then measure message timing under the intended load. [CAN in Automation, priority and arbitration](https://www.can-cia.org/can-knowledge/can-cc)
+
+Before the [SocketCAN setup in CAN 02](/can02/), identify the adapter's transceiver, both termination locations, and the actuator's nominal bitrate. Choose one documented feedback frame and write down its expected identifier, payload layout, and rate. Those details give the first received log a concrete interpretation.

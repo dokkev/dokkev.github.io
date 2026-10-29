@@ -16,7 +16,7 @@ from matplotlib.font_manager import FontProperties, fontManager
 
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT = ROOT / "assets" / "img" / "hardware" / "models"
+OUTPUT = ROOT / "public" / "assets" / "img" / "hardware" / "models"
 
 PAPER = "#f3efe6"
 INK = "#171612"
