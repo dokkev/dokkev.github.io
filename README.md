@@ -1,8 +1,8 @@
 # Dong Ho Kang — portfolio
 
 An Astro portfolio with static research pages and React islands for interactive
-blog demos. The Astro migration is being developed on `codex/astro-portfolio`.
-The live site still uses the Jekyll version on `main`.
+blog demos. GitHub Pages deploys the Astro build from `main` to
+https://www.dongho.dev.
 
 ## Local development
 
@@ -26,7 +26,7 @@ pnpm preview     # Serve the built site
 
 ```text
 src/
-  pages/                  Routes and the interactive MDX example
+  pages/                  Page routes
   layouts/                Shared page and article layouts
   components/             Publication cards and React demos
   lib/                    Content loading and Markdown / BibTeX conversion
@@ -39,11 +39,11 @@ content/
   news/                   News entries
 public/
   assets/                 Images, videos, PDFs, and existing static files
-  CNAME                   Custom domain for a future production switch
+  CNAME                   Custom domain for GitHub Pages
 scripts/                  Research figure generation tools
 docs/                     Migration status and known limitations
 legacy/jekyll/            Archived Jekyll theme, tooling, and documentation
-.github/workflows/        Astro build check; no production deployment
+.github/workflows/        Astro checks and GitHub Pages deployment
 ```
 
 ## Editing content
@@ -66,6 +66,6 @@ legacy/jekyll/            Archived Jekyll theme, tooling, and documentation
 All blog posts, project descriptions, documentation, and website copy follow the
 [shared writing style guide](docs/writing/style-guide.md).
 
-See [migration status](docs/astro-migration.md) for remaining work before a
-production switch. Archived Jekyll files are retained for reference and share
+See [migration notes](docs/astro-migration.md) for deployment details and known
+limitations. Archived Jekyll files are retained for reference and share
 content/assets through relative symlinks; they are not included in Astro output.

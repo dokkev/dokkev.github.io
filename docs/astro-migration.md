@@ -1,9 +1,13 @@
-# Astro portfolio prototype
+# Astro portfolio deployment
 
-This app lives on `codex/astro-portfolio`. It runs from the repository root.
-The live Jekyll deployment continues from `main`; the old engine and workflows
-are archived under `legacy/jekyll/` on this migration branch. The active Astro
-workflow checks this branch and does not publish to GitHub Pages.
+The Astro app runs from the repository root. The `Astro build and deploy`
+workflow checks `main`, `codex/astro-portfolio`, and relevant pull requests.
+Pushes to `main` and manual runs on `main` build `dist/` and deploy it through
+GitHub Pages Actions to https://www.dongho.dev. Other branches only run checks.
+
+The Pages publishing source is GitHub Actions. The custom domain remains in
+`public/CNAME`. The previous Jekyll source and workflows are archived under
+`legacy/jekyll/`; they do not run as active workflows.
 
 ## Run locally
 
@@ -56,16 +60,14 @@ pnpm preview
   are reached through their parent or series navigation rather than the latest
   articles list.
 
-## Prototype scope and remaining migration work
+## Content scope and known limitations
 
 The current build has 60 HTML pages, including About, Publications, Projects, Blog,
-and the existing published article routes. The live domain remains
-on Jekyll until an explicit production switch.
+and the existing published article routes.
 
-Before a production switch, port and verify any legacy archive/tag/year URLs,
-RSS, the standalone News archive, coauthor profile links, syntax highlighting,
-and site-specific article widgets that should be retained. The `CNAME` is already in `public/`; add the GitHub Pages deployment
-configuration for the Astro output at that point.
+Legacy archive/tag/year URLs, RSS, the standalone News archive, coauthor
+profile links, and site-specific article widgets have not all been ported or
+verified. Syntax highlighting uses GitHub Light.
 
 Two old project sources reference images absent from the repository:
 `assets/img/mec/4demo.gif` and `assets/img/whisker/fig12.png`. They remain source
