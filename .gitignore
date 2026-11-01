@@ -18,3 +18,6 @@ public/assets/libs/
 .idea/
 .qodo/
 __pycache__/
+
+# Generated CMD volume meshes (rebuilt by the Newton generator)
+/scripts/cmd/meshes/

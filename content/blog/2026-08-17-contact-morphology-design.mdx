@@ -1,0 +1,89 @@
+---
+title: "What Is Contact Morphology Design?"
+description: How a compliant structure changes the contact load path, its stiffness, and the force-control problem.
+published: true
+hidden: true
+date: 2026-08-17 00:00:00
+permalink: /whatiscmd/
+tags: [Robotics, Hardware Development, Contact Morphology Design]
+---
+
+import CmdStructuralContactDemo from "../../src/components/demos/CmdStructuralContactDemo";
+
+Two fingertips can use the same soft material and still respond differently to contact. A rigid insert redirects load. A cellular interior gives walls room to deform. A filled pad carries load through its continuous volume. The robot encounters both the resulting force and the contact patch that transmits it.
+
+**Contact Morphology Design (CMD) is the design of contact geometry, material distribution, and structural support for a chosen interaction and its sensing and control conditions.** I use the term for a research perspective that treats the contact interface as part of the robot system.
+
+## Hybrid, compliant, and solid structures
+
+The three specimens share a rounded outer envelope: 30 mm wide, 14 mm deep toward the contact surface, and extruded 12 mm through the section. Their soft material uses the same illustrative stable Neo-Hookean law, with $E=100$ kPa and $\nu=0.35$.
+
+- **Hybrid Structure:** a T-shaped rigid carrier extends a 7.6 mm wide stem 6 mm into the soft pad. Soft material fills the space around the stem, with **no lateral void**. The material is bonded to the stem and backing, representing an embedded insert.
+- **Compliant Structure:** fourteen hexagonal channels form a honeycomb interior. Their walls and outer skin deform under load. The backing is rigid, with no internal stem.
+- **Solid Structure:** the rounded envelope is filled with soft material and bonded to the same backing plane.
+
+The comparison holds the outer envelope and soft material law fixed. Internal material volume and mass differ. The material parameters are illustrative and are not fitted to a particular silicone.
+
+## Three loading cases
+
+A rigid platen follows prescribed motions, and Newton computes the deformation and contact reactions. These cases compare the same imposed motion; they do not impose equal contact forces.
+
+| Case | Prescribed motion | What changes |
+| --- | --- | --- |
+| Normal load | Smooth indentation from 0 to 2.4 mm over 1.2 s | Normal reaction and contact-patch growth |
+| Cyclic load | Two 0 → 2.4 → 0 mm cycles, each lasting 2 s | Loading, release, and recovery over repeated contact |
+| Lateral load | Preload to 1.5 mm over 0.6 s, then translate 3 mm sideways over 2 s | Shear deformation, friction reaction, and redistribution of contact |
+
+The platen has the same friction coefficient, $\mu=0.6$, in every case. All rigid backing and insert surfaces stay fixed.
+
+<CmdStructuralContactDemo client:visible />
+
+The patch views look down onto the platen plane. Colored polygons estimate the projected contacting surface; dots mark active contact nodes. The area comes from clipping boundary triangles at the contact plane, including the solver's 5 μm contact radius. It depends on the mesh and penalty contact model. It is not a measured pressure image or an exact continuous contact area.
+
+## Normal force and contact area
+
+At the end of the normal loading motion, all three specimens have the same 2.4 mm indentation:
+
+| Structure | Normal reaction | Estimated contact area |
+| --- | --- | --- |
+| Hybrid Structure | 6.344 N | 204.9 mm² |
+| Compliant Structure | 1.159 N | 182.2 mm² |
+| Solid Structure | 3.980 N | 193.3 mm² |
+
+The honeycomb provides room for the cellular walls to deform. The embedded rigid stem constrains deformation inside the hybrid pad. The filled pad lies between these two responses under the chosen loading condition. The patch shows where the external load is transmitted, while the section shows how the internal structure carries it.
+
+Here, *hyperelastic* names the soft material model used in all three cases. *Stiffening* describes a rising force slope during indentation. Material nonlinearity, changing contact geometry, and internal constraints can all contribute. These curves do not isolate their individual contributions.
+
+## Release and lateral motion add different questions
+
+The cyclic case computes both loading and return motion; it does not replay a single loading curve backward. The soft material law is hyperelastic, while contact friction and the simulation's damping dissipate energy. Any loading–return difference in this example therefore includes those effects and does not establish a physical material's viscoelasticity or fatigue behavior.
+
+The lateral case begins with the same 1.5 mm indentation in each structure, giving different normal forces. The platen then moves sideways while that indentation stays fixed. Lateral reaction is signed: a negative value opposes the platen's positive translation.
+
+| Structure, after 3 mm lateral motion | Normal reaction | Lateral reaction | Estimated contact area |
+| --- | --- | --- | --- |
+| Hybrid Structure | 3.152 N | -1.873 N | 161.9 mm² |
+| Compliant Structure | 0.554 N | -0.332 N | 140.4 mm² |
+| Solid Structure | 1.950 N | -1.167 N | 147.4 mm² |
+
+Because the coefficient of friction is shared, this comparison does not demonstrate different surface friction properties. The normal force, internal deformation, and local sliding conditions differ. The evolving patch helps locate those differences, but the patch view alone does not classify every point as sticking or sliding.
+
+## What the contact model captures
+
+The optional Drake overlay uses a [hydroelastic pressure-field contact model](https://drake.mit.edu/doxygen_cxx/group__hydroelastic__user__guide.html) on the nominal tetrahedral geometries. Its hydroelastic modulus matches the Solid Structure's Newton normal reaction at **0.5 mm indentation only**, then remains fixed for all three geometries. This contact parameter is distinct from the soft material's Young's modulus.
+
+The query computes pressure traction where the platen intersects nominal geometry. It does not solve honeycomb wall deformation, the embedded insert's structural constraint, or the cyclic and frictional lateral trajectories. Newton's [VBD model](https://newton-physics.github.io/newton/latest/solvers/vbd.html) supplies the deformable dynamics in those cases.
+
+The dashed Drake curves stop at 1 mm. Their difference from Newton illustrates the chosen models and calibration, including calibration to a finite-rate loading state. It does not rank the engines against physical specimens or cover every modeling approach available in either engine.
+
+## What this changes for a robot
+
+A small motion command changes force according to the local interface response:
+
+$$
+\Delta F_n\approx k_c\Delta\delta,\qquad k_c=\frac{\partial F_n}{\partial\delta}.
+$$
+
+A force controller must operate across that changing response. A tactile sensor also observes the load through a changing patch and internal structure. Normal compression alone leaves out recovery, shear, and sliding, which is why the three cases use different loading paths.
+
+These simulations use ideal prescribed motion and illustrative material parameters. The recording includes numerical damping and omits cell-wall self-contact after collapse. It does not establish calibrated silicone behavior, long-term durability, or hardware control performance. Choosing a contact structure requires evaluating the loading paths and force range the robot will actually encounter.

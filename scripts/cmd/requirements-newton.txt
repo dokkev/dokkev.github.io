@@ -1,0 +1,5 @@
+newton==1.6.0
+warp-lang==1.17.0
+numpy==2.4.6
+gmsh==4.15.2
+shapely==2.1.2

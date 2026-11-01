@@ -2124,3 +2124,61 @@ h3 {
 .wbc-primary-secondary > div:first-child { border-left: 3px solid #16735e; }
 .wbc-primary-secondary > div:last-child { border-left: 3px solid #b56617; }
 @media(max-width:560px) { .wbc-primary-secondary { grid-template-columns: 1fr; } }
+
+/* CMD: computed contact maps and sampled force-control replay. */
+.cmd-force-demo { margin: 2rem 0; padding: 22px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+.cmd-force-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+.cmd-force-heading strong { font-size: 20px; }
+.cmd-force-heading span, .cmd-force-condition { color: #52635b; font-size: 13px; }
+.cmd-force-modes { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 12px; }
+.cmd-force-demo button { border: 1px solid #cbd5cf; border-radius: 6px; background: #fff; color: #293b32; padding: 9px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+.cmd-force-demo button[aria-pressed="true"] { background: #e7f1eb; border-color: #17695b; color: #164f40; }
+.cmd-force-demo button:disabled { opacity: .45; cursor: default; }
+.cmd-force-demo button:focus-visible, .cmd-force-demo input:focus-visible { outline: 2px solid #17695b; outline-offset: 3px; }
+.cmd-force-playback { display: flex; align-items: center; gap: 8px; margin: 16px 0; font-size: 12px; }
+.cmd-force-playback input { min-width: 50px; flex: 1; accent-color: #17695b; }
+.cmd-force-playback span { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.cmd-pad-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.cmd-pad { min-width: 0; border: 1px solid var(--line); border-top: 3px solid; border-radius: 6px; padding: 12px; }
+.article-body .cmd-pad h4 { margin: 0; font: 600 16px "DM Sans", sans-serif; }
+.cmd-pad-side { display: block; width: 100%; height: 130px; }
+.cmd-pad-side text { font: 11px "DM Sans", sans-serif; fill: #475b50; }
+.cmd-pressure { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.cmd-pressure canvas { width: 100%; max-width: 235px; height: auto; aspect-ratio: 1; border: 1px solid #dce3df; }
+.cmd-pressure span { font-size: 11px; color: #52635b; }
+.cmd-pad-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 8px; margin: 16px 0 4px; font-size: 12px; }
+.cmd-pad-metrics dt { color: #52635b; }
+.cmd-pad-metrics dd { margin: 1px 0 0; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.article-body .cmd-loop-values { font-size: 12px; line-height: 1.6; margin: 14px 0 0; padding-top: 10px; border-top: 1px solid var(--line); }
+.cmd-pressure-scale { display: flex; justify-content: center; align-items: center; gap: 9px; margin: 16px 0 24px; font-size: 11px; }
+.cmd-pressure-scale i { width: 150px; height: 10px; background: linear-gradient(to right,rgb(239,244,247),rgb(57,113,159),rgb(47,164,158),rgb(216,216,83),rgb(247,159,56)); }
+.cmd-chart-legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 16px; font-size: 12px; }
+.cmd-force-chart { display: block; width: 100%; overflow: hidden; }
+.cmd-force-chart text { font: 12px "DM Sans", sans-serif; fill: #475b50; }
+.article-body .cmd-force-caption { font-size: 14px; line-height: 1.7; margin: 8px 0 0; }
+@media (max-width: 600px) {
+  .cmd-force-demo { padding: 12px; }
+  .cmd-pad-grid { gap: 8px; }
+  .cmd-pad { padding: 8px; }
+  .cmd-pad-metrics { grid-template-columns: 1fr; }
+  .cmd-pad-side { height: 100px; }
+  .cmd-force-playback { flex-wrap: wrap; }
+  .cmd-force-playback input { flex-basis: 40%; }
+}
+.cmd-structure-scene { display: block; width: 100%; height: auto; }
+.cmd-structure-scene text { font: 11px "DM Sans", sans-serif; fill: #475b50; }
+.article-body .cmd-structure-note { font-size: 12px; line-height: 1.6; color: #52635b; margin: 14px 0; }
+.cmd-drake-toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; margin: 18px 0; }
+.cmd-drake-toggle input { accent-color: #17695b; }
+
+.cmd-three-structures { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 700px) {
+  .cmd-three-structures { grid-template-columns: 1fr; }
+  .cmd-three-structures .cmd-pad-metrics { grid-template-columns: 1fr 1fr; }
+  .cmd-three-structures .cmd-structure-scene { max-width: 360px; margin: 0 auto; }
+}
+.cmd-contact-patch { display: block; width: 100%; height: auto; border-top: 1px solid var(--line); }
+.cmd-contact-patch text { font: 12px "DM Sans", sans-serif; fill: #475b50; }
+@media (max-width: 700px) {
+  .cmd-three-structures .cmd-contact-patch { max-width: 360px; margin: 0 auto; }
+}
