@@ -12,7 +12,7 @@ const titles = {
 };
 const captions = {
   qp: [
-    'These are contours of the actual Talos tracking cost on an affine two-dimensional slice of the 94-variable problem. The coordinates combine a static solution, the full weighted-QP solution, and the full HQP solution; they are not Cartesian robot coordinates.',
+    'These are contours of the actual Talos tracking cost on an affine two-dimensional slice of the 94-variable problem. The axes are slice coordinates u and v, not Cartesian robot coordinates. Curves connect commands with the same tracking cost.',
     'Every point in this plane satisfies floating-base dynamics and the two stationary-foot equalities. The blue polygon adds the actual torque, actuated-acceleration, and point-force inequalities. The rectangular plot window only crops the display.',
     'Expand the cost sublevel set until it touches the feasible polygon at the full weighted-QP solution (u=1, v=0). The hand gains a little acceleration by accepting nonzero CoM acceleration. The solve used all 94 variables; this picture is a slice, not a reduced two-variable controller.',
   ],
@@ -62,9 +62,9 @@ export default function WbcTaskComparisonDemo({method}: {method: Method}) {
         {step===2 && <path d={path(ellipse(data.slice.optimal_level*t))} fill="#b56617" fillOpacity=".06" stroke="#b56617" strokeWidth="3" />}
       </g>
       <path d="M140 350 H503 M140 350 V45" stroke="#89949b" fill="none" />
-      <text x="165" y="380">u · weighted-QP motion coefficient</text><text x="145" y="25">v · HQP motion coefficient</text>
+      <text x="165" y="380">u · slice coordinate</text><text x="145" y="25">v · slice coordinate</text>
       {[-.4,0,.5,1,1.4,1.8].map(n=><g key={n}><text x={plot([n,0])[0]-8} y="369">{n}</text><text x="105" y={plot([0,n])[1]+5}>{n}</text></g>)}
-      {[[0,0],[1,0],[0,1]].map((p,i)=><g key={i} opacity={step===0?.45:1}><circle cx={plot(p)[0]} cy={plot(p)[1]} r="5" fill={i===1?'#16735e':'#2863b2'} /><text x={plot(p)[0]+10} y={plot(p)[1]-10}>{['static','QP optimum','HQP result'][i]}</text></g>)}
+      {[[0,0],[1,0]].map((p,i)=><g key={i} opacity={step===0?.45:1}><circle cx={plot(p)[0]} cy={plot(p)[1]} r="5" fill={i===1?'#16735e':'#2863b2'} /><text x={plot(p)[0]+10} y={plot(p)[1]-10}>{['static','QP optimum',''][i]}</text></g>)}
       <text x="520" y="120" fill="#b56617">same cost</text><text x="520" y="145" fill="#b56617">on each curve</text>
       {step>=1 && <><text x="520" y="230" fill="#2863b2">feasible</text><text x="520" y="253" fill="#2863b2">slice</text></>}
     </svg>}

@@ -212,3 +212,15 @@ J, its row cross product gives a unit null vector n and N=n nᵀ. The unscaled
 posture request z, allowed Nz, and removed (I-N)z use the same rad/s scale.
 The common time envelope is factored out of the arrows. Spaces are recomputed
 from the current interpolated posture, rather than kept at the initial pose.
+
+### Whole-space projection
+
+The toy panel now has five steps. It starts from a 5x5x5 lattice in joint-velocity
+space, applies Ny=I-Jy†Jy to show a rank-one height constraint collapsing it onto
+a plane, then applies the full endpoint projector Nxy to collapse that plane onto
+a line. Ny and Nxy use the same current planar-arm Jacobian; the nested nullspaces
+ensure Nxy Ny=Nxy. All 125 samples and all 300 connecting edges are transformed,
+with a faint original bounding cube for reference. During an animated transition
+the interpolated linear map need not be an idempotent projector; completed stages
+are the exact maps. The height-only step is geometric; replayed robot trajectories
+continue to use the full two-coordinate endpoint constraint.

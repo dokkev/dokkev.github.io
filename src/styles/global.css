@@ -2119,3 +2119,8 @@ h3 {
 @media(max-width:560px) { .wbc-nullspace-space { height: 340px; } }
 .wbc-toy-controls { position: sticky; top: 0; z-index: 3; background: #fff; padding: .6rem 0; border-bottom: 1px solid #dae2e7; }
 .wbc-nullspace-surface { width: 100%; height: 100%; }
+.wbc-primary-secondary { display: grid; grid-template-columns: repeat(2,1fr); gap: .8rem; margin: 1rem 0; }
+.wbc-primary-secondary > div { border: 1px solid #d1ded8; border-radius: 8px; padding: .9rem; display: flex; flex-direction: column; gap: .6rem; font-size: .85rem; color: #374953; }
+.wbc-primary-secondary > div:first-child { border-left: 3px solid #16735e; }
+.wbc-primary-secondary > div:last-child { border-left: 3px solid #b56617; }
+@media(max-width:560px) { .wbc-primary-secondary { grid-template-columns: 1fr; } }

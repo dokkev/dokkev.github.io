@@ -1,27 +1,28 @@
 import { memo, useEffect, useRef, useState } from 'react';
 import { renderToString } from 'katex';
 import WbcNullspaceSpaceScene from './WbcNullspaceSpaceScene';
-import { samplePlanarTrajectory } from '../../lib/demos/planarArmMath';
+import { planarArm, samplePlanarTrajectory } from '../../lib/demos/planarArmMath';
 import data from '../../lib/demos/data/wbc-nullspace-toy.json';
 
 const clamp=(t:number)=>Math.max(0,Math.min(1,t));
 const smooth=(t:number)=>t*t*t*(10+t*(-15+6*t));
 const degrees=(r:number)=>(r*180/Math.PI).toFixed(1);
-const names=['Keep the endpoint here','Filter the posture command','Move the joints, preserve the endpoint','Compare what each task achieved'];
+const names=['Start with the full 3D command space','Hold height: collapse onto a plane','Also hold x: collapse onto a line','Change Task 2, preserve Task 1','Compare what each task achieved'];
 const captions=[
   'A planar arm has three joint velocities and a two-coordinate endpoint task. Away from singularities, one local motion direction remains available while the endpoint stays fixed. The secondary task bends joint 3 toward −120.3°. A smooth speed envelope starts and ends the motion at rest.',
-  'The 3D axes are joint velocities, not Cartesian position. The green line is ker J; the blue plane is row(J). The request z projects orthogonally onto the green line. The red vector lies in the blue plane; its translated dashed connector is perpendicular to Nz. Vectors are shown before the common speed envelope c(t).',
-  'Both arms follow the same posture reference over three seconds of computed time, with zero velocity at both endpoints. The right arm recomputes J(q) and N(q) continuously. The target marker is fixed, but the displayed endpoint comes from forward kinematics; it is never pinned to the marker.',
+  'First impose only endpoint height: Jy q̇ = 0 is one independent constraint. The entire 3D lattice projects onto the 2D plane ker Jy. This intermediate geometric step does not replay a height-only robot trajectory.',
+  'Add the independent x-position constraint. Projecting the height-preserving plane into ker [Jx; Jy] collapses it onto a line. The robot replay uses this final two-coordinate primary task.',
+  'Task 2 changes the posture: its requested joint-3 velocity changes as the posture error shrinks. Task 1 stays fixed: the projected endpoint velocity remains zero. The right arm updates its Jacobian and projector as the posture changes.',
   'The unfiltered arm approaches the posture target but moves its endpoint. The projected arm preserves the endpoint and makes a smaller posture change. The plot shows joint motion in configuration space through its effect on the robot, not a 2D drawing of the null space.',
 ];
 const formulas=[
   String.raw`p(q)\in\mathbb R^2,\quad J(q)\in\mathbb R^{2\times3},\quad \underbrace{J(q)\dot q=0}_{\text{hold endpoint position}}`,
-  String.raw`z=\begin{bmatrix}0\\0\\2(q_{3,d}-q_3)\end{bmatrix},\quad N=I-J^\dagger J,\quad Nz\in\ker J`,
+  String.raw`N_y=I-J_y^\dagger J_y,\quad J_y\in\mathbb R^{1\times3},\quad \dim\ker J_y=2`,
+  String.raw`J=\begin{bmatrix}J_x\\J_y\end{bmatrix},\quad N=I-J^\dagger J,\quad \dim\ker J=1`,
   String.raw`\dot q(t)=c(t)N(q(t))z(q(t)),\qquad \frac{d}{dt}p(q(t))=J(q(t))\dot q(t)=0`,
   String.raw`\text{Primary: }p(q)=p_0,\qquad \text{secondary: reduce }q_{3,d}-q_3`,
 ];
 const Formula=memo(({expression}:{expression:string})=><div className="nullspace-formula" dangerouslySetInnerHTML={{__html:renderToString(expression,{displayMode:true,throwOnError:true})}} />);
-const formatVector=(v:number[])=>`(${v.map(x=>Math.abs(x)<1e-9?'0':x.toFixed(2)).join(', ')})`;
 
 export default function WbcNullspaceToyDemo(){
   const [step,setStep]=useState(0),[phase,setPhase]=useState(0);
@@ -29,19 +30,32 @@ export default function WbcNullspaceToyDemo(){
   useEffect(()=>{
     let frame=0,start:number|undefined;
     const from=live.current;
-    const crossesMotion=Math.min(from,step)<2&&Math.max(from,step)>1;
+    const crossesMotion=Math.min(from,step)<3&&Math.max(from,step)>2;
     const transitionMs=crossesMotion?2400:600;
     const tick=(now:number)=>{start??=now;const t=clamp((now-start)/transitionMs);const value=from+(step-from)*smooth(t);live.current=value;setPhase(value);if(t<1)frame=requestAnimationFrame(tick);};
     frame=requestAnimationFrame(tick);return()=>cancelAnimationFrame(frame);
   },[step]);
-  const motion=clamp(phase-1), time=motion*data.duration;
+  const motion=clamp(phase-2), time=motion*data.duration;
   const projected=samplePlanarTrajectory(data.projected.frames,time,data.target);
+  const {J,n,z}=planarArm(projected.q);
+  const heightAmount=clamp(phase),positionAmount=clamp(phase-1);
+  const heightNormal=J[1],heightNormSquared=heightNormal.reduce((sum,v)=>sum+v*v,0);
+  const heightDot=heightNormal.reduce((sum,v,i)=>sum+v*z[i],0)/heightNormSquared;
+  const nullDot=n.reduce((sum,v,i)=>sum+v*z[i],0);
+  const allowed=z.map((v,i)=>{
+    const heightAllowed=v-heightNormal[i]*heightDot;
+    return (v+(heightAllowed-v)*heightAmount)*(1-positionAmount)+n[i]*nullDot*positionAmount;
+  });
+  const rawOutput=J.map(row=>row.reduce((sum,v,i)=>sum+v*z[i],0));
+  const allowedOutput=J.map(row=>row.reduce((sum,v,i)=>sum+v*allowed[i],0));
+  const fmt=(v:number)=>Math.abs(v)<1e-9?'0.000':v.toFixed(3);
+
   const panels=[{name:'Without projection',color:'#b74350',trajectory:data.raw,x:0},{name:'With null-space projection',color:'#16735e',trajectory:data.projected,x:330}];
   return <figure className="nullspace-demo wbc-task-comparison wbc-toy-demo">
-    <div className="nullspace-heading"><strong>{step+1} / 4 · {names[step]}</strong><span>3-link planar arm · position task</span></div>
-    <div className="nullspace-controls wbc-toy-controls"><button type="button" disabled={step===0} onClick={()=>setStep(s=>s-1)}>← Previous</button><button type="button" disabled={step===3} onClick={()=>setStep(s=>s+1)}>Next step →</button></div>
+    <div className="nullspace-heading"><strong>{step+1} / 5 · {names[step]}</strong><span>3-link planar arm · position task</span></div>
+    <div className="nullspace-controls wbc-toy-controls"><button type="button" disabled={step===0} onClick={()=>setStep(s=>s-1)}>← Previous</button><button type="button" disabled={step===4} onClick={()=>setStep(s=>s+1)}>Next step →</button></div>
     <svg viewBox="0 0 660 405" role="img" aria-label="Two three-link arms compare a direct posture command with a null-space command that keeps the endpoint fixed">
-      {panels.map(({name,color,trajectory,x},panel)=>{
+      {panels.map(({name,color,trajectory,x})=>{
         const current=samplePlanarTrajectory(trajectory.frames,time,data.target), initial=trajectory.frames[0];
         const index=Math.min(trajectory.frames.length-1,Math.floor(time/.02));
         const map=(p:number[])=>[x+38+p[0]*120,310-p[1]*120];
@@ -59,20 +73,34 @@ export default function WbcNullspaceToyDemo(){
           {current.points.map((p,i)=>{const at=map(p);return <g key={i}><circle cx={at[0]} cy={at[1]} r={i===3?5:7} fill="white" stroke={color} strokeWidth="2"/>{i<3&&<text x={at[0]+11} y={i===0?at[1]-12:at[1]+17} fill="#455760" style={{fontSize:12}}>q{i+1}</text>}</g>;})}
           <text x={x+22} y="96" fill="#455760">q₃ = {degrees(current.q[2])}°</text>
           <text x={x+22} y="339" fill={color}>Endpoint error: {(current.tip_error*1000).toFixed(3)} mm</text>
-          {step===1 && <g>
-            {panel===0?<><line x1={tip[0]} y1={tip[1]} x2={tip[0]+data.initial_tip_velocity[0]*70} y2={tip[1]-data.initial_tip_velocity[1]*70} stroke={color} strokeWidth="3"/><text x={x+190} y="265" fill={color}>Jz ≠ 0</text></>:<text x={x+190} y="265" fill={color}>JNz = 0</text>}
+          {step===2 && <g>
+            {x===0?<><line x1={tip[0]} y1={tip[1]} x2={tip[0]+data.initial_tip_velocity[0]*70} y2={tip[1]-data.initial_tip_velocity[1]*70} stroke={color} strokeWidth="3"/><text x={x+190} y="265" fill={color}>Jz ≠ 0</text></>:<text x={x+190} y="265" fill={color}>JNz = 0</text>}
           </g>}
-          <text x={x+22} y="385" fill={color} style={{fontSize:13}}>{panel===0?`Initial z [rad/s] = ${formatVector(data.initial_z)}`:`Initial Nz [rad/s] = ${formatVector(data.initial_allowed)}`}</text>
+
         </g>;
       })}
       <text x="22" y="22" fill="#455760">Blue crosshair: fixed primary target · faint links: starting posture</text>
     </svg>
     <div className="wbc-space-heading"><strong>Null-space projection in joint-velocity space</strong><span>q̇₁, q̇₂, q̇₃ [rad/s] · Euclidean metric</span></div>
-    <WbcNullspaceSpaceScene q={projected.q} projection={clamp(phase)} />
-    <div className="wbc-space-legend"><span>Orange: request z</span><span>Green: Nz and ker J</span><span>Blue plane: row(J)</span><span>Red: (I − N)z</span></div>
-    <p className="wbc-space-note">J and its spaces follow the right-hand robot's current pose. Arrows show z and Nz before the scalar speed envelope c(t). This is ℝ³ of joint velocities, not SE(3) pose space.</p>
+    <WbcNullspaceSpaceScene q={projected.q} projection={Math.min(2,phase)} />
+    <div className="wbc-space-legend"><span>Orange: request z</span><span>Green: projected lattice / allowed space</span><span>Faint cube: original space</span><span>Red: (I − N)z</span></div>
+    <p className="wbc-space-note">Task outputs below use z and Nz before the common timing envelope c(t).</p>
+    <div className="wbc-primary-secondary">
+      <div><strong>Task 1 · {step<2?'hold endpoint height':'hold endpoint x + height'}</strong>
+        <span>Unfiltered height velocity: <b>{fmt(rawOutput[1])} m/s</b></span>
+        <span>{step===0?'Before projection:':'After projection:'} <b>{fmt(allowedOutput[1])} m/s</b></span>
+        {step>=2&&<span>Projected x velocity: <b>{fmt(allowedOutput[0])} m/s</b></span>}
+      </div>
+      <div><strong>Task 2 · change posture</strong>
+        <span>Requested q̇₃: <b>{fmt(z[2])} rad/s</b></span>
+        <span>Allowed q̇₃: <b>{fmt(allowed[2])} rad/s</b></span>
+        <span>Lower task yields the component that would change Task 1.</span>
+      </div>
+    </div>
+    {step>0&&<Formula expression={String.raw`J_1(\dot q_{\rm primary}+N_1z)=b_1+\underbrace{J_1N_1}_{0}z=b_1`} />}
+    <p className="wbc-space-note">The same 3D samples map into a plane under one constraint, then a line under two. The last two stages use the moving robot's current Jacobian. These axes are joint velocities, not Cartesian position.</p>
     <Formula expression={formulas[step]}/>
     <div className="wbc-task-metrics"><span>Computed time<strong>{(motion*data.duration).toFixed(2)} / {data.duration.toFixed(1)} s</strong></span><span>Projected endpoint speed<strong>{projected.tip_speed.toFixed(6)} m/s</strong></span><span>Projected q₃ goal error<strong>{degrees(Math.abs(data.q3_goal-projected.q[2]))}°</strong></span></div>
-    <figcaption>{captions[step]} Links are 1.0, 0.8, and 0.6 m. The calculation uses RK4 at 5 ms with no endpoint correction; maximum projected endpoint drift is below 10⁻⁸ m. The robot motion replays over 2.4 seconds; navigation stays available throughout.</figcaption>
+    <figcaption>{captions[step]}</figcaption>
   </figure>;
 }
