@@ -1,0 +1,10 @@
+name: wbc-blog
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - pinocchio=4.0.0
+  - tsid=1.10.0
+  - example-robot-data=5.0.0
+  - numpy
+  - scipy

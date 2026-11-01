@@ -1,0 +1,177 @@
+---
+title: "[WBC 03] - From a Pose Reference to a Solver Task"
+description: How a pose task turns model data and a reference into consistent errors, desired acceleration, and a solver residual.
+published: true
+hidden: false
+lang: en
+date: 2026-06-15 00:00:00
+permalink: /wbc03/
+series: "WBC Software Architecture"
+series_order: 3
+series_label: "03"
+tags: [Whole Body Control, Software]
+---
+
+import WbcPoseMathDemo from "../../../src/components/demos/WbcPoseMathDemo";
+
+A hand target specifies where the hand should go. The solver also needs to know which robot accelerations move it there. A pose task connects the two: it computes an error, applies feedback, and returns a Jacobian and acceleration target.
+
+[WBC 02](/wbc02/) prepared the current robot state and model data. This post builds one acceleration-level pose task on that interface.
+
+## Choose the coordinates before applying gains
+
+A pose contains position and orientation, but their stored values cannot be compared in the same way. Position error is a subtraction. Orientation error must account for how rotations compose: yaw angles of 179° and −179° are only 2° apart. We therefore compare orientations through the relative rotation $R^TR_d$. The rotation logarithm converts it into a three-component axis–angle error that feedback gains can act on. SE(3) extends the relative-transform calculation to position and orientation together.
+
+Let $T=(R,p)$ be the current hand pose and $T_d=(R_d,p_d)$ its reference. Both transforms map hand-frame coordinates to world coordinates. A relative transform describes the target as seen from the current hand:
+
+$$
+T^{-1}T_d=
+\begin{bmatrix}
+R^TR_d & R^T(p_d-p) \\
+0 & 1
+\end{bmatrix}.
+$$
+
+A reference can arrive as seven stored values: position and a unit quaternion. The task builds an SE(3) transform from them, compares it with the current pose, and extracts an error for feedback. The stored vector and the transform represent the same pose; the six-component error is a different quantity.
+
+<WbcPoseMathDemo client:visible />
+
+Rotation error needs an axis and an angle. The map $\operatorname{log}_3$ returns that three-component rotation vector from $R^TR_d$. For this task, express both position and angular error along world-aligned axes:
+
+$$
+e=
+\begin{bmatrix}
+p_d-p \\
+R\,\operatorname{log}_3(R^TR_d)
+\end{bmatrix},
+\qquad
+ e_v=V_d-V.
+$$
+
+The first three entries have units of metres; the last three have units of radians. $V$ and $V_d$ contain linear then angular velocity, expressed along world axes at their respective frame origins. This is a split position/orientation error. The angular feedback is a local tracking construction, with the usual rotation-log ambiguity at 180°.
+
+**Every quantity in the task must follow the same convention.** Here the Jacobian and current velocity use Pinocchio's `LOCAL_WORLD_ALIGNED`: axes aligned to the world, with the current frame origin as the velocity reference point. This differs from `WORLD`, whose spatial velocity representation uses the world origin. [Pinocchio's frame API](https://github.com/stack-of-tasks/pinocchio/blob/v4.0.0/include/pinocchio/algorithm/frames.hpp) exposes those frame choices.
+
+<details>
+<summary>Why this is not simply log6 of the relative pose</summary>
+
+The split error uses relative translation directly and `log3` for orientation. The full SE(3) logarithm also couples its translational component to rotation. Replacing one with the other changes the error definition. This example keeps position error interpretable in metres and rotates the angular error into world-aligned axes. For rotation tasks, $e_v$ denotes a velocity difference, not the exact time derivative of the rotation-vector error.
+
+</details>
+
+## Turn error into a desired acceleration
+
+For each selected task direction, apply a feedback rule:
+
+$$
+a^*=a_{\mathrm{ref}}+K_pe+K_de_v.
+$$
+
+The reference supplies pose, velocity, and acceleration. For a stationary target, its velocity and acceleration are zero. The gains set how the task requests acceleration in response to error. They do not decide which task wins when two requests conflict.
+
+The model relates robot acceleration to task acceleration:
+
+$$
+a_{\mathrm{task}}=J\dot v+d,
+\qquad
+b=a^*-d.
+$$
+
+Here $d$ is the task acceleration when generalized acceleration $\dot v$ is zero. For this world-aligned geometric task, it is the drift term often written $\dot Jv$. Use classical linear acceleration for the position rows, paired with angular acceleration for the orientation rows.
+
+The task can now return **$J,b$**, defining a residual $J\dot v-b$. The formulation decides how to use it:
+
+| Role | Solver expression |
+| --- | --- |
+| Hard task | $J\dot v=b$ |
+| Soft task | Include $\lVert J\dot v-b\rVert^2$ in the objective |
+
+A task with position-only control selects the first three rows of both $J$ and $b$. A torso orientation task selects the last three. Masking only one side would change the meaning or size of the request.
+
+## Keep the task independent of the model cache
+
+The task owns its reference, gains, and axis selection. It receives model results without updating Pinocchio's shared `data`. The following Python example assumes six-component references in the convention above; multiplication by the gain arrays is elementwise.
+
+```python
+from dataclasses import dataclass
+import numpy as np
+import pinocchio as pin
+
+@dataclass
+class PoseReference:
+    pose: pin.SE3
+    velocity: np.ndarray       # [linear, angular], world-aligned
+    acceleration: np.ndarray   # [linear, angular], world-aligned
+
+@dataclass
+class TaskRequest:
+    J: np.ndarray
+    b: np.ndarray
+
+class PoseTask:
+    def __init__(self, reference, kp, kd, axes):
+        self.reference = reference
+        self.kp = np.asarray(kp).copy()  # six gains
+        self.kd = np.asarray(kd).copy()
+        self.axes = np.asarray(axes, dtype=bool)  # six flags
+
+    def evaluate(self, pose, velocity, J, drift):
+        ref = self.reference
+        R = pose.rotation
+        error = np.concatenate([
+            ref.pose.translation - pose.translation,
+            R @ pin.log3(R.T @ ref.pose.rotation),
+        ])
+        velocity_error = ref.velocity - velocity
+        a_star = (ref.acceleration + self.kp * error
+                  + self.kd * velocity_error)
+        return TaskRequest(
+            J=J[self.axes, :].copy(),
+            b=(a_star - drift)[self.axes].copy(),
+        )
+```
+
+This example expects pose, velocity, $J$, and drift from one model update. Gains and masks have six entries; model input validation belongs at the application boundary. The [TSID pose task](https://github.com/stack-of-tasks/tsid/blob/079b2250378d6bc5aaf035ffbd4f124f6b0e1de7/src/tasks/task-se3-equality.cpp) uses the same separation between feedback, drift compensation, and selected task rows.
+
+## Prepare drift once, then evaluate the task
+
+Extend the `RobotModel.update` from 02 to prepare acceleration data with $\dot v=0$. The code below belongs inside the model owner, before any task reads its results:
+
+```python
+# Inside RobotModel.update(q, v), after computeAllTerms:
+pin.forwardKinematics(
+    self.model, self._data, q, v, np.zeros(self.model.nv),
+)
+pin.updateFramePlacements(self.model, self._data)
+```
+
+The model can then provide a hand-motion snapshot in the chosen convention:
+
+```python
+# Inside RobotModel.hand_motion(), after update:
+rf = pin.LOCAL_WORLD_ALIGNED
+pose = self._data.oMf[self._hand_id].copy()
+velocity = pin.getFrameVelocity(
+    self.model, self._data, self._hand_id, rf,
+).vector.copy()
+J = pin.getFrameJacobian(
+    self.model, self._data, self._hand_id, rf,
+).copy()
+drift = pin.getFrameClassicalAcceleration(
+    self.model, self._data, self._hand_id, rf,
+).vector.copy()
+return pose, velocity, J, drift
+```
+
+`getFrameClassicalAcceleration` reads the acceleration data prepared above. Because generalized acceleration was set to zero, this result is drift rather than the full commanded acceleration. The [frame acceleration API](https://github.com/stack-of-tasks/pinocchio/blob/v4.0.0/include/pinocchio/algorithm/frames.hpp) describes this use for acceleration-level constraints.
+
+One controller update now has a short task boundary:
+
+```python
+robot.update(q, v)
+hand_request = hand_task.evaluate(*robot.hand_motion())
+# Other tasks use the same model update.
+# The formulation assembles their J, b requests with dynamics and contacts.
+```
+
+The model owner provides geometry and dynamics; the task provides feedback; the formulation assigns constraints, weights, and priority. [WBC 04](/wbc04/) takes these requests and examines how to combine them when they conflict.

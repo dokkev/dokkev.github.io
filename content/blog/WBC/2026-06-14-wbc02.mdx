@@ -1,0 +1,157 @@
+---
+title: "[WBC 02] - Representing Floating-Base Robots in Code"
+description: From encoder and base-estimator outputs to consistent q, v, and robot-model data for whole-body control.
+published: true
+hidden: false
+lang: en
+date: 2026-06-14 00:00:00
+permalink: /wbc02/
+series: "WBC Software Architecture"
+series_order: 2
+series_label: "02"
+tags: [Whole Body Control, Floating Base, Software]
+---
+
+The hand task needs the hand's current position. The contact constraint needs the foot Jacobian. The dynamics need the mass matrix. All three depend on the same robot state.
+
+[WBC 01](/wbc01/) introduced how these quantities enter a controller. The first software boundary is turning encoder and base-estimator outputs into a state the robot model understands.
+
+## Start with the measurements
+
+Joint encoders provide joint positions; velocity comes from sensing or estimation. A floating-base estimator provides the base pose and velocity. The state adapter puts these values into the model's ordering and coordinate conventions.
+
+A packet's third motor is not necessarily the model's third joint. An estimator's quaternion may use a different coefficient order. These conversions belong at an explicit boundary, so each task can read one canonical state.
+
+## Give configuration and velocity different sizes
+
+For this Talos model, 32 scalar joints accompany a free-flyer base:
+
+| Quantity | Base | Joints | Total |
+| --- | --- | --- | --- |
+| Configuration $q$ | Position 3 + quaternion 4 | 32 angles | `nq = 39` |
+| Generalized velocity $v$ | Linear 3 + angular 3 | 32 rates | `nv = 38` |
+| Actuator torque $\tau$ | No base actuator | 32 torques | `na = 32` |
+
+The quaternion stores orientation with four coefficients. Angular velocity has three components, so $v$ has a different size from $q$. Generalized acceleration $\dot v$ has size `nv` too. Other joint representations or transmissions can change these counts; query the model and define the actuator map.
+
+This difference also changes integration. Use the model's configuration operation instead of adding a velocity vector to stored coordinates:
+
+```python
+q_next = pin.integrate(model, q, v * dt)
+delta = pin.difference(model, q, q_target)  # length model.nv
+```
+
+`integrate` advances the configuration along a tangent displacement. `difference` returns the tangent displacement between two configurations. They handle quaternion geometry as part of the model. [Pinocchio's configuration API](https://github.com/stack-of-tasks/pinocchio/blob/v4.0.0/include/pinocchio/algorithm/joint-configuration.hpp) defines both operations.
+
+## Write the state convention down
+
+A vector's size does not identify its frame, units, or ordering. This example uses the following [Pinocchio free-flyer convention](https://github.com/stack-of-tasks/pinocchio/blob/v4.0.0/include/pinocchio/src/multibody/joint/joint-free-flyer.hxx):
+
+| Data | Convention |
+| --- | --- |
+| Base pose | Transform from base coordinates to world coordinates |
+| `q[0:3]` | Base origin in world coordinates, metres |
+| `q[3:7]` | Unit quaternion, `qx, qy, qz, qw` |
+| `v[0:3]` | Base-origin linear velocity expressed in the base frame, m/s |
+| `v[3:6]` | Base angular velocity expressed in the base frame, rad/s |
+| Joint positions and rates | Model order, radians and rad/s for these revolute joints |
+| Actuator order | Explicit motor-to-model map; base excluded |
+
+If an estimator provides world-expressed linear velocity at the base origin, rotate it into the base frame before packing $v$. If it reports velocity at an IMU origin elsewhere, account for that offset as well. A quaternion reorder alone does not resolve a velocity-frame mismatch.
+
+Map joints by name during initialization and retain each joint's `idx_q` and `idx_v`. For this model a scalar joint occupies one entry in each vector, but the two indices differ because the base occupies seven configuration entries and six velocity entries.
+
+Keep torque measurements separate from torque commands. Neither is needed to define the kinematic state $(q,v)$ used here.
+
+## Update the model before evaluating tasks
+
+The state adapter owns conversion into $q,v$. The robot model owns the kinematic and dynamic calculations. Tasks read those results and apply their references and gains.
+
+The following Python excerpt illustrates the model side of one control update. `q` and `v` have already been assembled from the same state snapshot. `model`, `data`, and `hand_id` are initialized beforehand.
+
+```python
+# Refresh model data for this state.
+pin.computeAllTerms(model, data, q, v)
+pin.updateFramePlacements(model, data)
+
+hand_pose = data.oMf[hand_id].copy()
+J_hand = pin.getFrameJacobian(
+    model, data, hand_id, pin.LOCAL_WORLD_ALIGNED
+).copy()
+M = np.triu(data.M) + np.triu(data.M, 1).T
+h = data.nle.copy()
+
+# Task evaluation follows, using these results and its reference.
+```
+
+Pinocchio's mass calculation fills the upper triangle, so this excerpt mirrors it before treating $M$ as a full matrix. `LOCAL_WORLD_ALIGNED` expresses frame velocity about the hand origin with axes aligned to the world. The task's velocity and error must use compatible conventions. [Pinocchio's model-data update](https://github.com/stack-of-tasks/pinocchio/blob/v4.0.0/include/pinocchio/algorithm/compute-all-terms.hpp) describes the calculations included in `computeAllTerms`.
+
+The sizes follow from the velocity space:
+
+| Model output | Shape in this example | Consumer |
+| --- | --- | --- |
+| Hand pose | Rigid transform | Hand task |
+| Hand pose Jacobian | `6 × 38` | Hand pose task |
+| Hand position Jacobian | `3 × 38` | Position-only task |
+| Mass matrix $M$ | `38 × 38` | Dynamics formulation |
+| Bias $h$ | `38` | Dynamics formulation |
+
+Task acceleration also needs its drift term; that computation enters with the task construction in [WBC 03](/wbc03/).
+
+## Own the mutable data in one place
+
+Pinocchio separates `model` from `data`. `model` describes the robot's structure, joint layout, and inertial parameters. `data` is a working cache: calls such as `computeAllTerms` overwrite its matrices and placements for a new state. Keep the model fixed during control, and give each independently updated computation its own `data` object.
+
+The controller should own that cache. A small wrapper can keep updates in one method and expose the results needed by tasks. This excerpt uses the same initialized `model` and `hand_id` as above:
+
+```python
+class RobotModel:
+    def __init__(self, model, hand_id):
+        self.model = model
+        self._data = model.createData()
+        self._hand_id = hand_id
+
+    def update(self, q, v):
+        pin.computeAllTerms(self.model, self._data, q, v)
+        pin.updateFramePlacements(self.model, self._data)
+
+    def hand_kinematics(self):
+        pose = self._data.oMf[self._hand_id].copy()
+        J = pin.getFrameJacobian(
+            self.model, self._data, self._hand_id,
+            pin.LOCAL_WORLD_ALIGNED,
+        ).copy()
+        return pose, J
+
+    def dynamics(self):
+        M = np.triu(self._data.M) + np.triu(self._data.M, 1).T
+        return M, self._data.nle.copy()
+```
+
+`hand_kinematics` and `dynamics` must be called after `update`. They return copies, so a task cannot accidentally modify the shared cache or retain a view that changes next cycle. The leading underscore marks ownership by convention; Python does not enforce read-only access. Tasks receive the returned values instead of the `data` object.
+
+## Keep one model state for one control update
+
+Updating the cache between the hand task and contact task would make them describe different robot states. Take one state snapshot, update the model once, and evaluate all tasks before the next update.
+
+The application flow below prepares model outputs from one state snapshot. `state_adapter.pack` is an application method that applies the ordering and frame conventions from the table above.
+
+```python
+# Initialization, outside the control loop.
+robot = RobotModel(model, hand_id)
+
+# One control update; state is a loop-owned snapshot.
+q, v = state_adapter.pack(state)
+robot.update(q, v)
+
+hand_pose, J_hand = robot.hand_kinematics()
+M, h = robot.dynamics()
+# Read contact and other task kinematics from this same update.
+# Keep these outputs together until task evaluation and solver assembly finish.
+```
+
+For an asynchronous sensor callback, keep the input buffer separate from `RobotModel`. The callback publishes a complete timestamped state; the control loop acquires a coherent snapshot before calling this code. The buffer needs a synchronized handoff appropriate to the framework. Neither the callback nor a task should call `robot.update` midway through task evaluation. Align estimator and joint measurements to the snapshot time before packing them.
+
+This Python example makes ownership visible and copies outputs for clarity. It does not establish hard real-time behavior. A real-time implementation needs preallocated storage and a bounded state handoff; returning references also requires keeping their lifetime within the current model update.
+
+[WBC 03](/wbc03/) extends this interface with frame velocity and acceleration drift, then uses those outputs to construct a task request. All task evaluations use the same model update before the solver combines their requests with $M$ and $h$.

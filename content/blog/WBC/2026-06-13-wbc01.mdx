@@ -1,0 +1,143 @@
+---
+title: "[WBC 01] - From a Hand Target to Whole-Body Control"
+description: Why a humanoid's hand target involves the whole robot, and how tasks, contacts, and dynamics become software responsibilities.
+published: true
+hidden: false
+lang: en
+date: 2026-06-13 00:00:00
+permalink: /wbc01/
+series: "WBC Software Architecture"
+series_order: 1
+series_label: "01"
+tags: [Whole Body Control, Software]
+---
+
+import WbcReachDemo from "../../../src/components/demos/WbcReachDemo";
+import WbcBalanceDemo from "../../../src/components/demos/WbcBalanceDemo";
+import WbcFlowDemo from "../../../src/components/demos/WbcFlowDemo";
+
+Ask a humanoid to reach for a cup. Which motors should move? The arm can extend, the torso can lean, and the knees can bend. Each choice changes how the feet support the robot. A hand target alone does not decide the motion of the rest of the body.
+
+Whole-body control (WBC) computes a coordinated response from those demands. In the example below, the robot must keep its feet planted and preserve its center-of-mass (CoM) and torso references while reaching.
+
+<WbcReachDemo client:visible />
+
+Moving the target from 8 cm to 45 cm forward increases the final hand error from **4.6 mm to 86.9 mm**. The CoM reference is retained, and the far reach activates a torque limit. Reaching farther would require changing some of the chosen requirements, rather than asking the same controller for more hand motion.
+
+**The controller needs a policy for conflicting tasks.** This example makes support, CoM, torso, and actuator requirements hard constraints, while allowing hand error. Other formulations can trade task errors through weights or preserve tasks through a strict hierarchy. Another balance policy or a step could produce a different reach.
+
+## Why all the joint motors are not enough
+
+An arm bolted to a table gets support from its mounting. A standing humanoid gets support through its feet, and that support can change or disappear.
+
+The model therefore includes a **floating base**: the robot's translation and rotation relative to the world. Even with a motor at every internal joint, these add six motion directions without six corresponding motors:
+
+$$
+\underbrace{n_j+6}_{\text{generalized velocity components}}
+\quad\text{versus}\quad
+\underbrace{n_j}_{\text{joint-torque inputs}}.
+$$
+
+The Talos model here has 38 velocity components and 32 actuator inputs. This is the source of its floating-base **underactuation**. Motors apply torques between links; there is no motor between the pelvis and the world. The robot influences its base through coupled body motion and external contact forces.
+
+Contact can constrain enough motion to make the reduced system fully actuated. The floating-base model keeps the six unactuated directions explicit as contacts change. [MIT's contact formulation](https://underactuated.csail.mit.edu/contact.html) develops this distinction.
+
+For software, joint encoders alone are consequently not a complete robot state. The controller also needs an estimate of base motion and a representation of the active contacts.
+
+<WbcBalanceDemo client:visible />
+
+The pelvis target changes in position and orientation, but no actuator drives the base directly. The controller coordinates joint torques and contact forces to track it with both feet planted. CoM is shown as an outcome of that motion, rather than held at a separate reference. These small motions illustrate supported base control, not disturbance recovery.
+
+## Turn “move the hand” into something a solver can use
+
+A controller needs more than the desired hand position. It also needs the current position, velocity, and a rule for correcting their errors. For a position task, one choice is a desired acceleration:
+
+$$
+a^* = \ddot x_d + K_p(x_d-x)+K_d(\dot x_d-\dot x).
+$$
+
+Here $x_d$ and $x$ are desired and current hand positions. The three terms follow planned acceleration, correct position error, and regulate approach velocity. The gains set an acceleration response, not directly a physical hand stiffness.
+
+**Operational-space control (OSC)** specifies behavior in a task space, such as hand position, rather than assigning independent goals to each joint. The Jacobian $J$ connects the task to the robot:
+
+$$
+\underbrace{\ddot x}_{\text{hand acceleration}}
+=
+\underbrace{J(q)\dot v}_{\text{effect of robot acceleration}}
++
+\underbrace{\dot J(q,v)v}_{\text{effect of changing geometry}}.
+$$
+
+$q$ describes configuration, $v$ generalized velocity, and $\dot v$ generalized acceleration. A task can now provide the solver with **$J$ and $a^*-\dot Jv$**. The solver can compare that request with other tasks expressed against the same robot acceleration. [WBC 03](/wbc03/) develops this construction for position and orientation.
+
+This is already a software boundary: the hand task owns the tracking rule; the robot model provides the kinematics. The solver combines these task requests with the active constraints.
+
+## Put objectives and physical limits in one problem
+
+The hand request shares the robot with every other task. Before choosing a solver, specify what the robot should achieve and which motions are allowed.
+
+An **optimal control problem (OCP)** expresses this over a time interval. The following adapts Eq. (1) in [Wensing et al., *Optimization-Based Control for Dynamic Legged Robots*](https://arxiv.org/pdf/2211.11644), with configuration evolution and the initial state written explicitly:
+
+$$
+\begin{aligned}
+\min_{z(\cdot),\,\tau(\cdot),\,\lambda(\cdot)}\quad
+& \operatorname{Cost}\bigl(z(\cdot),\tau(\cdot),\lambda(\cdot)\bigr) \\
+\text{subject to}\quad
+& \dot q = N(q)v,\qquad z(0)=z_{\mathrm{measured}}, \\
+& M(q)\dot v+h(q,v)=S^T\tau+J_c^T\lambda, \\
+& \text{contact constraints}, \\
+& \text{joint position and velocity limits}, \\
+& \text{actuator limits}, \\
+& \text{task constraints},\qquad t\in[0,T].
+\end{aligned}
+$$
+
+Here $z=(q,v)$ is the robot state. The unknowns are trajectories of state, joint torque $\tau$, and contact force or wrench $\lambda$. $N(q)$ maps generalized velocity to configuration rate, including the floating-base orientation representation.
+
+The dynamics line ties motion to motor and contact effort. $M$ is the mass matrix; $h$ contains gravity and velocity-dependent effects. $S$ selects actuated joints, and $J_c$ is the contact Jacobian. Contact constraints describe support, including allowed forces and friction.
+
+**A cost expresses a preference; a hard constraint defines what the solution must satisfy.** Hand error can enter the cost, while a planted foot becomes a constraint. Making both hand and foot tracking hard can leave no solution. These are controller design choices, not properties of the task names.
+
+## From a motion horizon to one control update
+
+The OCP chooses motion over time. A reactive WBC controller can instead use the current state and references to choose the next command. The survey distinguishes these predictive and reactive roles in Section II.D. A planner or MPC can supply references to WBC; whole-body MPC can also optimize the full model over a horizon.
+
+For an acceleration-level inverse-dynamics controller, one update can take the form
+
+$$
+\begin{aligned}
+\min_{a,\,\tau,\,\lambda}\quad
+& \operatorname{Cost}_{\mathrm{tasks}}(a,\tau,\lambda) \\
+\text{subject to}\quad
+& M a+h=S^T\tau+J_c^T\lambda, \\
+& J_c a+\dot J_c v=0, \\
+& \lambda\in\mathcal F,\qquad \tau_{\min}\leq\tau\leq\tau_{\max}, \\
+& \text{additional task and joint-limit constraints}.
+\end{aligned}
+$$
+
+Here $a=\dot v$. Model terms are evaluated at the current state. The contact acceleration equation assumes maintained rigid, stationary contacts; $\mathcal F$ describes admissible support forces. Joint position limits need a rule that constrains future motion, since the current configuration is already measured.
+
+The task from the previous section supplies a residual $J_i a-b_i$, where $b_i=a_i^*-\dot J_i v$. **Gains set each task's feedback response. Weights or priority levels govern how tasks compete.** A weighted QP minimizes a sum of residual costs; a strict hierarchy preserves higher-priority results before considering lower-priority tasks. Null-space projection offers another construction. [WBC 04](/wbc04/) examines those choices.
+
+The TSID examples above use hard constraints and one weighted soft-task level. They illustrate this acceleration-level path; WBC as a whole also includes other formulations and command interfaces.
+
+## What the equations ask from the software
+
+A solver cannot work from “reach for the cup.” Someone must produce a consistent state, update the model, build each task, specify the contacts, and interpret the result.
+
+<WbcFlowDemo client:visible />
+
+In the acceleration-level path shown here, the Recursive Newton–Euler Algorithm (RNEA) can evaluate inverse dynamics after the solver selects an acceleration and contact forces. A formulation that solves directly for torque can return it without a separate reconstruction step. For a robot supported by contacts, actuator effort is the remainder after subtracting contact support:
+
+$$
+\tau = S\left[\operatorname{RNEA}(q,v,\dot v_{\mathrm{sol}})-J_c^T\lambda_{\mathrm{sol}}\right].
+$$
+
+Here RNEA is evaluated without external forces, and $S$ selects actuated rows. Here $\lambda$ stacks the foot contact wrenches, and $J_c$ stacks their corresponding contact Jacobians in matching frames and ordering. TSID represents each foot with four point forces and maps them to a wrench before this expression applies. The [Pinocchio RNEA API](https://github.com/stack-of-tasks/pinocchio/blob/devel/include/pinocchio/algorithm/rnea.hpp) also supports external-force inputs; with those contacts already included, they must not be subtracted again. TSID's [torque reconstruction](https://github.com/stack-of-tasks/tsid/blob/079b2250378d6bc5aaf035ffbd4f124f6b0e1de7/src/formulations/inverse-dynamics-formulation-acc-force.cpp) evaluates the equivalent mass, bias, and contact-force blocks directly.
+
+The planner may change a hand reference or request a step. Mode logic decides which tasks and contacts are active. Those changes must reach the solver as updated task and contact data, rather than being hidden inside the hardware driver.
+
+The command adapter maps an accepted solver result to the actuator interfaces. It also needs a defined response when the solver fails.
+
+This series follows that path from equations into code. [WBC 02](/wbc02/) starts with the state contract: what belongs in $q$ and $v$, how actuated joints are ordered, and how the robot model exposes them to the rest of the controller.

@@ -1,0 +1,282 @@
+---
+title: "[WBC 04] - Combining Tasks into a Whole-Body Controller"
+description: "How task requests become costs, constraints, and priority levels in a whole-body controller."
+published: true
+hidden: false
+lang: en
+date: 2026-06-16 00:00:00
+permalink: /wbc04/
+series: "WBC Software Architecture"
+series_order: 4
+series_label: "04"
+tags: [Whole Body Control, Optimization, Software]
+---
+
+import WbcNullspaceToyDemo from "../../../src/components/demos/WbcNullspaceToyDemo";
+import WbcNullspaceSvdDemo from "../../../src/components/demos/WbcNullspaceSvdDemo";
+import WbcTaskComparisonDemo, { WbcTaskSnapshot } from "../../../src/components/demos/WbcTaskComparisonDemo";
+
+The hand, center-of-mass, and posture tasks can each compute a valid acceleration request and still disagree about how the robot should move. They all depend on the same generalized acceleration $a=\dot v$:
+
+$$
+J_{\mathrm{com}}a\approx b_{\mathrm{com}},\qquad
+J_{\mathrm{hand}}a\approx b_{\mathrm{hand}},\qquad
+J_{\mathrm{posture}}a\approx b_{\mathrm{posture}}.
+$$
+
+[WBC 03](/wbc03/) built a `TaskRequest(J, b)` from a reference and model data. This post combines those requests. The task computes what it wants; the controller decides which requests may compromise and which requirements must hold.
+
+## One Talos state, three ways to combine its tasks
+
+The Talos comparison uses the same reduced model as WBC 01, at its half-sitting configuration with zero velocity. Pinocchio computes the actual mass matrix and task Jacobians. Both feet stay in stationary rigid contact. A right-hand target 0.30 m forward with $K_p=100$ s$^{-2}$ requests $b_h=[30,0,0]^T$ m/s². The CoM reference and joint posture reference remain at their current values, so $b_{\rm com}=0$ and $b_{\rm posture}=0$.
+
+<WbcTaskSnapshot client:visible />
+
+This deliberately large instantaneous hand request exposes the conflict. It is one offline control update, not a simulated reach trajectory or a recommended command. No contact physics or hardware is run.
+
+| Model block | Size and convention |
+| --- | --- |
+| $q,v,a$ | 39 configuration entries; 38 velocity and acceleration entries |
+| $S$ | $32\times38$, selecting actuated coordinates |
+| $J_c$ | $12\times38$, two sole-origin spatial Jacobians in world-aligned axes |
+| $J_{\rm com},J_h$ | Each $3\times38$, world-axis translational acceleration tasks |
+| $f$ | 24 sole-local point-force components, four points per foot |
+| $\lambda=Ff$ | 12 world-aligned sole-origin wrench components |
+
+## Separate physical feasibility from tracking error
+
+Return to the reaching example in [WBC 01](/wbc01/). A hand target asks for motion, but the controller must also find compatible joint torques and ground contact forces. Its decision vector can include all three:
+
+$$
+y=\begin{bmatrix}a\\\tau\\\lambda\end{bmatrix}.
+$$
+
+For the generic formulation, $\lambda$ stacks contact wrenches in the same frames and order as the rows of $J_c$. A motion task becomes a residual over this larger vector:
+
+$$
+r_i(y)=A_i y-b_i,\qquad
+A_i=\begin{bmatrix}J_i&0&0\end{bmatrix}.
+$$
+
+Dynamics and maintained stationary contacts supply hard equalities:
+
+$$
+\underbrace{\begin{bmatrix}M&-S^T&-J_c^T\end{bmatrix}}_{E_{\mathrm{dyn}}}y=-h,
+\qquad
+\underbrace{\begin{bmatrix}J_c&0&0\end{bmatrix}}_{E_{\mathrm{contact}}}y=-\dot J_c v.
+$$
+
+$S$ selects actuated velocity coordinates. Torque bounds and admissible contact wrenches further restrict the feasible set. A contact model can impose unilateral force, friction, and center-of-pressure limits. A QP uses linear inequalities, including a friction-pyramid approximation to the circular Coulomb cone.
+
+In the computed comparison, the solver uses $y=[a;\tau;f]\in\mathbb R^{94}$ and substitutes $\lambda=Ff$. Each sole has four support points at $(\pm0.10,\pm0.065,0)$ m. The common feasible set $\mathcal F$ imposes:
+
+- All 38 rigid-body dynamics rows and 12 stationary-contact acceleration rows.
+- Unscaled URDF torque bounds and actuated acceleration bounds $|Sa|\le10$ rad/s².
+- At each support point, $f_z\ge0$, $|f_x|\le0.3f_z$, and $|f_y|\le0.3f_z$ in sole-local axes.
+- Total normal force between 5 and 1000 N per foot.
+
+These friction-pyramid inequalities are a model approximation. Joint position prediction, collisions, contact changes, and future feasibility are outside this single-state comparison. Because $v=0$, the acceleration drift terms vanish at this snapshot.
+
+Tracking a hand reference can remain a soft cost. Keeping a contact stationary is a hard requirement for this chosen contact mode. A CoM request may be hard, soft, or prioritized depending on the controller design. Its name alone does not determine how it enters the solver.
+
+Joint limits also need a constraint on the decision variables. At a fixed state, $q$ is already known; writing $q_{\min}\le q\le q_{\max}$ does not constrain the current acceleration solve. One approach bounds predicted joint position and velocity using $a$ and the control period. These bounds require a chosen prediction model and do not by themselves guarantee safety for all future motion.
+
+## Weighted tasks produce one quadratic cost
+
+A weighted controller minimizes tracking residuals inside the feasible set:
+
+$$
+\min_y\;\frac12\sum_i w_i\lVert A_i y-b_i\rVert^2,
+\qquad Ey=e,\quad Gy\le g,\quad w_i\ge0.
+$$
+
+$E,e$ collect hard equalities; $G,g$ collect linear inequality bounds. The solver can trade one soft task's error against another's. Increasing the CoM weight makes CoM error more expensive, but does not give it strict priority over the hand task.
+
+The same expression takes the standard QP form:
+
+$$
+\min_y\;\frac12 y^THy+c^Ty,
+\qquad H=\sum_i w_i A_i^TA_i,\quad
+c=-\sum_i w_i A_i^Tb_i.
+$$
+
+Each task contributes a matrix and a vector to the shared problem. Because $H\succeq0$, the cost is convex. The affine constraints define a convex feasible set. Any local minimum is global, although a feasible minimizer need not be unique or even exist for every convex QP. See [Boyd and Vandenberghe, §4.4](https://web.stanford.edu/~boyd/cvxbook/bv_cvxbook.pdf).
+
+The Talos weighted objective is
+
+$$
+\frac12\left(100\lVert J_{\rm com}a\rVert^2
++\lVert J_ha-b_h\rVert^2
++0.01\lVert Sa/10\rVert^2\right).
+$$
+
+For this example, translation residuals use a 1 m/s² scale and the posture residual uses a 10 rad/s² scale. These scales and weights are illustrative controller settings.
+
+<WbcTaskComparisonDemo method="qp" client:visible />
+
+The plot is a two-dimensional **slice of the actual 94-variable QP**, not a separate toy controller. Let $y_s$ be a static-reference solution, $y_Q$ the full weighted-QP solution, and $y_H$ the full HQP result. The plotted plane is
+
+$$
+y(u,v)=y_s+u(y_Q-y_s)+v(y_H-y_s).
+$$
+
+Every point in this plane satisfies the hard equalities. The polygon clips it by the actual inequalities; the rectangular display window is only a crop. The contours evaluate the Talos objective on that plane. QP and HQP outputs lie at $(u,v)=(1,0)$ and $(0,1)$ respectively. The solver itself searches all 94 variables.
+
+The weighted result requests 17.946 m/s² of forward hand acceleration and leaves a 0.083 m/s² CoM acceleration norm. A torque bound is active. The hand's full three-component acceleration residual is 12.506 m/s².
+
+Gains, weights, and priority levels act at different stages:
+
+| Setting | What it changes |
+| --- | --- |
+| Task gains $K_p,K_d$ | The requested task acceleration and therefore $b_i$ |
+| Cost weight $w_i$ | The tradeoff among residuals in one weighted objective |
+| Priority level | Which task results lower levels must preserve |
+
+Weights also depend on scaling. A metre of position error and a radian of orientation error are different quantities. Choose residual scales before interpreting weight ratios; increasing weights across many orders of magnitude can worsen numerical conditioning.
+
+## Preserve the primary task with a null-space correction
+
+Strict hierarchy asks a different question: which corrections can improve a lower task without changing the achieved primary output?
+
+### See the remaining motion on a small robot
+
+A three-link planar arm has three joint velocities but only two endpoint position outputs. Away from singularities, it can change posture while keeping that endpoint fixed. The primary task is $J(q)\dot q=0$; the secondary request bends the third joint toward a posture reference.
+
+<WbcNullspaceToyDemo client:visible />
+
+The direct request $z$ moves the endpoint because $Jz\ne0$. Projecting it gives $\dot q=(I-J^\dagger J)z$, so $J\dot q=0$. Several joints now move together to cancel their effects on the endpoint. The endpoint orientation is free; only its position is held.
+
+The 3D view uses joint-velocity coordinates $(\dot q_1,\dot q_2,\dot q_3)$ in rad/s. Here $J:\mathbb R^3\to\mathbb R^2$ has rank two: its null space is a line, perpendicular to its two-dimensional row space. The dashed segment from $Nz$ to $z$ is the removed component $(I-N)z$. These are actual orthogonal directions in the toy robot's joint-velocity space, rather than selected Cartesian task outputs or an SE(3) pose visualization.
+
+The trajectory uses a smooth scalar speed envelope. With $u=t/T$ and $T=3$ s,
+
+$$
+s(u)=10u^3-15u^4+6u^5,\qquad
+c(t)=\frac{ds}{du}=30u^2(1-u)^2,\qquad
+\dot q=c(t)N(q)z(q).
+$$
+
+The common envelope changes traversal speed while retaining $J\dot q=0$. It gives zero joint velocity and acceleration at the start and end. Browser playback interpolates joint angles with cubic Hermite segments using stored joint velocities, then recomputes forward kinematics. Motion replays over 2.4 seconds; the other step transitions remain 0.6 seconds.
+
+This example uses velocity-level kinematics to show the null-space idea. The Jacobian and projector are recomputed during integration. Keeping only the initial projector would preserve the task at that initial configuration, not throughout a finite motion. The Talos calculation below applies the same space restriction to acceleration requests at one fixed state.
+
+### Apply the projection to Talos tasks
+
+The primary output is now the actual three-component Talos CoM acceleration, together with both stationary feet. First solve the hand task while preserving just the foot contacts:
+
+$$
+N_c=I-J_c^\dagger J_c,\qquad
+a_{\rm raw}=N_c(J_hN_c)^\dagger b_h.
+$$
+
+This reaches the requested hand acceleration kinematically but also requests nonzero CoM acceleration. Stack both primary requirements into $P$. At this state its rank is 15, leaving 23 null-space coordinates:
+
+$$
+P=\begin{bmatrix}J_c\\J_{\rm com}\end{bmatrix}\in\mathbb R^{15\times38},\qquad
+P=U\Sigma V_r^T,\qquad V=[V_r\;V_0].
+$$
+
+$V_r\in\mathbb R^{38\times15}$ spans the row space of $P$. Its directions change the primary output. $V_0\in\mathbb R^{38\times23}$ spans $\ker P$, so $PV_0=0$. Express the same request in this orthonormal basis:
+
+$$
+\alpha=V_r^Ta_{\rm raw},\qquad \beta=V_0^Ta_{\rm raw},\qquad
+a_{\rm raw}=V_r\alpha+V_0\beta.
+$$
+
+<WbcNullspaceSvdDemo client:visible />
+
+Projection removes the 15 row-space coefficients and keeps the 23 null-space coefficients:
+
+$$
+N_p=V_0V_0^T=I-P^\dagger P,\qquad
+a_{\rm filtered}=V_0\beta,\qquad
+Pa_{\rm filtered}=\underbrace{PV_0}_{0}\beta=0.
+$$
+
+The bars show actual SVD coefficients from the Talos Jacobian, not a two-dimensional picture of its null space. After reconstruction, all 12 foot and 3 CoM acceleration outputs vanish to numerical precision. Foot translation, foot rotation, CoM, and hand residuals are shown separately because their units differ.
+
+Projection also changes the hand output from 30.000 to 24.259 m/s² along world x, with additional y/z acceleration. To recover the hand request, choose new coefficients inside the allowed space:
+
+$$
+\beta^*\in\arg\min_\beta\lVert\underbrace{J_hV_0}_{3\times23}\beta-b_h\rVert^2,
+\qquad a_{\rm NP}=V_0\beta^*.
+$$
+
+Changing $\beta$ can improve hand tracking while $Pa_{\rm NP}=0$ remains true. This restores the three-component hand request, but exceeds the actuated acceleration bound used by QP and HQP. It does not solve for torques or contact forces and therefore cannot claim membership in $\mathcal F$.
+
+The SVD uses a relative singular-value cutoff of $10^{-10}$ and a fixed Euclidean metric on the chosen generalized acceleration coordinates. Orthogonality and coefficient magnitudes depend on that coordinate scaling; the bars are not individual joint commands or a dynamically consistent torque-space decomposition. Damping and numerical tolerances can introduce leakage.
+
+The zero primary request makes this example $a=V_0\beta$. For a nonzero primary request, start from a primary solution $a_1$ and use $a=a_1+V_0\beta$. Then $Pa=Pa_1$: the lower task preserves the achieved primary output, including a nonzero primary residual.
+
+## Preserve task results across QP levels
+
+Hierarchical quadratic programming (HQP) applies strict ordering through successive optimization levels. Each level improves its own objective while preserving higher-level results and the common hard constraints. It can handle both equality and inequality objectives; see [Escande, Mansard, and Wieber (2014)](https://gepettoweb.laas.fr/uploads/Publications/2014_escande_ijrr.pdf).
+
+For the equality least-squares tasks used here, a simplified two-level construction is
+
+$$
+\begin{aligned}
+y_1&\in\arg\min_{y\in\mathcal F}\frac12\lVert A_1y-b_1\rVert^2,\\
+y_2&\in\arg\min_{y\in\mathcal F}\frac12\lVert A_2y-b_2\rVert^2
+\quad\text{subject to }A_1y=A_1y_1.
+\end{aligned}
+$$
+
+$\mathcal F$ is the common feasible set. Preserving $A_1y_1$ preserves the optimal first-level residual, including when it is nonzero. Fixing the entire vector $y=y_1$ would remove the remaining freedom needed by the second task. Hierarchical inequality objectives need their own slack and active-constraint treatment; the equality formula above does not cover that case.
+
+For this Talos snapshot, the three levels minimize CoM acceleration, hand acceleration error, and scaled posture acceleration, respectively. All levels retain the same $\mathcal F$ used by the weighted QP.
+
+<WbcTaskComparisonDemo method="hqp" client:visible />
+
+The HQP result retains the first level's CoM output within numerical tolerance and achieves 17.893 m/s² forward hand acceleration. Its full hand residual is 12.562 m/s², slightly larger than the weighted result. The posture level preserves all three achieved CoM and hand outputs; it cannot materially improve posture in this saturated snapshot.
+
+Several tasks can share a level and use weights within it. The distinction is between tradeoffs *within* a level and preservation *between* levels. Solver names alone do not establish which hierarchy is implemented.
+
+In particular, the TSID recordings in WBC 01 use hard constraints and one weighted soft level. Their hand and posture costs trade off within that level. They do not demonstrate a separate strict priority level for every task.
+
+## Assemble the problem outside the task
+
+Keep the `TaskRequest(J, b)` from 03 unchanged. The task owns its reference, gains, and selected axes. The controller configuration assigns its request a weight, a priority level, or hard-constraint treatment. The problem assembler maps it into solver coordinates.
+
+The following illustrative Python function assembles the tracking cost for one weighted level. Its input is a list of `(TaskRequest, weight)` pairs; the task objects do not own those weights.
+
+```python
+import numpy as np
+
+def tracking_cost(weighted_requests, nv, na, nlambda):
+    ny = nv + na + nlambda
+    H = np.zeros((ny, ny))
+    c = np.zeros(ny)
+    for request, weight in weighted_requests:
+        A = np.zeros((request.J.shape[0], ny))
+        A[:, :nv] = request.J
+        H += weight * (A.T @ A)
+        c -= weight * (A.T @ request.b)
+    return H, c
+```
+
+This assumes nonnegative validated weights and matching request dimensions. The contact representation determines `nlambda`. For the stacked wrench convention above, it is six times the number of contacts. A point-force parameterization needs the corresponding force-generator mapping instead.
+
+One control update then follows this sequence:
+
+```text
+one state snapshot
+    → update model once
+    → evaluate active tasks and contacts
+    → assemble task costs / priority levels and hard constraints
+    → solve for a, tau, lambda
+    → accept a valid feasible result or enter the chosen failure path
+```
+
+For a weighted backend, the assembler passes $H,c,E,e,G,g$ to one QP. An HQP backend also needs explicit level grouping and preservation of higher-level results. The equality-only null-space method works with projected task Jacobians and needs additional machinery for physical inequalities.
+
+The assembly contract must also specify the solver's objective convention. The code above assumes $\frac12y^THy+c^Ty$; omitting the half changes the required Hessian scaling. Frames, variable ordering, and constraint signs must agree across every block.
+
+A solver status, finite outputs, and constraint residuals determine whether the controller accepts a result. If the hard feasible set is empty, changing a tracking weight cannot repair it. The application needs an explicit failure response and a deliberate policy for which requirements, if any, may be relaxed.
+
+
+## Computation and reproducibility
+
+The recordings for this post are generated by `scripts/wbc/generate_task_comparison.py`, using Pinocchio 4.0.0 and the same `talos_reduced.urdf` as WBC 01. The exported data records the URDF hash, dimensions, constraints, and numerical residuals. SciPy SLSQP solves the convex quadratic subproblems after SVD elimination of equality constraints; this is an offline calculation, not a real-time HQP solver benchmark.
+
+The generator rejects failed solves, nonfinite exported values, physical constraint residuals above $10^{-5}$, or failed hierarchy-preservation checks. Plot polygon clipping allows $10^{-6}$ numerical tolerance; the solver constraints are checked separately. No stiffness, timing, tracking stability, or hardware performance is inferred from this single-state calculation.
