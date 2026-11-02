@@ -1,6 +1,6 @@
 ---
 title: "What Is Contact Morphology Design?"
-description: Designing contact formation, release, and control abstractions to reduce the burden on learned dexterous manipulation policies.
+description: Designing how contact forms, transmits load, and evolves within the coupled mechanics, sensing, and control of a robot.
 published: true
 hidden: true
 date: 2026-08-17 00:00:00
@@ -10,69 +10,107 @@ tags: [Robotics, Hardware Development, Contact Morphology Design]
 
 import CmdStructuralContactDemo from "../../src/components/demos/CmdStructuralContactDemo";
 
-Learning a dexterous manipulation policy means learning how actions change contact with an object. An object rotation can require one finger to establish support, another to move along the surface, and a third to release. The hand's design shapes which transitions are possible, how precisely they must be commanded, and what the policy can observe.
+When we talk about physical interaction in robotics, we usually talk about force. A robot pushes with 10 N. A gripper applies 20 N. A controller tracks a desired wrench.
 
-One route to broader capability expands the conditions covered during training. [Learning Dexterous In-Hand Manipulation](https://arxiv.org/abs/1808.00177) randomized physical properties to transfer policies from simulation to a real hand. More recently, [Dex4D](https://dex4d.github.io/) trained a policy across more than 3,000 simulated objects. These results motivate a complementary design question: **how should we build the robot so that a policy has less contact complexity to learn and control?**
+These descriptions are useful. Robotics would be almost impossible without them. But force is not where the physical interaction begins.
 
-**Contact Morphology Design (CMD) is my research perspective on designing how contacts form, carry load, change, and release. It connects contact geometry, material distribution, and structural support to the contact transitions a manipulation policy needs.** The aim is to reduce the precision, experience, and adaptation required to realize those transitions. Whether a particular design achieves that reduction is an empirical question.
+Imagine a robot finger pressing against an object. The outer surface touches first. As the finger keeps moving, the soft material deforms and a contact patch forms. With more preload, the patch grows and its effective stiffness changes. Load spreads over the surface, travels through the soft material into the rigid structure, becomes joint torque, passes through the transmission, and reaches the actuator. The actuator responds, the finger moves, and the contact changes again.
 
-## From passive adaptation to intentional contact transitions
+Contact is part of a closed physical loop:
 
-Mechanical intelligence and passive adaptability show how a body can help organize interaction. For example, [RBO Hand 2](https://www.roboticsproceedings.org/rss10/p18.pdf) uses compliant, underactuated mechanics to realize diverse grasp postures through hand–object interaction. This establishes a useful starting point: mechanical design can take on part of the work otherwise assigned to actuation and control.
+$$
+\begin{aligned}
+&\text{actuation}\rightarrow\text{structure}\rightarrow\text{deformation}\\
+&\quad\rightarrow\text{contact}\rightarrow\text{load transmission}\\
+&\quad\rightarrow\text{structure}\rightarrow\text{actuation}.
+\end{aligned}
+$$
 
-Dexterous manipulation also requires changing which contacts exist while preserving enough support to continue the task. A contact that securely holds an object must eventually permit release or repositioning. Deformation that accommodates uncertain approach can also affect where contact occurs, when it releases, and how those events appear to a sensor.
+In a robot, that loop is wired into another one:
 
-My research focuses on **designing the ability to make and break the contacts needed for dexterous manipulation**. That requires studying contact formation and release alongside load transmission. Softness is one design variable; the target is a set of contact transitions that can be intentionally produced and recognized.
+$$
+\begin{aligned}
+&\text{sensing}\rightarrow\text{model}\rightarrow\text{controller}\\
+&\quad\rightarrow\text{hardware}\rightarrow\text{contact}\rightarrow\text{sensing}.
+\end{aligned}
+$$
 
-Contact transitions are already studied in control. For instance, [contact-implicit MPC](https://arxiv.org/abs/2402.18897) generates in-hand contact plans without prescribing a contact sequence in advance. The question I pursue concerns the physical interface itself: how should its morphology be designed so useful transitions are accessible to a controller or learned policy?
+This is the perspective behind what I call **Contact Morphology Design**, or **CMD**.
 
-## Design the morphology and its control abstraction together
+## Force is the result, not the interaction
 
-A policy receives observations and issues actions. Between them lies a changing contact interface: distributed forces, deformation, friction, and contact boundaries. The research challenge is to identify which features of that interaction must be represented for the task, and design the interface so that representation remains useful.
+When two bodies touch, geometry, material deformation, friction, structural support, and motion all shape what happens. What we call a contact force is one useful summary of that richer process.
 
-For example, a policy could reason about establishing support, shifting a loaded contact, or releasing it. Such an abstraction needs physical meaning. An action intended to release must reliably change support; observations must let the policy distinguish completion from continued attachment or loss of the object. Under partial observation, the representation may need history or uncertainty about contact state.
+Robot control works with abstractions such as $q$, $\dot q$, $\tau$, $F$, and $W$. That is what makes control tractable. But every abstraction hides information.
 
-**The grand challenge is to connect how contact physically forms to an abstraction through which a policy can predict and control its transitions.** A label such as “in contact” is insufficient if states with that label respond very differently to the same action. A useful abstraction must preserve the differences that matter for the next manipulation step.
+A normal force of 10 N does not say whether the contact patch is large or small. It does not locate pressure concentrations, reveal internal collapse, or describe patch migration and proximity to slip. Two fingertips can produce the same measured force through very different physical interactions.
 
-| Design question | Consequence for the policy |
-| --- | --- |
-| Over what range of approach errors does a useful contact form? | Determines the precision needed to establish support. |
-| How does contact carry load while fingers or the object move? | Determines which support changes the policy can execute without losing the object. |
-| What motion releases contact, and how does deformation recover? | Determines the actions and timing needed for release and recontact. |
-| Which contact changes can the sensors distinguish? | Determines what the policy can infer and whether its state representation is adequate. |
+If those differences matter for the task, the robot has to recover them somehow: tactile sensing, contact-location estimates, deformation models, slip estimation, or richer state estimators. Learning-based policies face the same issue. They may never represent contact as a wrench, but the complexity still appears in sensing, data, temporal context, model capacity, or training.
 
-The working hypothesis is that morphology can make some of these transitions more consistent across object poses and disturbances. That could reduce the variation a policy must learn while preserving the contact transitions the task requires. Morphology can also introduce memory, delayed recovery, or ambiguous observations. Those effects must be evaluated together rather than inferred from compliance alone.
+That suggests another option: alongside richer abstractions, can we also design the physical interaction itself?
 
-## One outer shape, three internal structures
+## Contact as a design variable
 
-Two fingertips can use the same soft material and still transform the same motion into different contact forces. An embedded rigid insert redirects load, while internal channels give material room to deform. This example isolates one part of the CMD question: how internal structure changes the contact response to the same commanded motion. The outer envelope and soft material law remain fixed.
+There is no universally good contact. One task wants a large compliant patch; another wants a small, localized one. A fingertip may need to be compliant in one direction and stiff in another. Some interactions should resist motion; others should release with almost no resistance. Maximizing friction, compliance, contact area, or grip force alone cannot settle those choices.
 
-- **Hybrid Structure:** a T-shaped rigid carrier extends into the soft pad. The material fills the space around the stem and is bonded to it, with no lateral void.
-- **Compliant Structure:** fourteen hexagonal channels form a honeycomb interior. Its walls and outer skin deform above a rigid backing.
-- **Solid Structure:** the same outer envelope is filled with soft material and bonded to the backing, without an internal stem.
+CMD makes the physical process of contact deliberate. It treats the following as design variables:
 
-Internal material volume and mass differ. These are illustrative specimens, with material parameters that have not been fitted to a particular silicone.
+- Contact geometry and material distribution.
+- Local compliance and rigid support.
+- How the contact patch evolves under load.
+- Structural load paths, including transmission back toward the actuator.
 
-Newton computes their deformation under three prescribed platen motions. Each structure receives the same motion in each case, so the resulting forces can differ.
+**Contact Morphology Design is a methodology for designing how forces are transmitted and deformations evolve through physical contact.**
 
-| Case | Prescribed motion | Design question illustrated |
-| --- | --- | --- |
-| Normal load | Indent from 0 to 2.4 mm over 1.2 s | How does motion become force, and where is that force transmitted? |
-| Cyclic load | Two 0 → 2.4 → 0 mm cycles, each lasting 2 s | How does the response change during loading and release? |
-| Lateral load | Preload to 1.5 mm, then translate 3 mm sideways | How does the loaded structure respond to shear and redistribute contact? |
+There is an important second half to that definition: the morphology belongs to a robot whose sensing, hardware, and controller shape the interaction.
+
+## Contact morphology in the closed-loop robot
+
+A soft pad never exists in isolation. Changing its stiffness changes deformation, the contact patch, and the load path through the finger. Those changes also affect joint torque, the mechanical impedance seen at the actuator, sensor response, and the dynamics the controller sees. The morphology changes the robot system.
+
+Contact morphology therefore has to be studied as part of the closed-loop robot. The same compliant interface can behave differently on a highly geared, stiff actuator and a backdrivable one. A morphology evaluated under position control may behave differently under torque or impedance control. A feature that looks insignificant in a static test can matter once the system moves and the controller closes the loop.
+
+CMD sits between mechanics, hardware design, sensing, and control, and asks two questions:
+
+1. How does physical morphology shape the interaction seen by the complete robot system?
+2. How should morphology be designed for the controller, model, sensing, and hardware it will work with?
+
+## Same shape, same motion, different interaction
+
+Three fingertips with identical outer shape and soft material law push back with normal forces more than five times apart under the same indentation. Their largest reconstructed contact area is only about 12% larger than the smallest.
+
+The three share a 30 × 14 mm rounded profile, extruded 12 mm through the section. All use the same Neo-Hookean material law, with $E=100$ kPa and $\nu=0.35$. Their internal structures differ:
+
+- **Hybrid:** a rigid T-shaped insert extends 6 mm into the pad and redirects load. The surrounding soft material is bonded to the insert, with no lateral void.
+- **Compliant:** fourteen hexagonal channels form a honeycomb whose walls can deform.
+- **Solid:** soft material fills the envelope and is bonded to a rigid backing.
+
+Newton computes each structure under the same platen motions: normal indentation, two loading–release cycles, and lateral translation after preload. Friction is $\mu=0.6$ in every case. The animation connects the internal deformation to the force-bearing contact region and resulting reactions.
 
 <CmdStructuralContactDemo client:visible />
 
-The same imposed motion produces different reactions because the structures provide different paths for deformation and load. The section view shows that structural response; the contact view locates the force-bearing surface region. For a policy, these are different physical consequences of the same action. The example exposes a mechanical dependency that a contact abstraction must account for; it does not yet demonstrate reduced policy training cost.
+At 2.4 mm normal indentation and at the end of the lateral motion, the recorded results are:
+
+| Structure | Normal reaction at 2.4 mm indentation | Reconstructed area at 2.4 mm indentation | Normal / lateral reaction at 1.5 mm preload + 3 mm translation |
+| --- | --- | --- | --- |
+| Hybrid | 6.34 N | 201.7 mm² | 3.15 N / −1.87 N |
+| Solid | 3.98 N | 193.0 mm² | 1.95 N / −1.17 N |
+| Compliant | 1.16 N | 179.3 mm² | 0.55 N / −0.33 N |
+
+Negative lateral reaction opposes the prescribed translation. The lateral case holds indentation equal, giving different normal preload forces across structures.
+
+These results show what individual summaries leave out. Similar total contact areas accompany very different forces. Neither an area nor an endpoint force alone says how each pad will respond to the next motion. Internal load paths shape that response, which makes them a CMD design variable.
+
+Which structure is useful depends on the task. Limiting force under an uncertain approach favors a lower force rise over the approach range. Carrying load within limited travel asks whether the required force is reached before travel runs out. Either choice needs the full force–displacement response, not just endpoints.
+
+This example isolates the mechanical part of the loop: prescribed motion and a fixed backing, without an actuator or feedback controller. The specimens are illustrative, with no fitted silicone model. The simulation includes numerical damping and omits self-contact after cell collapse. It does not demonstrate reduced policy training cost.
 
 <details>
-<summary>Specimen geometry and simulation conditions</summary>
+<summary>Loading conditions and interpretation</summary>
 
-The common envelope is 30 mm wide, 14 mm deep toward contact, and extruded 12 mm through the section. Its rounded profile is constant along that extrusion. The hybrid stem is 7.6 mm wide and extends 6 mm into the pad.
+Normal loading indents from 0 to 2.4 mm over 1.2 s. The cyclic case computes two 0 → 2.4 → 0 mm cycles, each lasting 2 s. The lateral case reaches 1.5 mm indentation over 0.6 s, then translates 3 mm over 2 s while maintaining that indentation. Backing and insert surfaces remain fixed. Internal material volume and mass differ across structures.
 
-All three soft bodies use the same stable Neo-Hookean law, with $E=100$ kPa and $\nu=0.35$. Here, *hyperelastic* names the material model. Changing force slope can also arise from evolving contact geometry and structural constraints; these curves do not isolate those contributions.
-
-The platen friction coefficient is $\mu=0.6$ in every case. Backing and insert surfaces remain fixed. The lateral case reaches its 1.5 mm preload over 0.6 s, then translates over 2 s. The simulation includes numerical damping and omits cell-wall self-contact after collapse. It does not establish calibrated silicone behavior, durability, or hardware control performance.
+Friction and numerical damping dissipate energy, so loading–release differences do not establish physical viscoelasticity or fatigue behavior. The shared friction coefficient also means the lateral-force differences cannot be attributed to different surface friction properties. The contact view locates force-bearing regions; it does not classify sticking and sliding.
 
 </details>
 
@@ -81,53 +119,26 @@ The platen friction coefficient is $\mu=0.6$ in every case. Backing and insert s
 
 The lower views connect Newton's active platen contacts to the deformed surface mesh. A triangle is filled only when all three vertices carry normal contact force above $10^{-7}$ N. Triangles with one or two active vertices remain unfilled, leaving their boundary unresolved at this mesh spacing. Dots show all active contact nodes. The gold line above projects the same filled triangles onto the platen in front view.
 
-Fill intensity encodes each triangle's mean nodal normal force on a common scale. Forces are reconstructed from Newton's contact records, penalty stiffness, and penetration depth. Nodal force is not pressure. Every view uses the same recorded state at 0.05 s intervals.
+Fill intensity encodes each triangle's mean nodal normal force on a common scale. Forces are reconstructed from Newton's contact records, penalty stiffness, and penetration depth. Nodal force is not pressure. The simulation records states every 0.05 s. Playback linearly interpolates deformation, platen motion, forces, and area readouts. Contact meshes cross-fade between neighboring recorded states; the gold projection uses the same blend. These intermediate displays are visual interpolation, not additional solver states.
 
-The demo's contact-region area sums the projected fully active triangles. The tables below retain a separate geometric estimate: boundary triangles clipped at the platen plane, including the solver's 5 μm contact radius. These two area definitions can differ. Both are mesh-dependent simulation quantities.
-
-</details>
-
-## What the example exposes to a policy
-
-Normal loading probes how approach becomes force and a supporting region. The cyclic case probes the path through loading, release, and recontact. Lateral motion probes how an existing contact changes under shear. These are components of a manipulation sequence, examined here with prescribed motion and a fixed backing.
-
-A policy representation must distinguish contacts that occupy similar areas but respond differently to the next action. Similar areas can accompany different forces, and a current contact image does not specify how deformation will recover. A candidate abstraction must be tested by whether it predicts the effect of subsequent actions. For these structures, that means relating contact formation and release to the commanded motion, loading history, and available observations.
-
-<details>
-<summary>Numerical results for the prescribed loading cases</summary>
-
-At the end of normal loading, all specimens have the same 2.4 mm indentation:
-
-| Structure | Normal reaction | Geometric contact-area estimate |
-| --- | --- | --- |
-| Hybrid Structure | 6.344 N | 204.9 mm² |
-| Compliant Structure | 1.159 N | 182.2 mm² |
-| Solid Structure | 3.980 N | 193.3 mm² |
-
-The embedded stem constrains deformation inside the hybrid pad; the honeycomb leaves room for cellular walls to deform. Under this loading condition, the filled pad lies between their normal-force responses.
-
-A requirement to limit force over an uncertain approach would favor a lower force rise over that approach range. A requirement to carry a specified load within limited travel would ask whether the structure reaches that load before exhausting its travel. The endpoint values above cannot settle either choice: both require the response over the relevant motion range. Contact-region evolution adds where the structure transmits load as that motion proceeds.
-
-Loading history also belongs in the requirement. The cyclic case computes loading and return motion. Its friction and numerical damping dissipate energy, so a loading–return difference does not establish a physical material's viscoelasticity or fatigue behavior. A repeated-contact design would need recovery evaluated on its actual cycle and timescale.
-
-The lateral case holds indentation at 1.5 mm and moves the platen sideways. At 3 mm translation:
-
-| Structure | Normal reaction | Lateral reaction | Geometric contact-area estimate |
-| --- | --- | --- | --- |
-| Hybrid Structure | 3.152 N | -1.873 N | 161.9 mm² |
-| Compliant Structure | 0.554 N | -0.332 N | 140.4 mm² |
-| Solid Structure | 1.950 N | -1.167 N | 147.4 mm² |
-
-Negative lateral reaction opposes the platen's positive translation. The shared friction coefficient means these differences cannot be attributed to different surface friction properties. Normal preload forces and deformation differ across the structures. For a task requiring shear transmission, the next comparison must specify whether indentation or normal force is held equal. The contact view alone does not classify sticking and sliding.
+The demo's contact-region area sums the projected fully active triangles. The table uses this same reconstructed area at recorded endpoints. The data also retain a separate geometric estimate from clipping boundary triangles at the platen plane, including the solver's 5 μm contact radius. That estimate is not the area shown here. Both definitions are mesh-dependent simulation quantities.
 
 </details>
 
-## Test whether design reduces the learning burden
+## Making the downstream problem simpler
 
-The animation contains prescribed motions and mechanical responses. It does not test intentional multi-finger contact switching, sensor-based state estimation, or a learned manipulation policy. The next research step is to connect candidate morphologies to those capabilities.
+A robot still needs sensing, models, controllers, policies, and actuators. Morphology shapes the physical interaction those components must handle.
 
-A learning-based evaluation should ask how much training each design needs to reach a specified task performance. It should also compare performance at equal training budgets and test object poses or disturbances outside the training distribution. The task, observation access, policy architecture, and training protocol must be stated so a mechanical benefit can be distinguished from a training change.
+If the interaction is highly sensitive, strongly history-dependent, or hard to observe, the controller or policy inherits that complexity. If morphology makes the interaction more predictable, structured, or observable, the downstream problem can become simpler.
 
-The contact abstraction needs its own evaluation. Can the available observations identify the state needed for the next action? Does the same abstract action produce a consistent transition across the intended conditions? A simpler representation is useful only if it retains the information needed for successful manipulation.
+**The research hypothesis is that morphology can reduce the complexity of the representation required for control by shaping the physics that representation must describe.** The challenge is to connect how contact forms to an abstraction through which a controller or policy can predict and control its transitions.
 
-My research goal is to design the physical contact process and the representation used to control it together. The decisive experiment is a manipulation sequence that requires repeated support changes: measure whether a morphology makes those transitions more reliable, and whether that reliability reduces the data or training variation a policy needs.
+For learned manipulation policies, that hypothesis is testable. Hold the task, observation access, policy architecture, and training protocol fixed, change the morphology, and measure:
+
+1. **Sample efficiency:** how much training each design needs to reach a target success rate.
+2. **Equal-budget performance:** how each design performs at the same training budget.
+3. **Generalization:** how each handles object poses and disturbances outside the training distribution.
+
+The decisive experiment is a task requiring repeated support changes: make, shift, release, and re-grasp. The question is whether morphology makes those transitions more reliable while preserving the contact repertoire the task needs, and whether that reliability reduces the required training.
+
+Alongside how a robot should control contact, CMD asks: **how should the robot be physically designed so that forces, deformations, sensing, and control produce the interaction we want?**

@@ -2,31 +2,40 @@ import { useEffect, useRef, useState } from 'react';
 
 type Mode='normal'|'cyclic'|'lateral';
 type Frame={time:number;indentation:number;lateral_displacement:number;force:number;lateral_force:number;patch_area_mm2:number;contact_patch:number[][][];contact_nodes:number[][];contact_faces:number[][];contact_area_mm2:number;partial_contact_faces:number;front_positions:number[][]};
+type PlaybackFrame=Frame & {contact_layers:{frame:Frame;opacity:number}[]};
 type Pad={name:string;kind:'hybrid'|'compliant'|'solid';carrier_polygon:number[][];rest_front:number[][];front_faces:number[][];runs:Record<Mode,{duration:number;frames:Frame[]}>};
 type Recording={metadata:{friction:number;sample_period:number};cases:Pad[]};
 const COLORS=['#17695b','#b35b2b','#4e61a8'];
 const LABELS:Record<Mode,string>={normal:'Normal load',cyclic:'Cyclic load',lateral:'Lateral load'};
 const CONDITIONS:Record<Mode,string>={normal:'Smooth normal indentation: 0 → 2.4 mm.',cyclic:'Two normal loading cycles: 0 → 2.4 → 0 mm, with a 2 s period.',lateral:'Preload to 1.5 mm, then translate the platen 3 mm sideways at fixed indentation.'};
 const clamp=(x:number)=>Math.max(0,Math.min(1,x));
-function sample(pad:Pad,mode:Mode,progress:number):Frame {
-  const frames=pad.runs[mode].frames;
-  return frames[Math.round(clamp(progress)*(frames.length-1))];
+function sample(pad:Pad,mode:Mode,progress:number):PlaybackFrame {
+  const frames=pad.runs[mode].frames,position=clamp(progress)*(frames.length-1);
+  const i=Math.floor(position),a=frames[i],b=frames[Math.min(i+1,frames.length-1)],t=position-i;
+  const lerp=(key:'time'|'indentation'|'lateral_displacement'|'force'|'lateral_force'|'contact_area_mm2')=>a[key]+t*(b[key]-a[key]);
+  return {...(t<.5?a:b),time:lerp('time'),indentation:lerp('indentation'),lateral_displacement:lerp('lateral_displacement'),
+    force:lerp('force'),lateral_force:lerp('lateral_force'),contact_area_mm2:lerp('contact_area_mm2'),
+    front_positions:a.front_positions.map((p,j)=>p.map((v,k)=>v+t*(b.front_positions[j][k]-v))),
+    contact_layers:t===0?[{frame:a,opacity:1}]:[{frame:a,opacity:1-t},{frame:b,opacity:t}]};
 }
-function Specimen({pad,frame,color}:{pad:Pad;frame:Frame;color:string}) {
-  const xy=([x,z]:number[])=>[150+x*7,65+z*7];
-  const poly=(face:number[],positions:number[][])=>face.map(i=>xy(positions[i]).join(',')).join(' ');
-  const bottom=65+(14.005-frame.indentation*1000)*7,shift=frame.lateral_displacement*7000;
-  // Union the x projections of the same triangles drawn in the top view.
+function contactSpans(frame:Frame):number[][] {
+  // Union x projections within each recorded contact mesh; node IDs differ between frames.
   const intervals=frame.contact_faces.map(face=>{
     const x=face.map(j=>frame.contact_nodes[j][0]);
     return [Math.min(...x),Math.max(...x)];
   }).sort((a,b)=>a[0]-b[0]);
-  const contactSpans:number[][]=[];
+  const spans:number[][]=[];
   for(const [lo,hi] of intervals){
-    const last=contactSpans[contactSpans.length-1];
+    const last=spans[spans.length-1];
     if(last&&lo<=last[1]+1e-6)last[1]=Math.max(last[1],hi);
-    else contactSpans.push([lo,hi]);
+    else spans.push([lo,hi]);
   }
+  return spans;
+}
+function Specimen({pad,frame,color}:{pad:Pad;frame:PlaybackFrame;color:string}) {
+  const xy=([x,z]:number[])=>[150+x*7,65+z*7];
+  const poly=(face:number[],positions:number[][])=>face.map(i=>xy(positions[i]).join(',')).join(' ');
+  const bottom=65+(14.005-frame.indentation*1000)*7,shift=frame.lateral_displacement*7000;
   return <svg className="cmd-structure-scene" viewBox="0 0 300 205" role="img" aria-label={`${pad.name} computed deformation`}>
     <polygon points={pad.carrier_polygon.map(p=>xy(p).join(',')).join(' ')} fill="#a5ada8" stroke="#5c695e" strokeWidth="1.5"/>
     <text x="150" y="28" textAnchor="middle">{pad.kind==='hybrid'?'Embedded T carrier · no void':'Fixed backing'}</text>
@@ -38,9 +47,11 @@ function Specimen({pad,frame,color}:{pad:Pad;frame:Frame;color:string}) {
     <rect x={31+shift} y={bottom} width="238" height="12" rx="2" fill="#535e59"/>
     {[0,1,2,3,4].map(i=><path key={i} d={`M${50+i*44+shift} ${bottom+3}v6`} stroke="#d4ddd6" strokeWidth="1.5"/>)}
     <g aria-label="Contact-region projection onto the platen, front view">
-      {contactSpans.map(([lo,hi],i)=><g key={i}>
+      {frame.contact_layers.map((layer,k)=><g key={k} opacity={layer.opacity}>
+      {contactSpans(layer.frame).map(([lo,hi],i)=><g key={i}>
         <path d={`M${150+lo*7} ${bottom}H${150+hi*7}`} stroke="#fff" strokeWidth="6"/>
         <path d={`M${150+lo*7} ${bottom}H${150+hi*7}`} stroke="#d49a16" strokeWidth="3.5"><title>Contact-region front projection: {lo.toFixed(2)} to {hi.toFixed(2)} mm</title></path>
+      </g>)}
       </g>)}
     </g>
     <path d="M35 192H53" stroke="#d49a16" strokeWidth="3.5"/>
@@ -49,22 +60,24 @@ function Specimen({pad,frame,color}:{pad:Pad;frame:Frame;color:string}) {
 }
 // Fixed across all structures and loading cases; recorded nodal forces peak below 0.03 N.
 const CONTACT_FORCE_MAX=.03;
-function Patch({frame,color}:{frame:Frame;color:string}) {
-  return <svg className="cmd-contact-patch" viewBox="0 0 300 165" role="img" aria-label={`Reconstructed VBD contact surface: ${frame.contact_faces.length} active triangles, ${frame.contact_area_mm2.toFixed(1)} square millimeters at ${frame.time.toFixed(2)} seconds`}>
+function Patch({frame:playback,color}:{frame:PlaybackFrame;color:string}) {
+  return <svg className="cmd-contact-patch" viewBox="0 0 300 165" role="img" aria-label={`VBD contact surface playback at ${playback.time.toFixed(2)} seconds; interpolated region area ${playback.contact_area_mm2.toFixed(1)} square millimeters`}>
     <text x="150" y="17" textAnchor="middle">VBD contact region · top view</text>
     <rect x="45" y="40" width="210" height="84" fill="#f4f6f4" stroke="#aab5ad" strokeDasharray="3 3"/>
-    {frame.contact_nodes.length===0&&<text x="150" y="87" textAnchor="middle">No active contact</text>}
+    {playback.contact_layers.every(layer=>layer.frame.contact_nodes.length===0)&&<text x="150" y="87" textAnchor="middle">No active contact</text>}
+    {playback.contact_layers.map(({frame,opacity},k)=><g key={k} opacity={opacity}>
     {frame.contact_faces.map((face,i)=>{
       const force=face.reduce((sum,j)=>sum+frame.contact_nodes[j][2],0)/3;
       const points=face.map(j=>`${150+frame.contact_nodes[j][0]*7},${82+frame.contact_nodes[j][1]*7}`).join(' ');
       return <polygon key={`face${i}`} points={points} fill={color} fillOpacity={.15+.85*clamp(force/CONTACT_FORCE_MAX)}><title>Active surface triangle; mean nodal normal force {force.toFixed(6)} N</title></polygon>;
     })}
     {frame.contact_nodes.map(([x,y,f],i)=><circle key={i} cx={150+x*7} cy={82+y*7} r=".7" fill="#263d32" fillOpacity=".5"><title>Active node: ({x.toFixed(3)}, {y.toFixed(3)}) mm; normal force {f.toFixed(6)} N</title></circle>)}
-    {frame.contact_nodes.length>0&&frame.contact_faces.length===0&&<text x="150" y="33" textAnchor="middle">Contacts present; no fully active face</text>}
+    </g>)}
+    {playback.contact_layers.some(layer=>layer.frame.contact_nodes.length>0)&&playback.contact_layers.every(layer=>layer.frame.contact_faces.length===0)&&<text x="150" y="33" textAnchor="middle">Contacts present; no fully active face</text>}
     {[0,.5,1].map((v,i)=><g key={v}><circle cx={49+i*78} cy="145" r="3" fill={color} fillOpacity={.15+.85*v}/><text x={57+i*78} y="149">{(v*CONTACT_FORCE_MAX).toFixed(3)} N</text></g>)}
   </svg>;
 }
-function Chart({data,mode,progress}:{data:Recording;mode:Mode;progress:number}) {
+function Chart({data,mode,playback}:{data:Recording;mode:Mode;playback:PlaybackFrame[]}) {
   const coordinate=(f:Frame)=>mode==='normal'?f.indentation*1000:mode==='lateral'?f.lateral_displacement*1000:f.time;
   const xmax=mode==='normal'?2.4:mode==='lateral'?3:4;
   const values=data.cases.flatMap(p=>p.runs[mode].frames.flatMap(f=>mode==='lateral'?[f.force,f.lateral_force]:[f.force]));
@@ -77,7 +90,7 @@ function Chart({data,mode,progress}:{data:Recording;mode:Mode;progress:number}) 
     {[0,1,2,3,4].map(i=>i*xmax/4).map(v=><text key={v} x={x(v)} y="232" textAnchor="middle">{v.toFixed(1)}</text>)}
     <text x="635" y="255" textAnchor="end">{mode==='normal'?'Indentation [mm]':mode==='lateral'?'Platen translation [mm]':'Time [s]'}</text>
     {data.cases.map((p,i)=>{
-      const frames=p.runs[mode].frames,f=sample(p,mode,progress);
+      const frames=p.runs[mode].frames,f=playback[i];
       return <g key={p.kind}>
         <path d={path(frames.map(f=>[coordinate(f),f.force]))} stroke={COLORS[i]} strokeWidth="2.5" fill="none"/>
         {mode==='lateral'&&<path d={path(frames.map(f=>[coordinate(f),f.lateral_force]))} stroke={COLORS[i]} strokeWidth="2" strokeDasharray="5 4" fill="none"/>}
@@ -121,7 +134,7 @@ export default function CmdStructuralContactDemo() {
     </div>)}</div>
     <p className="cmd-structure-note">Gold on the upper animation marks the contact region projected onto the platen in front view. Below: the same reconstructed VBD contact surface, viewed from above. Filled triangles retain the original surface mesh and have three force-bearing contact vertices. Dots show all active contact nodes. Fill intensity encodes mean nodal normal force on the same 0–0.030 N scale in every case; it is not pressure.</p>
     <div className="cmd-chart-legend">{data.cases.map((p,i)=><span key={p.kind} style={{color:COLORS[i]}}>● {p.name}</span>)}<span>{mode==='lateral'?'Continuous: normal · dashed: lateral reaction':'Normal contact force'}</span></div>
-    <Chart data={data} mode={mode} progress={progress}/>
-    <p className="cmd-force-caption">Each view uses the same recorded state, sampled every 0.05 s. Nodal normal forces are reconstructed from Newton contact records using the solver’s penalty stiffness and penetration depth, then accumulated at mesh nodes. Contact-region area sums the projected fully active triangles. Boundary triangles with only one or two active vertices remain unfilled, so the boundary is mesh-dependent. The dashed outline is the undeformed 30 × 12 mm footprint.</p>
+    <Chart data={data} mode={mode} playback={frames}/>
+    <p className="cmd-force-caption">Recordings are sampled every 0.05 s. Playback linearly interpolates deformation, platen motion, force, and area readouts. Contact meshes cross-fade between adjacent recorded states; the gold projection uses the same blend. These intermediate displays are not additional solver states. Nodal normal forces are reconstructed from Newton contact records using the solver’s penalty stiffness and penetration depth, then accumulated at mesh nodes. Contact-region area sums the projected fully active triangles. Boundary triangles with only one or two active vertices remain unfilled, so the boundary is mesh-dependent. The dashed outline is the undeformed 30 × 12 mm footprint.</p>
   </section>;
 }

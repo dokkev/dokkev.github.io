@@ -45,8 +45,11 @@ and `structural-lateral.json`. The UI fetches and caches only the selected mode.
 carry active platen normal force above 1e-7 N. It overlays all active nodes.
 Mean nodal normal force sets face opacity on a shared 0–0.030 N scale.
 This quantity is force, not pressure. Marker size has no physical area.
-Deformation, contact nodes, and force readouts use the same nearest recorded
-state at 0.05 s intervals. The clipped polygons remain in the recordings for
+Playback linearly interpolates deformation, platen motion, forces, and area
+readouts between the 0.05 s samples. Contact meshes and their front-view
+projections cross-fade with the same weights. Active node indices are local
+to each snapshot, so their positions are not interpolated across snapshots.
+The blended display does not constitute a new solver state. The clipped polygons remain in the recordings for
 the separate geometric area estimates reported in the article tables.
 Display positions are rounded to 0.001 mm; patch outlines are snapped at
 0.001 mm and simplified at 0.002 mm. Reported patch areas retain the original
@@ -105,5 +108,4 @@ normal nodal force in N. No pressure is inferred.
 The platen remains broad enough to cover the contact region over the motion.
 
 Each snapshot checks finite particle positions and minimum deformation
-Jacobian above 0.15; contact buffer saturation raises an error. The UI uses
-the nearest recorded snapshot for every view and readout.
+Jacobian above 0.15; contact buffer saturation raises an error. Playback preserves recorded contact topology within each cross-fade layer.
