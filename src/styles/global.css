@@ -2168,8 +2168,6 @@ h3 {
 .cmd-structure-scene { display: block; width: 100%; height: auto; }
 .cmd-structure-scene text { font: 11px "DM Sans", sans-serif; fill: #475b50; }
 .article-body .cmd-structure-note { font-size: 12px; line-height: 1.6; color: #52635b; margin: 14px 0; }
-.cmd-drake-toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; margin: 18px 0; }
-.cmd-drake-toggle input { accent-color: #17695b; }
 
 .cmd-three-structures { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 @media (max-width: 700px) {

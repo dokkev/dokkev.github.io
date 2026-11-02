@@ -33,7 +33,9 @@ def main():
                 frames.append({**f,'front_positions':np.round(f['front_positions'],3).tolist(),
                     'contact_patch':rings,'contact_nodes':[[round(x,3),round(y,3),v] for x,y,v in f['contact_nodes']]})
             cases.append({**case,'runs':{mode:{**run,'frames':frames}}})
-        metadata={**raw['metadata'],'patch_display':'Unioned rings with even-odd fill; snapped at 0.001 mm and simplified at 0.002 mm. Reported area uses original clipped triangles.'}
+        metadata={**raw['metadata'],
+            'contact_surface_display':'Original fully active boundary triangles indexed into contact_nodes; mean nodal normal force sets fill opacity; partial-contact faces omitted',
+            'patch_display':'Unioned rings with even-odd fill; snapped at 0.001 mm and simplified at 0.002 mm. Reported area uses original clipped triangles.'}
         path=OUTPUT/f'structural-{mode}.json'
         path.write_text(json.dumps({'metadata':metadata,'cases':cases},separators=(',',':'),allow_nan=False)+'\n')
         print(path.name,path.stat().st_size,'bytes',flush=True)

@@ -133,8 +133,22 @@ class Loading(Compression):
         if min_j<.15 or not np.isfinite(pos).all():
             raise RuntimeError(f'Invalid element: Jmin={min_j}')
         ids=np.flatnonzero(nodes>1e-7)
+        # Preserve surface adjacency: fill only outward faces whose three
+        # vertices carry active platen contact. Mixed faces remain unresolved.
+        active_vertices=nodes>1e-7
+        active_counts=active_vertices[self.surface_faces].sum(axis=1)
+        facing=normals[:,2]>0
+        contact_faces=self.surface_faces[facing&(active_counts==3)]
+        partial_faces=int(np.count_nonzero(facing&(active_counts>0)&(active_counts<3)))
+        lookup=np.full(len(pos),-1,dtype=int)
+        lookup[ids]=np.arange(len(ids))
+        face_normals=np.cross(pos[contact_faces[:,1]]-pos[contact_faces[:,0]],
+                              pos[contact_faces[:,2]]-pos[contact_faces[:,0]])
+        contact_area=float(face_normals[:,2].sum()*.5e6)
         return {'time':float(self.clock.numpy()[0]),'indentation':float(HEIGHT+PARTICLE_RADIUS-height),
             'lateral_displacement':float(poses[0,0]),'force':float(reaction[2]),'lateral_force':float(reaction[0]),
+            'contact_faces':lookup[contact_faces].tolist(),'contact_area_mm2':contact_area,
+            'partial_contact_faces':partial_faces,
             'min_jacobian':min_j,'patch_area_mm2':float(area),'contact_patch':patches,
             'contact_nodes':np.round(np.column_stack([pos[ids,:2]*1000,nodes[ids]]),6).tolist(),
             'front_positions':np.round(pos[self.front_ids][:,[0,2]]*1000,5).tolist()}
@@ -164,6 +178,8 @@ def main():
     metadata={'newton_version':version('newton'),'warp_version':version('warp-lang'),
         'young_modulus':1e5,'poisson_ratio':.35,'friction':FRICTION,'friction_velocity_epsilon':.0001,
         'dt':DT,'iterations':30,'sample_period':.05,'mesh_spacing':.0008,
+        'contact_surface_method':'Original outward boundary triangles with all three vertices carrying active platen normal force > 1e-7 N; projected area; mixed triangles omitted',
+        'contact_force_threshold':1e-7,
         'patch_method':'Projected boundary triangles clipped at platen plane including 5 um contact radius; mesh-dependent estimate',
         'geometry':'Hybrid: bonded embedded T carrier, no void. Compliant: 14 hexagonal channels. Solid: filled envelope.',
         'generator_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
