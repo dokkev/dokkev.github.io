@@ -1,6 +1,6 @@
 ---
 layout: distill
-title: Robot Hardware Series [EN/KR]
+title: Robot Hardware Series [KR]
 description: Robot hardware notes from a Physical AI perspective
 img: assets/img/hardware/draco_writing.jpg
 importance: 7
@@ -8,10 +8,10 @@ category: robotics
 project_group: technical
 related_publications: false
 published: true
-redirect: /hardware01/
+redirect: /hardware01-kr/
 ---
 
-[Robot Hardware 01 - What Is Robot Hardware?](/hardware01/)
+영문판은 준비 중입니다. [EN · Coming soon](/hardware01/)
 
 [로봇 하드웨어 01 - 로봇 하드웨어란?](/hardware01-kr/)
 
@@ -21,13 +21,15 @@ redirect: /hardware01/
 
 [로봇 하드웨어 04 - 액추에이터 (3): QDD 액추에이터](/hardware04-kr/)
 
+[로봇 하드웨어 05 - 액추에이터 (4): 토크 리플](/hardware05-kr/)
+
+[로봇 하드웨어 06 - 액추에이터 (5): 백래시](/hardware06-kr/)
+
+[로봇 하드웨어 07 - 액추에이터 (6): 발열](/hardware07-kr/)
+
 앞으로 다룰 주제들은 다음과 같습니다 (COMING SOON):
 
-05 - 액추에이터 (5): 같은 전류를 보내도 토크가 출렁이는 이유
-
-06 - 액추에이터 (6): 방향을 바꾸는 순간 관절이 명령을 잃는 이유
-
-07 - 액추에이터 (7): 뜨거워진 액추에이터는 같은 액추에이터가 아닙니다
+08 - 케이블 구동 메커니즘 (1): 케이블과 Capstan Drive
 
 09 - 메카니즘 (1): Proximal Actuation (Linkage, Belt, Cable)
 

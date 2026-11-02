@@ -9,8 +9,9 @@ const { doc } = Astro.props;
 const mdxPosts = import.meta.glob<MDXInstance<Record<string, unknown>>>("../../content/blog/**/*.mdx", { eager: true });
 const Content = doc.mdx ? mdxPosts[`../../content/${doc.mdx}`]?.default : undefined;
 if (doc.mdx && !Content) throw new Error(`Missing MDX article: ${doc.mdx}`);
-const html = Content ? "" : await markdown(doc.body);
-const siblings = posts.filter((p) => doc.series && p.series === doc.series && p.lang === doc.lang).sort((a, b) => a.seriesOrder - b.seriesOrder);
+const html = doc.comingSoon || Content ? "" : await markdown(doc.body);
+const koreanEdition = doc.translations.find((t) => t.lang === "ko" && posts.some((p) => p.url === t.url && !p.comingSoon));
+const siblings = posts.filter((p) => doc.series && p.series === doc.series && p.lang === doc.lang && !p.comingSoon).sort((a, b) => a.seriesOrder - b.seriesOrder);
 const parent = posts.find((p) => p.url === doc.parent);
 ---
 
@@ -34,7 +35,7 @@ const parent = posts.find((p) => p.url === doc.parent);
         <nav class="language-links" aria-label="Article language">
           {doc.translations.map((t) => (
             <a href={t.url} aria-current={t.lang === doc.lang ? "page" : undefined}>
-              {t.label}
+              {posts.find((p) => p.url === t.url)?.comingSoon ? `${t.label} · Coming soon` : t.label}
             </a>
           ))}
         </nav>
@@ -45,7 +46,15 @@ const parent = posts.find((p) => p.url === doc.parent);
         This project is available at <a href={doc.redirect}>{doc.redirect} ↗</a>.
       </p>
     )}
-    <article class="prose article-body">{Content ? <Content /> : <Fragment set:html={html} />}</article>
+    <article class="prose article-body">
+      {doc.comingSoon ? (
+        <>
+          <h2>Coming soon</h2>
+          <p>The English edition is being prepared.</p>
+          {koreanEdition && <p><a href={koreanEdition.url}>Read the Korean edition →</a></p>}
+        </>
+      ) : Content ? <Content /> : <Fragment set:html={html} />}
+    </article>
     {siblings.length > 1 && (
       <aside class="article-series">
         <h2>In this series</h2>

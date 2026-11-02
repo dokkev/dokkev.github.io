@@ -1,6 +1,6 @@
 ---
 import Base from "../../layouts/Base.astro";
-import { listedPosts, posts, seriesNames } from "../../lib/content";
+import { listedPosts, seriesPosts, seriesNames } from "../../lib/content";
 ---
 
 <Base title="Blog" description="Notes on robotics, contact morphology, whole-body control, and building robot hardware.">
@@ -34,17 +34,17 @@ import { listedPosts, posts, seriesNames } from "../../lib/content";
       <h2>Series</h2>
       {seriesNames.map((name) => (
         <details open>
-          <summary>{name}</summary>
+          <summary>{seriesPosts.some((p) => p.series === name && p.lang === "en") ? name : name.replace("[EN/KR]", "[KR]")}</summary>
           <ol>
-            {posts
-              .filter((p) => p.series === name && p.lang !== "ko" && !p.parent)
+            {seriesPosts
+              .filter((p) => p.series === name && !p.parent)
               .sort((a, b) => a.seriesOrder - b.seriesOrder)
               .map((post) => (
                 <li>
                   <a href={post.url}>{post.title.replace(/^\[[^\]]+\]\s*-?\s*/, "")}</a>
-                  {posts.some((child) => child.parent === post.url) && (
+                  {seriesPosts.some((child) => child.parent === post.url) && (
                     <ul>
-                      {posts
+                      {seriesPosts
                         .filter((child) => child.parent === post.url)
                         .map((child) => (
                           <li>

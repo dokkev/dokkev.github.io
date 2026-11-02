@@ -67,6 +67,7 @@ export interface Document {
   mdx?: string;
   lang: string;
   hidden: boolean;
+  comingSoon: boolean;
   series?: string;
   parent?: string;
   seriesOrder: number;
@@ -95,12 +96,13 @@ function documents(folder: "blog" | "projects"): Document[] {
         title: data.title,
         description: data.description || "",
         url,
-        body: content,
+        body: data.coming_soon === true ? "" : content,
         date,
         updated: data.updated,
         mdx: filename.endsWith(".mdx") ? path.relative(root, filename) : undefined,
         lang: data.lang || "en",
         hidden: data.hidden === true,
+        comingSoon: data.coming_soon === true,
         series: data.series,
         parent: data.parent,
         seriesOrder: data.series_order || 0,
@@ -115,8 +117,12 @@ function documents(folder: "blog" | "projects"): Document[] {
 }
 export const posts = documents("blog").sort((a, b) => b.date.localeCompare(a.date));
 export const projects = documents("projects").sort((a, b) => a.importance - b.importance);
-export const listedPosts = posts.filter((p) => !p.hidden && !p.parent && p.lang !== "ko");
-export const seriesNames = [...new Set(posts.filter((p) => p.lang !== "ko" && p.series).map((p) => p.series!))];
+export const listedPosts = posts.filter((p) => !p.hidden && !p.parent && !p.comingSoon && p.lang !== "ko");
+// Prefer a published English edition; fall back to Korean while it is coming soon.
+export const seriesPosts = posts.filter((p) => p.series && !p.comingSoon &&
+  (p.lang !== "ko" || !posts.some((other) => other.series === p.series &&
+    other.seriesOrder === p.seriesOrder && other.lang === "en" && !other.comingSoon)));
+export const seriesNames = [...new Set(seriesPosts.map((p) => p.series!))];
 export const about = matter(fs.readFileSync(path.join(root, "about.md"), "utf8")).content;
 export const news = files(path.join(root, "news"))
   .map((filename) => {
