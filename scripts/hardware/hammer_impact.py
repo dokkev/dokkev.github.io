@@ -45,60 +45,95 @@ STONE = (
     '<geom type="sphere" size="{r}" mass="{m}" condim="1" solref="{sr}" solimp="0.99 0.99 0.001"/></body>'
 )
 
+GEAR_K = 1.0e4  # N m/rad, joint-side torsional stiffness of the compliant gearbox (series example)
+GEAR_ZETA = 0.05  # damping ratio of the link-rotor mode
+
+ROTOR = (
+    '<body name="rotor"><joint name="rotor" type="hinge" axis="0 0 1" armature="{armature}" damping="0"/>'
+    '<geom type="sphere" size="0.005" mass="1e-6" contype="0" conaffinity="0"/></body>'
+)
+SPRING = (
+    '<tendon><fixed name="gear" stiffness="{k}" damping="{b}">'
+    '<joint joint="hinge" coef="1"/><joint joint="rotor" coef="-1"/></fixed></tendon>'
+)
+
 MJCF = """
 <mujoco>
   <option timestep="{dt}" gravity="0 0 0" integrator="implicitfast"/>
   <worldbody>
     <body name="arm">
-      <joint name="hinge" type="hinge" axis="0 0 1" armature="{armature}" damping="0"/>
+      <joint name="hinge" type="hinge" axis="0 0 1" armature="{link_armature}" damping="0"/>
       <geom type="capsule" fromto="0 0 0 {arm_inner} 0 0" size="0.008" mass="0.0001" contype="0" conaffinity="0"/>
       <geom name="head" type="sphere" condim="1" pos="{arm} 0 0" size="{r}" mass="{m}" solref="{sr}" solimp="0.99 0.99 0.001"/>
     </body>
+    {rotor}
     {target}
   </worldbody>
+  {spring}
 </mujoco>
 """
 
 
-def simulate(N: int):
+def simulate(N: int, compliant: bool = False):
+    """Rigid gearbox: rotor inertia is armature on the link joint.
+    Compliant gearbox: rotor is a second hinge (armature N^2 J_m, joint coordinates) tied to the
+    link through a torsional spring GEAR_K, so a hit shorter than the link-rotor mode period sees
+    mostly the link inertia."""
     armature = N * N * J_M
-    m_eff = (HEAD_MASS * ARM**2 + armature) / ARM**2  # kg at the head (thin arm approx.)
-    m_c = m_eff * STONE_MASS / (m_eff + STONE_MASS)
+    link_I = HEAD_MASS * ARM**2
+    # mass the contact sees at the instant of impact: link + rotor if rigid, link only if compliant
+    m_inst = (link_I + (0 if compliant else armature)) / ARM**2
+    m_c = m_inst * STONE_MASS / (m_inst + STONE_MASS)
     k_ref = CONTACT_K / m_c  # MuJoCo direct solref is per unit effective contact mass
     b_ref = 2 * CONTACT_ZETA * np.sqrt(k_ref)
     sr = f"{-k_ref:.6g} {-b_ref:.6g}"
     tgt = STONE.format(arm=ARM, y=-(HEAD_R + STONE_R), r=STONE_R, m=STONE_MASS, sr=sr)
+    if compliant:
+        j_red = link_I * armature / (link_I + armature)
+        b_gear = 2 * GEAR_ZETA * np.sqrt(GEAR_K * j_red)
+        rotor, spring, link_arm = ROTOR.format(armature=armature), SPRING.format(k=GEAR_K, b=f"{b_gear:.6g}"), 0
+    else:
+        rotor, spring, link_arm = "", "", armature
     xml = MJCF.format(
-        dt=DT, armature=armature, arm=ARM, arm_inner=ARM - HEAD_R, r=HEAD_R, m=HEAD_MASS,
-        sr=sr, target=tgt,
+        dt=DT, link_armature=link_arm, arm=ARM, arm_inner=ARM - HEAD_R, r=HEAD_R, m=HEAD_MASS,
+        sr=sr, target=tgt, rotor=rotor, spring=spring,
     )
     model = mujoco.MjModel.from_xml_string(xml)
     data = mujoco.MjData(model)
+    hinge = data.joint("hinge")
+    slide = data.joint("slide")
+    rot = data.joint("rotor") if compliant else None
     w0 = -TIP_SPEED / ARM  # rad/s, swinging toward -y (the stone)
     gap = 0.15  # rad before contact
-    data.qpos[0] = gap
-    data.qvel[0] = w0
+    hinge.qpos[0] = gap
+    hinge.qvel[0] = w0
+    if compliant:
+        rot.qpos[0] = gap
+        rot.qvel[0] = w0
     mujoco.mj_forward(model, data)
 
     link_inertia = float(model.body_inertia[1][2] + HEAD_MASS * ARM**2)  # about the hinge (approx.)
     t_hit = None
     rows = []
     f6 = np.zeros(6)
-    prev_v = data.qvel[0]
-    t_end = gap / abs(w0) + 0.06
+    prev_v = hinge.qvel[0]
+    t_end = gap / abs(w0) + 0.1
     while data.time < t_end:
         mujoco.mj_step(model, data)
-        qdd = (data.qvel[0] - prev_v) / DT
-        prev_v = data.qvel[0]
+        qdd = (hinge.qvel[0] - prev_v) / DT
+        prev_v = hinge.qvel[0]
         force = 0.0
         for i in range(data.ncon):
             mujoco.mj_contactForce(model, data, i, f6)
             force += abs(f6[0])
         if force > 1e-6 and t_hit is None:
             t_hit = data.time
-        xs = float(-data.qpos[1])  # stone travel along the hit direction
-        rows.append((data.time, force, armature * qdd, float(data.qpos[0]), float(data.qvel[0]), xs))
-        if t_hit is not None and data.time > t_hit + 0.03:
+        if compliant:  # torque through the gear teeth, joint side, positive when braking the rotor
+            tau_g = -(GEAR_K * (rot.qpos[0] - hinge.qpos[0]) + b_gear * (rot.qvel[0] - hinge.qvel[0]))
+        else:
+            tau_g = armature * qdd
+        rows.append((data.time, force, tau_g, float(hinge.qpos[0]), float(hinge.qvel[0]), float(-slide.qpos[0])))
+        if t_hit is not None and data.time > t_hit + 0.08:
             break
 
     rows = np.array(rows)
@@ -108,7 +143,8 @@ def simulate(N: int):
     in_contact = F > 1e-3
     contact_time = float(in_contact.sum() * DT)
     rebound_tip = float(qd[-1] * ARM)
-    stone_speed = float(-data.qvel[1])
+    stone_speed = float(-slide.qvel[0])
+    n_hits = int(np.sum(np.diff(in_contact.astype(int)) == 1) + in_contact[0])
 
     # resample around the impact for the web demo (0.05 ms steps, -2 ms .. +12 ms)
     grid = np.arange(-0.002, 0.022 + 1e-9, 1e-4)
@@ -130,6 +166,7 @@ def simulate(N: int):
         "rebound_tip_speed": round(rebound_tip, 3),
         "peak_gear_torque": round(float(np.abs(tau_gear).max()), 2),
         "stone_speed": round(stone_speed, 3),
+        "hits": n_hits,
         "slide_m": round(stone_speed**2 / (2 * ICE_MU * 9.81), 3),
         "series": series,
     }
@@ -137,17 +174,19 @@ def simulate(N: int):
 
 def main():
     results = [simulate(N) for N in RATIOS]
+    compliant = [simulate(N, compliant=True) for N in RATIOS]
     meta = {
         "arm_m": ARM, "head_mass_kg": HEAD_MASS, "tip_speed_mps": TIP_SPEED, "rotor_inertia": J_M,
         "contact_stiffness_N_per_m": CONTACT_K, "contact_damping_ratio": CONTACT_ZETA, "timestep_s": DT,
         "stone_mass_kg": STONE_MASS, "ice_mu": ICE_MU,
+        "gear_stiffness_Nm_per_rad": GEAR_K, "gear_damping_ratio": GEAR_ZETA,
         "mujoco": mujoco.__version__,
-        "note": "Rigid gearbox; free stone; contact stiffness fixed in N/m by scaling solref with the effective contact mass.",
+        "note": "results: rigid gearbox; compliant: two-inertia model with gear stiffness; free stone; contact stiffness fixed in N/m by scaling solref with the effective contact mass.",
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps({"meta": meta, "results": results}, separators=(",", ":")))
-    for r in results:
-        print(f"N={r['N']:4d}  I={r['apparent_inertia']:.4f}  impulse={r['impulse']:.3f} N s  "
+    OUT.write_text(json.dumps({"meta": meta, "results": results, "compliant": compliant}, separators=(",", ":")))
+    for r in results + compliant:
+        print(f"hits={r['hits']} N={r['N']:4d}  I={r['apparent_inertia']:.4f}  impulse={r['impulse']:.3f} N s  "
               f"peak={r['peak_force']:.0f} N  contact={r['contact_time_ms']:.2f} ms  "
               f"rebound={r['rebound_tip_speed']:.2f} m/s  gearT={r['peak_gear_torque']:.1f} N m  "
               f"stone={r['stone_speed']:.2f} m/s slide={r['slide_m']:.2f} m")
