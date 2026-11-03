@@ -1,7 +1,6 @@
 ---
 title: "[로봇 하드웨어 02] - 액추에이터 (1): BLDC 모터"
 description: 모터의 전압·반사 관성·토크 추정·발열이 시뮬레이션과 실제 관절 토크를 다르게 만드는 과정
-layout: distill
 published: true
 hidden: true
 date: 2025-12-02 00:00:00
@@ -21,6 +20,8 @@ translations:
 tags: [Hardware]
 # categories: robotics101
 ---
+
+import FocDemo from "../../../../src/components/demos/FocDemo";
 
 ## 들어가며: 시뮬레이터 속의 모터
 
@@ -43,8 +44,8 @@ tags: [Hardware]
 모터 안에서는 코일에 흐르는 전류가 만든 자기장과 영구자석의 자기장이 서로 정렬하려는 방향으로 힘을 주고받고, 이 힘이 회전축을 중심으로 작용해 토크가 됩니다. 토크의 크기와 방향은 전류의 세기와 방향으로 결정되므로, 전류를 제어하면 토크를 제어할 수 있습니다.
 
 <figure>
-  <img src="/assets/img/hardware/bldc.gif" alt="BLDC 모터의 작동 원리" loading="lazy" />
-  <figcaption>BLDC 모터의 작동 원리 <a href="#ref-1">[1]</a></figcaption>
+  <img src="/assets/img/hardware/bldc.gif" alt="영구자석 로터와 3상 스테이터 코일로 이루어진 BLDC 모터를 6-step 정류로 구동하는 애니메이션" loading="lazy" />
+  <figcaption>6-step(블록) 정류로 구동하는 BLDC 모터. 로터의 위치에 맞춰 세 상 중 두 상에만 전류를 넣고, 다음 상 쌍으로 차례로 넘깁니다. <a href="#ref-1">[1]</a></figcaption>
 </figure>
 
 고성능 다관절 로봇에서 널리 쓰이는 BLDC 모터는 스테이터(Stator)에 코일을, 로터(Rotor)에 영구자석을 두고, 브러시와 정류자 대신 인버터가 각 상의 전류를 전자적으로 분배해 회전 자기장을 만듭니다. 구조와 동작 원리로 보면 엄밀히는 PMSM(영구자석 동기모터) 계열이지만 [5](#ref-5), [6](#ref-6), 이 글에서는 시장 관례대로 BLDC라고 부르겠습니다.
@@ -57,7 +58,33 @@ $$
 
 매입형 영구자석 모터의 릴럭턴스 토크나 고속 약계자 운전에서는 $i_d$의 역할도 함께 고려해야 합니다 [5](#ref-5), [6](#ref-6).
 
-이 식이 시뮬레이터 속 '이상적인 토크 소스'를 실제 하드웨어에서 구현하는 방법입니다. 그리고 이 글의 나머지는 이 식이 어디서 깨지는가에 대한 이야기입니다. 크게 세 가지 경우가 있습니다.
+FOC 제어기는 엔코더로 읽은 전기각 $\theta$를 이용해, 정지 좌표계의 상 전류 $(i_\alpha, i_\beta)$를 로터와 함께 도는 좌표계로 옮깁니다(Park 변환).
+
+$$
+\begin{bmatrix} i_d \\ i_q \end{bmatrix}
+=
+\begin{bmatrix} \cos\theta & \sin\theta \\ -\sin\theta & \cos\theta \end{bmatrix}
+\begin{bmatrix} i_\alpha \\ i_\beta \end{bmatrix}
+$$
+
+제어기는 $i_q$가 명령 $i_q^*$를 따라가도록 전압을 정합니다. 그런데 그 전압은 q축 전압 방정식을 만족해야 하고, 크기는 DC 버스 전압을 넘을 수 없습니다.
+
+$$
+v_q = R\,i_q + L\frac{di_q}{dt} + \omega_e L\, i_d + \omega_e \lambda,
+\qquad \lVert v_{dq} \rVert \le V_{\mathrm{bus}}
+$$
+
+마지막 항 $\omega_e \lambda$가 역기전력입니다. 모터가 만든 토크는 로터를 가속하므로, 속도와 전류는 기계 방정식을 통해 서로 묶여 있습니다.
+
+$$
+J\dot\omega = K_t\, i_q - B\omega - \tau_{\mathrm{load}}
+$$
+
+아래 데모는 이 세 식을 그대로 시뮬레이션합니다. 부하 없이 $i_q^*$를 주면 로터가 가속하고, 역기전력이 버스 전압에 가까워지면 측정 $i_q$가 명령보다 작아집니다. 결국 속도는 측정 $i_q$가 마찰만 이길 만큼 남는 무부하 속도 근처에서 멈춥니다. 명령한 전류가 흐르지 않는 이유가 제어기가 아니라 전압 여유에 있다는 뜻입니다. 부하 토크가 있으면 측정 $i_q$가 부하와 같아지는 속도에서 평형을 이루고, $i_d$를 음수로 주면 $\omega_e L\, i_d$ 항이 역기전력 일부를 상쇄해(약계자) 더 높은 속도까지 전류를 유지합니다. 6-step에서는 전류 벡터가 60°마다 건너뛰어 토크가 출렁이고, 전기각 오차 $\delta$가 있으면 같은 크기의 전류로 내는 토크가 $\cos\delta$배로 줄어듭니다.
+
+<FocDemo client:visible lang="ko" />
+
+$\tau \approx K_t\, i_q$가 시뮬레이터 속 '이상적인 토크 소스'를 실제 하드웨어에서 구현하는 방법입니다. 그리고 이 글의 나머지는 이 식이 어디서 깨지는가에 대한 이야기입니다. 크게 세 가지 경우가 있습니다.
 
 1. 전압이 부족해 원하는 i_q를 만들 수 없을 때
 
