@@ -1,148 +1,194 @@
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type PointerEvent, type ReactNode } from "react";
 
-// Apparent inertia of a single geared joint (link J_L, rotor J_m, ratio N) with
-// transmission losses, after Sim & Ramos (arXiv:2106.01842):
-//   frictionless:          I0   = J_L + N^2 J_m
-//   forward  (motor drives): I_f = J_L / eta_f + N^2 J_m
-//   backward (load drives):  I_b = J_L + N^2 J_m / eta_b
-// Backward efficiency from a single-mesh approximation eta_b = 2 - 1/eta_f (0 at eta_f = 0.5).
+// End-effector inertia ellipses of a 2-DoF planar arm with geared joints, after Sim & Ramos (arXiv:2106.01842).
+// Joint space:  links only  M_L(q)
+//               FWD         M_L(q) / eta_f + R      (motor drives, link side seen through forward losses)
+//               BWD         M_L(q) + R / eta_b      (environment backdrives, rotor side seen through backward losses)
+// with R = diag(N^2 J_m) the reflected rotor inertia and eta_b = 2 - 1/eta_f (single-mesh approximation).
+// Task space:   Lambda^-1 = J M^-1 J^T; the ellipse x^T Lambda^-1 x = k^2 has radius k sqrt(m_u) in direction u,
+// where m_u = 1 / (u^T Lambda^-1 u) is the effective mass felt when pushing the tip along u.
 
 type Lang = "ko" | "en";
+const DEG = Math.PI / 180;
+const L1 = 0.3;
+const L2 = 0.3; // m
+const M1 = 1.2;
+const M2 = 0.8; // kg, uniform rods
 const JM = 1e-5; // kg m^2, series example rotor inertia
-const JL = 0.09; // kg m^2, series example link inertia
-const TAU_M = 0.1; // N m, motor torque for the acceleration plot
-const N_MIN = 1;
-const N_MAX = 200;
-const COLORS = { zero: "#6b7280", fwd: "#2563eb", bwd: "#c2410c", link: "#15803d", rotor: "#7c3aed" };
+const COLORS = { link: "#6b7280", fwd: "#2563eb", bwd: "#c2410c", arm: "#374151" };
 
 const text = {
   ko: {
-    eyebrow: "직접 조작 · 감속비와 반사 관성",
-    title: "감속비가 관절의 관성을 어떻게 바꾸는가",
+    eyebrow: "직접 조작 · 감속비와 reflected inertia",
+    title: "말단에서 느껴지는 관성은 감속비와 힘의 방향에 따라 달라진다",
     N: "감속비 N",
     eta: "정방향 효율 η_f",
-    inertia: "관절에서 본 겉보기 관성 [kg·m²]",
-    accel: `모터 토크 ${TAU_M} N·m로 낼 수 있는 관절 가속도 [rad/s²]`,
-    xN: "감속비 N (로그 축)",
-    zero: "마찰 없음",
+    q1: "어깨 각 q_1",
+    q2: "팔꿈치 각 q_2",
+    drag: "팔 끝을 끌어 자세를 바꿀 수 있습니다",
+    link: "링크만 (로터 없음)",
     fwd: "FWD · 모터가 구동",
     bwd: "BWD · 외력이 역구동",
-    link: "링크 J_L",
-    rotor: "반사 관성 N²J_m",
-    extra: "BWD에서 마찰로 더해지는 몫",
+    nonback: "η_b ≤ 0: 역구동되지 않음",
+    col: ["effective mass", "최소", "최대"],
+    short: { link: "링크만", fwd: "FWD", bwd: "BWD" },
     etab: "역방향 효율 η_b",
-    nstar: "최적 감속비 N*",
-    If: "FWD 관성",
-    Ib: "BWD 관성",
-    ratio: "BWD / 마찰 없음",
-    nonback: "역구동 불가 (η_b ≤ 0)",
+    refl: "관절당 reflected inertia N²J_m",
     note:
-      "단일 관절 모델입니다. 링크 관성 J_L = 0.09 kg·m², 로터 관성 J_m = 1×10⁻⁵ kg·m²은 시리즈 공통 예시값이며, 역방향 효율은 단일 치합을 가정한 근사 η_b = 2 − 1/η_f로 계산했습니다. 겉보기 관성 식은 Sim & Ramos(2021)의 정방향·역방향 동역학을 따릅니다.",
+      "링크 길이 0.3 m, 질량 1.2 kg·0.8 kg의 균일 막대로 된 2자유도 평면 팔입니다. 두 관절에 같은 모터(J_m = 1×10⁻⁵ kg·m²)와 같은 감속비를 달았고, 역방향 효율은 단일 치합 근사 η_b = 2 − 1/η_f로 계산했습니다. 타원의 반지름은 그 방향으로 팔 끝을 밀 때 느껴지는 effective mass의 제곱근에 비례합니다. FWD·BWD 관성 식은 Sim & Ramos(2021)를 따르며, 중력과 로터의 자이로 효과는 무시했습니다.",
   },
   en: {
     eyebrow: "Try it · Gear ratio and reflected inertia",
-    title: "How the gear ratio changes the inertia of a joint",
+    title: "The inertia felt at the tip depends on the gear ratio and on which way power flows",
     N: "Gear ratio N",
     eta: "Forward efficiency η_f",
-    inertia: "Apparent inertia at the joint [kg·m²]",
-    accel: `Joint acceleration from ${TAU_M} N·m of motor torque [rad/s²]`,
-    xN: "Gear ratio N (log axis)",
-    zero: "frictionless",
+    q1: "Shoulder angle q_1",
+    q2: "Elbow angle q_2",
+    drag: "Drag the tip to change the pose",
+    link: "links only (no rotor)",
     fwd: "FWD · motor drives",
-    bwd: "BWD · load backdrives",
-    link: "link J_L",
-    rotor: "reflected N²J_m",
-    extra: "added by friction in BWD",
+    bwd: "BWD · environment backdrives",
+    nonback: "η_b ≤ 0: not backdrivable",
+    col: ["effective mass", "min", "max"],
+    short: { link: "links only", fwd: "FWD", bwd: "BWD" },
     etab: "Backward efficiency η_b",
-    nstar: "Optimal ratio N*",
-    If: "FWD inertia",
-    Ib: "BWD inertia",
-    ratio: "BWD / frictionless",
-    nonback: "not backdrivable (η_b ≤ 0)",
+    refl: "Reflected inertia per joint N²J_m",
     note:
-      "Single-joint model. Link inertia J_L = 0.09 kg·m² and rotor inertia J_m = 1×10⁻⁵ kg·m² are the series example values; backward efficiency uses the single-mesh approximation η_b = 2 − 1/η_f. The apparent-inertia expressions follow the forward and backward dynamics of Sim & Ramos (2021).",
+      "2-DoF planar arm of uniform rods, 0.3 m long, 1.2 kg and 0.8 kg. Both joints use the same motor (J_m = 1×10⁻⁵ kg·m²) and ratio; backward efficiency uses the single-mesh approximation η_b = 2 − 1/η_f. The ellipse radius is proportional to the square root of the effective mass felt when pushing the tip in that direction. FWD/BWD inertia follows Sim & Ramos (2021); gravity and rotor gyroscopic effects are ignored.",
   },
 };
 
-const etaB = (ef: number) => 2 - 1 / ef;
-const I0 = (N: number) => JL + N * N * JM;
-const If = (N: number, ef: number) => JL / ef + N * N * JM;
-const Ib = (N: number, ef: number) => {
-  const eb = etaB(ef);
-  return eb > 0 ? JL + (N * N * JM) / eb : Infinity;
+type M2x2 = [number, number, number, number]; // a b ; c d
+const inv = ([a, b, c, d]: M2x2): M2x2 => {
+  const det = a * d - b * c;
+  return [d / det, -b / det, -c / det, a / det];
 };
-const accelF = (N: number, ef: number) => (N * TAU_M) / If(N, ef);
+const mul = ([a, b, c, d]: M2x2, [e, f, g, h]: M2x2): M2x2 => [a * e + b * g, a * f + b * h, c * e + d * g, c * f + d * h];
+const tr = ([a, b, c, d]: M2x2): M2x2 => [a, c, b, d];
 
-const SUB = /([A-Za-zη])_([a-zA-Z]+)/g;
+function linkMass(q2: number): M2x2 {
+  const I1 = (M1 * L1 * L1) / 12;
+  const I2 = (M2 * L2 * L2) / 12;
+  const c1 = L1 / 2;
+  const c2 = L2 / 2;
+  const cq = Math.cos(q2);
+  const m11 = I1 + M1 * c1 * c1 + I2 + M2 * (L1 * L1 + c2 * c2 + 2 * L1 * c2 * cq);
+  const m12 = I2 + M2 * (c2 * c2 + L1 * c2 * cq);
+  const m22 = I2 + M2 * c2 * c2;
+  return [m11, m12, m12, m22];
+}
+function jac(q1: number, q2: number): M2x2 {
+  const s1 = Math.sin(q1);
+  const c1 = Math.cos(q1);
+  const s12 = Math.sin(q1 + q2);
+  const c12 = Math.cos(q1 + q2);
+  return [-L1 * s1 - L2 * s12, -L2 * s12, L1 * c1 + L2 * c12, L2 * c12];
+}
+// eigen-decomposition of a symmetric 2x2 (Lambda^-1) -> ellipse semi-axes sqrt(1/lambda) along eigenvectors
+function ellipse(LamInv: M2x2) {
+  const [a, b, , d] = LamInv;
+  const m = (a + d) / 2;
+  const r = Math.sqrt(((a - d) / 2) ** 2 + b * b);
+  const l1 = m + r;
+  const l2 = m - r;
+  const ang = 0.5 * Math.atan2(2 * b, a - d); // direction of l1
+  return { ang, mMin: 1 / l1, mMax: 1 / l2 };
+}
+
 function rich(str: string) {
   const out: ReactNode[] = [];
   let last = 0;
-  for (const m of str.matchAll(SUB)) {
+  for (const m of str.matchAll(/([A-Za-zη])_([a-z0-9]+)/g)) {
     out.push(str.slice(last, m.index!), m[1], <sub key={m.index}>{m[2]}</sub>);
     last = m.index! + m[0].length;
   }
   out.push(str.slice(last));
   return out;
 }
-const sci = (v: number) => (!Number.isFinite(v) ? "∞" : v >= 0.1 ? v.toFixed(3) : v.toExponential(2));
+
+// scene geometry
+const VW = 440;
+const VH = 330;
+const BASE: [number, number] = [170, 250];
+const PXM = 300; // px per metre
+const K = 40; // px per sqrt(kg)
 
 export default function ReflectedInertiaDemo({ lang = "ko" }: { lang?: Lang }) {
   const t = text[lang];
-  const [logN, setLogN] = useState(Math.log10(100));
-  const [ef, setEf] = useState(0.8);
-  const N = Math.round(10 ** logN);
-  const eb = etaB(ef);
-  const nstar = Math.sqrt(JL / (ef * JM));
+  const [N, setN] = useState(50);
+  const [ef, setEf] = useState(0.75);
+  const [q1, setQ1] = useState(25);
+  const [q2, setQ2] = useState(95);
+  const svg = useRef<SVGSVGElement>(null);
+  const dragging = useRef(false);
 
-  // ---- shared plot geometry ----
-  const W = 460;
-  const H = 190;
-  const L = 52;
-  const Rm = 12;
-  const T = 12;
-  const B = 30;
-  const X = (n: number) => L + ((Math.log10(n) - Math.log10(N_MIN)) / (Math.log10(N_MAX) - Math.log10(N_MIN))) * (W - L - Rm);
-  const Ns = Array.from({ length: 121 }, (_, k) => 10 ** (Math.log10(N_MIN) + (k / 120) * (Math.log10(N_MAX) - Math.log10(N_MIN))));
-  const xTicks = [1, 2, 5, 10, 20, 50, 100, 200];
-
-  // inertia plot: linear y, scaled to the backward curve at the largest ratio
-  const iTop = Math.min(3, Math.max(0.6, (Number.isFinite(Ib(N_MAX, ef)) ? Ib(N_MAX, ef) : 3) * 1.08));
-  const Yi = (v: number) => T + (1 - Math.min(v, iTop) / iTop) * (H - T - B);
-  const iTicks = [0, iTop / 2, iTop].map((v) => Math.round(v * 100) / 100);
-  const curve = (f: (n: number) => number, color: string, dash?: string) => (
-    <polyline
-      fill="none"
-      stroke={color}
-      strokeWidth={2.2}
-      strokeDasharray={dash}
-      points={Ns.filter((n) => Number.isFinite(f(n)))
-        .map((n) => `${X(n).toFixed(1)},${Yi(f(n)).toFixed(1)}`)
-        .join(" ")}
-    />
-  );
-
-  // acceleration plot: linear y
-  const aMax = Math.max(...Ns.map((n) => accelF(n, 1)));
-  const Ya = (v: number) => T + (1 - v / (aMax * 1.1)) * (H - T - B);
-
-  const xAxis = (
-    <g className="foc-axes">
-      <line x1={L} x2={W - Rm} y1={H - B} y2={H - B} />
-      {xTicks.map((n) => (
-        <text key={n} x={X(n)} y={H - B + 14} textAnchor="middle">
-          {n}
-        </text>
-      ))}
-    </g>
-  );
-
-  // composition bar (BWD)
-  const parts = [
-    { key: "link", v: JL, color: COLORS.link, label: rich(t.link) },
-    { key: "rotor", v: N * N * JM, color: COLORS.rotor, label: t.rotor },
-    { key: "extra", v: eb > 0 ? Ib(N, ef) - I0(N) : 0, color: COLORS.bwd, label: t.extra },
+  const eb = 2 - 1 / ef;
+  const R = N * N * JM;
+  const qa = q1 * DEG;
+  const qb = q2 * DEG;
+  const ML = linkMass(qb);
+  const J = jac(qa, qb);
+  const cases: { key: "link" | "fwd" | "bwd"; M: M2x2 | null }[] = [
+    { key: "link", M: ML },
+    { key: "fwd", M: [ML[0] / ef + R, ML[1] / ef, ML[2] / ef, ML[3] / ef + R] },
+    { key: "bwd", M: eb > 0 ? [ML[0] + R / eb, ML[1], ML[2], ML[3] + R / eb] : null },
   ];
-  const total = parts.reduce((a, p) => a + p.v, 0);
+  const ells = cases.map((c) => (c.M ? { ...c, e: ellipse(mul(mul(J, inv(c.M)), tr(J))) } : { ...c, e: null }));
+
+  const elbow: [number, number] = [BASE[0] + PXM * L1 * Math.cos(qa), BASE[1] - PXM * L1 * Math.sin(qa)];
+  const tip: [number, number] = [elbow[0] + PXM * L2 * Math.cos(qa + qb), elbow[1] - PXM * L2 * Math.sin(qa + qb)];
+
+  const ellPath = (e: { ang: number; mMin: number; mMax: number }) => {
+    const a = K * Math.sqrt(e.mMin); // along the l1 eigenvector (smallest effective mass)
+    const b = K * Math.sqrt(e.mMax);
+    const pts: string[] = [];
+    for (let i = 0; i <= 64; i++) {
+      const p = (i / 64) * 2 * Math.PI;
+      const x = a * Math.cos(p);
+      const y = b * Math.sin(p);
+      const X = x * Math.cos(e.ang) - y * Math.sin(e.ang);
+      const Y = x * Math.sin(e.ang) + y * Math.cos(e.ang);
+      pts.push(`${(tip[0] + X).toFixed(1)},${(tip[1] - Y).toFixed(1)}`);
+    }
+    return pts.join(" ");
+  };
+
+  // drag the tip: inverse kinematics keeping the elbow on the same side
+  const onMove = (ev: PointerEvent<SVGSVGElement>) => {
+    if (!dragging.current || !svg.current) return;
+    const pt = svg.current.createSVGPoint();
+    pt.x = ev.clientX;
+    pt.y = ev.clientY;
+    const p = pt.matrixTransform(svg.current.getScreenCTM()!.inverse());
+    let x = (p.x - BASE[0]) / PXM;
+    let y = (BASE[1] - p.y) / PXM;
+    const r = Math.hypot(x, y);
+    const rMax = Math.sqrt(L1 * L1 + L2 * L2 + 2 * L1 * L2 * Math.cos(15 * DEG)); // elbow limit 15 deg
+    const rMin = Math.sqrt(L1 * L1 + L2 * L2 + 2 * L1 * L2 * Math.cos(160 * DEG)); // elbow limit 160 deg
+    const rc = Math.max(rMin, Math.min(rMax, r || rMin));
+    x *= rc / r;
+    y *= rc / r;
+    const c2 = (x * x + y * y - L1 * L1 - L2 * L2) / (2 * L1 * L2);
+    const b = Math.acos(Math.max(-1, Math.min(1, c2)));
+    const a = Math.atan2(y, x) - Math.atan2(L2 * Math.sin(b), L1 + L2 * Math.cos(b));
+    setQ1(Math.round(Math.max(-30, Math.min(150, a / DEG))));
+    setQ2(Math.round(Math.max(15, Math.min(160, b / DEG))));
+  };
+
+  const slider = (label: string, value: number, set: (v: number) => void, min: number, max: number, step: number, unit: string, digits = 0) => (
+    <div className="foc-control">
+      <label>
+        <span>{rich(label)}</span>{" "}
+        <strong>
+          {value.toFixed(digits)}
+          {unit}
+        </strong>
+      </label>
+      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => set(+e.target.value)} />
+    </div>
+  );
+
+  const color = { link: COLORS.link, fwd: COLORS.fwd, bwd: COLORS.bwd };
 
   return (
     <section className="signal-demo foc-demo ri-demo" aria-label={t.title}>
@@ -151,137 +197,101 @@ export default function ReflectedInertiaDemo({ lang = "ko" }: { lang?: Lang }) {
         <h3>{t.title}</h3>
       </header>
 
-      <div className="ri-plots">
-        <div>
-          <div className="foc-chart-title">{t.inertia}</div>
-          <svg viewBox={`0 0 ${W} ${H}`} className="foc-chart" role="img" aria-label={t.inertia}>
-            {xAxis}
-            <g className="foc-axes">
-              <line x1={L} x2={L} y1={T} y2={H - B} />
-              {iTicks.map((v) => (
-                <g key={v}>
-                  <line x1={L} x2={W - Rm} y1={Yi(v)} y2={Yi(v)} strokeOpacity={0.35} />
-                  <text x={L - 6} y={Yi(v) + 4} textAnchor="end">
-                    {v}
-                  </text>
-                </g>
-              ))}
-            </g>
-            <line x1={L} x2={W - Rm} y1={Yi(JL)} y2={Yi(JL)} stroke={COLORS.link} strokeDasharray="2 3" />
-            {curve(I0, COLORS.zero, "5 4")}
-            {curve((n) => If(n, ef), COLORS.fwd)}
-            {curve((n) => Ib(n, ef), COLORS.bwd)}
-            <line x1={X(N)} x2={X(N)} y1={T} y2={H - B} stroke="#202725" strokeOpacity={0.4} />
-            <text x={W - Rm - 4} y={H - B - 6} textAnchor="end" className="ri-axis-note">
-              {t.xN}
-            </text>
+      <div className="ri-ellipse-layout">
+        <figure className="ri-arm">
+          <svg
+            ref={svg}
+            viewBox={`0 0 ${VW} ${VH}`}
+            style={{ overflow: "hidden" }}
+            role="img"
+            aria-label={t.title}
+            onPointerMove={onMove}
+            onPointerUp={() => (dragging.current = false)}
+            onPointerLeave={() => (dragging.current = false)}
+          >
+            <line x1={20} x2={VW - 20} y1={BASE[1] + 26} y2={BASE[1] + 26} stroke="#c9ccc4" />
+            <rect x={BASE[0] - 22} y={BASE[1] + 8} width={44} height={18} rx={3} fill="#d9dcd5" />
+            {ells.map(({ key, e }) =>
+              e ? (
+                <polygon
+                  key={key}
+                  points={ellPath(e)}
+                  fill={color[key]}
+                  fillOpacity={key === "link" ? 0.08 : 0.1}
+                  stroke={color[key]}
+                  strokeWidth={key === "link" ? 1.4 : 2.2}
+                  strokeDasharray={key === "link" ? "4 3" : undefined}
+                />
+              ) : null
+            )}
+            <line x1={BASE[0]} y1={BASE[1]} x2={elbow[0]} y2={elbow[1]} stroke={COLORS.arm} strokeWidth={10} strokeLinecap="round" />
+            <line x1={elbow[0]} y1={elbow[1]} x2={tip[0]} y2={tip[1]} stroke={COLORS.arm} strokeWidth={8} strokeLinecap="round" strokeOpacity={0.85} />
+            <circle cx={BASE[0]} cy={BASE[1]} r={9} fill="#fff" stroke={COLORS.arm} strokeWidth={3} />
+            <circle cx={elbow[0]} cy={elbow[1]} r={7} fill="#fff" stroke={COLORS.arm} strokeWidth={3} />
+            <circle
+              cx={tip[0]}
+              cy={tip[1]}
+              r={9}
+              fill="#111827"
+              style={{ cursor: "grab", touchAction: "none" }}
+              onPointerDown={(e) => {
+                dragging.current = true;
+                (e.target as Element).setPointerCapture?.(e.pointerId);
+              }}
+            />
           </svg>
+          <figcaption>{t.drag}</figcaption>
+        </figure>
+
+        <div className="ri-side">
           <div className="ri-legend">
-            <span style={{ color: COLORS.zero }}>- - {t.zero}</span>
+            <span style={{ color: COLORS.link }}>┄ {t.link}</span>
             <span style={{ color: COLORS.fwd }}>━ {t.fwd}</span>
             <span style={{ color: COLORS.bwd }}>━ {t.bwd}</span>
-            <span style={{ color: COLORS.link }}>┄ {rich(t.link)}</span>
           </div>
-        </div>
-
-        <div>
-          <div className="foc-chart-title">{t.accel}</div>
-          <svg viewBox={`0 0 ${W} ${H}`} className="foc-chart" role="img" aria-label={t.accel}>
-            {xAxis}
-            <g className="foc-axes">
-              <line x1={L} x2={L} y1={T} y2={H - B} />
-              {[0, Math.round(aMax / 2), Math.round(aMax)].map((v) => (
-                <text key={v} x={L - 6} y={Ya(v) + 4} textAnchor="end">
-                  {v}
-                </text>
+          <table className="ri-table">
+            <thead>
+              <tr>
+                {t.col.map((c, i) => (
+                  <th key={i}>{c}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {ells.map(({ key, e }) => (
+                <tr key={key}>
+                  <td style={{ color: color[key] }}>{t.short[key]}</td>
+                  {e ? (
+                    <>
+                      <td>{e.mMin.toFixed(2)} kg</td>
+                      <td>{e.mMax.toFixed(2)} kg</td>
+                    </>
+                  ) : (
+                    <td colSpan={2}>{rich(t.nonback)}</td>
+                  )}
+                </tr>
               ))}
-            </g>
-            <polyline
-              fill="none"
-              stroke={COLORS.zero}
-              strokeWidth={1.6}
-              strokeDasharray="5 4"
-              points={Ns.map((n) => `${X(n).toFixed(1)},${Ya(accelF(n, 1)).toFixed(1)}`).join(" ")}
-            />
-            <polyline
-              fill="none"
-              stroke={COLORS.fwd}
-              strokeWidth={2.2}
-              points={Ns.map((n) => `${X(n).toFixed(1)},${Ya(accelF(n, ef)).toFixed(1)}`).join(" ")}
-            />
-            {nstar <= N_MAX && (
-              <g>
-                <line x1={X(nstar)} x2={X(nstar)} y1={T} y2={H - B} stroke={COLORS.fwd} strokeDasharray="2 3" />
-                <text x={X(nstar) + 4} y={T + 10} className="ri-axis-note" fill={COLORS.fwd}>
-                  N* ≈ {nstar.toFixed(0)}
-                </text>
-              </g>
-            )}
-            <line x1={X(N)} x2={X(N)} y1={T} y2={H - B} stroke="#202725" strokeOpacity={0.4} />
-            <circle cx={X(N)} cy={Ya(accelF(N, ef))} r={4} fill={COLORS.fwd} />
-            <text x={W - Rm - 4} y={H - B - 6} textAnchor="end" className="ri-axis-note">
-              {t.xN}
-            </text>
-          </svg>
+            </tbody>
+          </table>
+          <output className="can-readout" aria-live="polite">
+            <span>
+              {rich(t.refl)}
+              <strong>{R.toFixed(4)} kg·m²</strong>
+            </span>
+            <span>
+              {rich(t.etab)}
+              <strong>{eb > 0 ? eb.toFixed(2) : "≤ 0"}</strong>
+            </span>
+          </output>
         </div>
-      </div>
-
-      <div className="ri-bar" aria-label="BWD inertia composition">
-        {parts.map((p) =>
-          p.v > 0 && Number.isFinite(p.v) ? (
-            <span key={p.key} style={{ flexGrow: p.v / total, background: p.color }} title={`${sci(p.v)} kg·m²`} />
-          ) : null
-        )}
-      </div>
-      <div className="ri-legend">
-        {parts.map((p) => (
-          <span key={p.key} style={{ color: p.color }}>
-            ■ {p.label} {Number.isFinite(p.v) ? `${sci(p.v)}` : "∞"}
-          </span>
-        ))}
       </div>
 
       <div className="foc-controls">
-        <div className="foc-control">
-          <label>
-            {t.N} <strong>{N}:1</strong>
-          </label>
-          <input type="range" min={0} max={Math.log10(N_MAX)} step={0.01} value={logN} onChange={(e) => setLogN(+e.target.value)} />
-        </div>
-        <div className="foc-control">
-          <label>
-            <span>{rich(t.eta)}</span> <strong>{ef.toFixed(2)}</strong>
-          </label>
-          <input type="range" min={0.55} max={1} step={0.01} value={ef} onChange={(e) => setEf(+e.target.value)} />
-        </div>
+        {slider(t.N, N, setN, 1, 150, 1, "")}
+        {slider(t.eta, ef, setEf, 0.6, 1, 0.01, "", 2)}
+        {slider(t.q1, q1, setQ1, -30, 150, 1, "°")}
+        {slider(t.q2, q2, setQ2, 15, 160, 1, "°")}
       </div>
-
-      <output className={`can-readout${eb <= 0 ? " logic-uncertain" : ""}`} aria-live="polite">
-        <span>
-          {t.rotor}
-          <strong>{sci(N * N * JM)}</strong>
-        </span>
-        <span>
-          {t.If}
-          <strong>{sci(If(N, ef))}</strong>
-        </span>
-        <span>
-          {t.Ib}
-          <strong>{eb > 0 ? sci(Ib(N, ef)) : t.nonback}</strong>
-        </span>
-        <span>
-          {t.ratio}
-          <strong>{eb > 0 ? `×${(Ib(N, ef) / I0(N)).toFixed(2)}` : "∞"}</strong>
-        </span>
-        <span>
-          {rich(t.etab)}
-          <strong>{eb.toFixed(2)}</strong>
-        </span>
-        <span>
-          {t.nstar}
-          <strong>{nstar.toFixed(0)}</strong>
-        </span>
-      </output>
       <p className="demo-model-note">{rich(t.note)}</p>
     </section>
   );
