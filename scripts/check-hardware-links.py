@@ -61,13 +61,14 @@ def main():
     urls = page_urls()
     problems = 0
     for d in SERIES_DIRS:
-        for f in sorted(d.glob("*.md")):
+        for f in sorted(list(d.glob("*.md")) + list(d.glob("*.mdx"))):
             text = f.read_text(encoding="utf-8")
             fm, body = front_matter(text)
             rel = f.relative_to(ROOT)
             links = re.findall(r"\]\((/[^)\s]*)\)", body)
             links += re.findall(r'(?:href|src)="(/[^"]*)"', body)
             links += re.findall(r'path="(assets/[^"]*)"', body)
+            links += re.findall(r'image:\s*"(/[^"]+)"', body)
             links += [l.strip() for l in re.findall(r"\|\s*(/[^|\n]+?)\s*$", body, re.M)]
             links += re.findall(r"^\s*url:\s*(/\S+)", fm, re.M)
             for link in links:

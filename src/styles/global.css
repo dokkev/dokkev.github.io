@@ -2202,3 +2202,121 @@ html:lang(ko) .article-heading h1 {
 html:lang(ko) .article-body h2 {
   letter-spacing: -0.015em;
 }
+
+/* Hardware component grid (Robot Hardware 01) */
+.hw-grid {
+  margin: 22px 0 28px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+.hw-grid-layer + .hw-grid-layer {
+  margin-top: 10px;
+}
+.hw-grid-layer-name {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.hw-grid-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: 6px;
+}
+.hw-grid-cards button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 4px 5px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 11.5px;
+  line-height: 1.2;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.hw-grid-cards button span {
+  max-width: 100%;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.hw-grid-cards button:hover {
+  border-color: var(--accent);
+}
+.hw-grid-cards button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--soft);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.article-body .hw-grid-cards img {
+  width: 100%;
+  height: 36px;
+  max-height: none;
+  object-fit: contain;
+  margin: 0;
+}
+.hw-grid-preview {
+  position: sticky;
+  top: 20px;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.hw-grid-photo {
+  background: #f6f6f2;
+  aspect-ratio: 3 / 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.article-body .hw-grid-photo img {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  object-fit: contain;
+  margin: 0;
+}
+.hw-grid-preview figcaption {
+  padding: 10px 12px 12px;
+  text-align: left;
+}
+.hw-grid-preview figcaption strong {
+  display: block;
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+.hw-grid-en {
+  font-weight: 400;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.hw-grid-preview figcaption p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+@media (max-width: 760px) {
+  .hw-grid-photo {
+    aspect-ratio: 16 / 9;
+  }
+  .hw-grid {
+    grid-template-columns: 1fr;
+  }
+  .hw-grid-preview {
+    position: static;
+    order: -1;
+  }
+  .hw-grid-cards {
+    grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  }
+}
