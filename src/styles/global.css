@@ -1,4 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap");
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css");
 :root {
   --bg: #fff;
   --surface: #fff;
@@ -2179,4 +2180,25 @@ h3 {
 .cmd-contact-patch text { font: 12px "DM Sans", sans-serif; fill: #475b50; }
 @media (max-width: 700px) {
   .cmd-three-structures .cmd-contact-patch { max-width: 360px; margin: 0 auto; }
+}
+
+/* Korean pages: Newsreader and DM Sans have no Hangul, so headings fell back
+   to a system serif that clashed with the sans body. Use Pretendard (matched
+   Latin + Hangul) for both, and em-based tracking that suits Hangul. */
+html:lang(ko) {
+  font-family: "Pretendard Variable", Pretendard, "DM Sans", system-ui, sans-serif;
+  word-break: keep-all;
+}
+html:lang(ko) h1,
+html:lang(ko) h2 {
+  font-family: inherit;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+html:lang(ko) .article-heading h1 {
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+}
+html:lang(ko) .article-body h2 {
+  letter-spacing: -0.015em;
 }
