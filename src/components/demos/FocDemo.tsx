@@ -13,6 +13,7 @@ type Lang = "ko" | "en";
 
 const DEG = Math.PI / 180;
 const OMEGA_BASE = 2 * Math.PI * 0.75; // electrical rad/s shown at 1 pu speed
+const P_LAMBDA = 1 / OMEGA_BASE;
 const P = { R: 0.25, L: 0.08, lambda: 1 / OMEGA_BASE, J: 1.2, B: 0.03, wc: 40 };
 const WINDOW = 3; // seconds of history
 const COLORS = { a: "#c2410c", b: "#2563eb", c: "#15803d", vec: "#202725", d: "#6b7280", q: "#17695b", w: "#7c3aed", v: "#b45309" };
@@ -44,7 +45,23 @@ const text = {
     rotorD: "d축 (로터 N극)",
     rotorQ: "q축",
     estQ: "추정 q축",
+    plane: "로터 좌표계(d–q) 벡터",
+    iCmdV: "전류 명령 i*",
+    iMeasV: "측정 전류 i",
+    planeI: "전류",
+    planeV: "전압",
+    restV: "나머지 전압 (전류를 미는 몫)",
+    emfV: "역기전력 ω_eλ",
+    limitV: "전압 한계 V_bus",
     aria: "3상 스테이터 코일, 영구자석 로터, 합성 전류 벡터와 d·q축을 보여 주는 모터 단면",
+    notesTitle: "관찰할 점",
+    notes: [
+      "부하 토크는 로터에 닿은 브레이크 패드로 표시하고, 불꽃의 양은 마찰로 사라지는 동력(부하 × 속도)에 비례합니다. 부하가 있으면 측정 i_q가 부하와 같아지는 속도에서 평형을 이룹니다.",
+      "i_d*를 음수로 주면 ω_e L i_d 항이 역기전력 일부를 상쇄해(약계자) 더 높은 속도까지 전류를 유지합니다.",
+      "각 코일은 전류 방향에 따라 로터 쪽 면이 N극이나 S극이 되는 전자석이어서 가까운 로터 극을 당기거나 밉니다. FOC에서는 상별 토크 기여 τ_k = (2/3) I sin²(θ_k − θ)가 항상 0 이상이라, 세 코일이 같은 방향으로 토크를 보태고 합이 일정합니다.",
+      "6-step에서는 한 코일이 쉬고 전류 벡터가 60°마다 건너뛰어 토크가 출렁입니다.",
+      "전기각 오차 δ가 있으면 같은 크기의 전류로 내는 토크가 cos δ배로 줄고, 그만큼 i_d가 생깁니다.",
+    ],
     note:
       "2극 표면부착형 영구자석 모터의 개념 모델입니다. 전류 제어기는 PI와 역기전력 피드포워드로 전압을 정하고, 전압 벡터의 크기를 DC 버스 전압으로 제한합니다. 모든 값은 정격 대비 단위이며 실측이 아닙니다. 속도 1은 역기전력이 버스 전압 1과 같아지는 속도입니다.",
   },
@@ -74,7 +91,23 @@ const text = {
     rotorD: "d axis (rotor N)",
     rotorQ: "q axis",
     estQ: "estimated q",
+    plane: "Rotor-frame (d–q) vectors",
+    iCmdV: "current command i*",
+    iMeasV: "measured current i",
+    planeI: "Current",
+    planeV: "Voltage",
+    restV: "remaining voltage (drives the current)",
+    emfV: "back-EMF ω_eλ",
+    limitV: "voltage limit V_bus",
     aria: "Motor cross-section with three stator coils, a permanent-magnet rotor, the resultant current vector and the d-q axes",
+    notesTitle: "What to look for",
+    notes: [
+      "The load torque is drawn as a brake pad on the rotor; the amount of sparks follows the power lost to friction (load × speed). With a load, the speed settles where the measured i_q equals the load.",
+      "A negative i_d* lets the ω_e L i_d term cancel part of the back-EMF (flux weakening), so current holds to a higher speed.",
+      "Each coil is an electromagnet whose rotor-facing side becomes N or S with the current direction, pulling or pushing the nearest rotor pole. In FOC the per-phase torque τ_k = (2/3) I sin²(θ_k − θ) is never negative, so all three coils add torque in the same direction and the sum stays constant.",
+      "In 6-step one coil rests and the current vector jumps every 60°, so torque ripples.",
+      "An electrical angle error δ scales the torque from the same current magnitude by cos δ and creates an equal share of i_d.",
+    ],
     note:
       "Concept model of a 2-pole surface-mounted PM motor. The current loop sets the voltage with PI control and back-EMF feedforward, and clips the voltage vector to the DC bus voltage. All values are per-unit, not measurements. Speed 1 is where the back-EMF equals a bus voltage of 1.",
   },
@@ -91,6 +124,9 @@ interface Sim {
   vuse: number;
   sat: boolean;
   iqCmdNow: number; // command expressed in the true rotor frame
+  idCmdNow: number;
+  vd: number;
+  vq: number; // applied voltage in the true rotor frame
 }
 interface Sample {
   t: number;
@@ -112,8 +148,21 @@ interface Inputs {
   vbus: number;
 }
 
+// Grinder-style sparks at a brake pad pressed on the rotor (load visualization).
+interface Spark {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number; // remaining seconds
+  max: number;
+}
+const PAD_ANGLE = 300 * DEG; // between coils c (240 deg) and a (0 deg)
+const MOTOR_C = 150;
+const padPoint = (r: number): [number, number] => [MOTOR_C + r * Math.cos(PAD_ANGLE), MOTOR_C - r * Math.sin(PAD_ANGLE)];
+
 const rot = (x: number, y: number, a: number): [number, number] => [x * Math.cos(a) - y * Math.sin(a), x * Math.sin(a) + y * Math.cos(a)];
-const fresh = (): Sim => ({ t: 0, theta: 30 * DEG, w: 0, id: 0, iq: 0, xd: 0, xq: 0, vuse: 0, sat: false, iqCmdNow: 0 });
+const fresh = (): Sim => ({ t: 0, theta: 30 * DEG, w: 0, id: 0, iq: 0, xd: 0, xq: 0, vuse: 0, sat: false, iqCmdNow: 0, idCmdNow: 0, vd: 0, vq: 0 });
 
 // Command current vector in the stationary frame.
 function commandAlphaBeta(s: Sim, u: Inputs): [number, number] {
@@ -158,7 +207,9 @@ function step(s: Sim, u: Inputs, dt: number) {
   s.t += dt;
   s.vuse = Math.min(mag, u.vbus) / u.vbus;
   s.sat = sat;
-  s.iqCmdNow = rot(ca, cb, -s.theta)[1];
+  [s.idCmdNow, s.iqCmdNow] = rot(ca, cb, -s.theta);
+  s.vd = Vd;
+  s.vq = Vq;
 }
 
 function sample(s: Sim): Sample {
@@ -177,7 +228,7 @@ function sample(s: Sim): Sample {
 }
 
 // "i_q*" -> i<sub>q</sub>*  (HTML) or tspan subscript (SVG)
-const SUB = /([A-Za-z])_([a-zαβ]+)/g;
+const SUB = /([A-Za-zωθτ])_([a-zαβ]+)/g;
 function rich(str: string, svg = false) {
   const out: ReactNode[] = [];
   let last = 0;
@@ -211,6 +262,8 @@ export default function FocDemo({ lang = "ko" }: { lang?: Lang }) {
   const [, setFrame] = useState(0);
   const sim = useRef<Sim>(fresh());
   const hist = useRef<Sample[]>([sample(sim.current)]);
+  const sparks = useRef<Spark[]>([]);
+  const sparkDebt = useRef(0);
   const inputs = useRef<Inputs>({ mode, idCmd, iqCmd, delta: 0, load, vbus });
   inputs.current = { mode, idCmd: mode === "foc" ? idCmd : 0, iqCmd, delta: deltaDeg * DEG, load, vbus };
 
@@ -237,6 +290,34 @@ export default function FocDemo({ lang = "ko" }: { lang?: Lang }) {
       }
       const cutoff = sim.current.t - WINDOW;
       while (hist.current.length > 2 && hist.current[0].t < cutoff) hist.current.shift();
+      // sparks: emission rate follows the friction power load * |speed|
+      const u = inputs.current;
+      const w = sim.current.w;
+      sparkDebt.current += elapsed * 520 * u.load * Math.min(1.2, Math.abs(w));
+      const [px, py] = padPoint(71);
+      const dir = Math.sign(w) || 1;
+      while (sparkDebt.current >= 1) {
+        sparkDebt.current -= 1;
+        const spread = (Math.random() - 0.5) * 0.9;
+        const speed = 160 + Math.random() * 240 * Math.min(1.2, Math.abs(w) + 0.2);
+        // surface moves counter-clockwise for positive speed: screen tangent (-sin, -cos)
+        const tx = -Math.sin(PAD_ANGLE) * dir;
+        const ty = -Math.cos(PAD_ANGLE) * dir;
+        const ox = Math.cos(PAD_ANGLE);
+        const oy = -Math.sin(PAD_ANGLE);
+        const vx = speed * (tx * Math.cos(spread) - ty * Math.sin(spread)) + ox * 40 * Math.random();
+        const vy = speed * (tx * Math.sin(spread) + ty * Math.cos(spread)) + oy * 40 * Math.random();
+        const max = 0.3 + Math.random() * 0.4;
+        sparks.current.push({ x: px, y: py, vx, vy, life: max, max });
+      }
+      for (const p of sparks.current) {
+        p.vy += 420 * elapsed; // gravity in screen pixels
+        p.vx *= 1 - 1.5 * elapsed;
+        p.x += p.vx * elapsed;
+        p.y += p.vy * elapsed;
+        p.life -= elapsed;
+      }
+      sparks.current = sparks.current.filter((p) => p.life > 0 && Math.hypot(p.x - MOTOR_C, p.y - MOTOR_C) < 140).slice(-260);
       setFrame((f) => f + 1);
       raf = requestAnimationFrame(tick);
     };
@@ -247,6 +328,7 @@ export default function FocDemo({ lang = "ko" }: { lang?: Lang }) {
   const reset = () => {
     sim.current = fresh();
     hist.current = [sample(sim.current)];
+    sparks.current = [];
     setFrame((f) => f + 1);
   };
 
@@ -270,7 +352,24 @@ export default function FocDemo({ lang = "ko" }: { lang?: Lang }) {
     ["b", 120 * DEG, now.ib],
     ["c", 240 * DEG, now.ic],
   ];
-  const markers = [COLORS.a, COLORS.b, COLORS.c, COLORS.vec, COLORS.q, COLORS.d].map((c) => (
+  // Each coil is an electromagnet. Positive phase current points its field toward the
+  // coil, so the coil face toward the rotor is an S pole (N for negative current).
+  // Torque from phase k: tau_k = (2/3) i_k sin(theta_k - theta); the three sum to i_q.
+  const contrib = phases.map(([name, ang, i]) => {
+    const tau = (2 / 3) * i * Math.sin(ang - theta);
+    return { name, ang, i, tau } as const;
+  });
+  const tangent = (ang: number, tau: number, color: string, key: string) => {
+    const r = 76;
+    const [x, y] = pt(ang, r);
+    const dir = Math.sign(tau);
+    const len = Math.min(1, Math.abs(tau) * 2.2) * 46;
+    // CCW tangent in screen coordinates
+    const tx = -Math.sin(ang) * dir;
+    const ty = -Math.cos(ang) * dir;
+    return <line key={key} x1={x} y1={y} x2={x + tx * len} y2={y + ty * len} stroke={color} strokeWidth={3} markerEnd={`url(#foc-arrow-${color.slice(1)})`} />;
+  };
+  const markers = [COLORS.a, COLORS.b, COLORS.c, COLORS.vec, COLORS.q, COLORS.d, COLORS.v, COLORS.w].map((c) => (
     <marker key={c} id={`foc-arrow-${c.slice(1)}`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill={c} />
     </marker>
@@ -333,8 +432,16 @@ export default function FocDemo({ lang = "ko" }: { lang?: Lang }) {
       </div>
 
       <div className="foc-layout">
+        <div className="foc-motor-col">
         <svg className="foc-motor" viewBox="0 0 300 336" role="img" aria-label={t.aria}>
-          <defs>{markers}</defs>
+          <defs>
+            {markers}
+            <radialGradient id="foc-glow">
+              <stop offset="0%" stopColor="#fff7c2" stopOpacity={1} />
+              <stop offset="45%" stopColor="#fbbf24" stopOpacity={0.7} />
+              <stop offset="100%" stopColor="#f97316" stopOpacity={0} />
+            </radialGradient>
+          </defs>
           <circle cx={C} cy={C} r={142} fill="#f4f5f2" stroke="#c9ccc4" strokeWidth={10} />
           {phases.map(([name, ang, i]) => {
             const [x, y] = pt(ang, 118);
@@ -352,12 +459,38 @@ export default function FocDemo({ lang = "ko" }: { lang?: Lang }) {
                   stroke={COLORS[name]}
                   strokeWidth={1.5}
                 />
-                <text x={x} y={y + 4} textAnchor="middle" className="foc-coil-label">
+                <text x={pt(ang, 124)[0]} y={pt(ang, 124)[1] + 5} textAnchor="middle" className="foc-coil-label">
                   {name}
                 </text>
+                {Math.abs(i) >= 0.03 && (
+                  <text
+                    x={pt(ang, 102)[0]}
+                    y={pt(ang, 102)[1] + 4}
+                    textAnchor="middle"
+                    className="foc-coil-pole"
+                    fill={i >= 0 ? "#3f63a8" : "#b4493a"}
+                  >
+                    {i >= 0 ? "S" : "N"}
+                  </text>
+                )}
               </g>
             );
           })}
+          {load > 0 && (
+            <g>
+              <title>{t.load}</title>
+              <rect
+                x={padPoint(77)[0] - 6}
+                y={padPoint(77)[1] - 11}
+                width={12}
+                height={22}
+                rx={2}
+                transform={`rotate(${-PAD_ANGLE / DEG} ${padPoint(77)[0]} ${padPoint(77)[1]})`}
+                fill="#4b5563"
+                fillOpacity={0.35 + 0.55 * load}
+              />
+            </g>
+          )}
           <g transform={`rotate(${-theta / DEG} ${C} ${C})`}>
             <path d={`M${C} ${C - 70} A70 70 0 0 1 ${C} ${C + 70} Z`} fill="#e7b3a8" />
             <path d={`M${C} ${C + 70} A70 70 0 0 1 ${C} ${C - 70} Z`} fill="#a9bfe0" />
@@ -368,12 +501,43 @@ export default function FocDemo({ lang = "ko" }: { lang?: Lang }) {
               S
             </text>
           </g>
+          {load > 0 && Math.abs(s.w) > 0.02 && (
+            <circle
+              cx={padPoint(71)[0]}
+              cy={padPoint(71)[1]}
+              r={8 + 10 * Math.min(1, load * Math.abs(s.w) * 2)}
+              fill="url(#foc-glow)"
+              opacity={Math.min(1, 0.3 + load * Math.abs(s.w) * 1.5)}
+            />
+          )}
+          <g className="foc-sparks">
+            {sparks.current.map((p, k) => {
+              const f = p.life / p.max;
+              const len = 0.04;
+              return (
+                <line
+                  key={k}
+                  x1={p.x}
+                  y1={p.y}
+                  x2={p.x - p.vx * len}
+                  y2={p.y - p.vy * len}
+                  stroke={f > 0.6 ? "#fef08a" : f > 0.3 ? "#fbbf24" : "#f97316"}
+                  strokeOpacity={Math.min(1, 0.35 + f)}
+                  strokeWidth={f > 0.5 ? 2.2 : 1.6}
+                  strokeLinecap="round"
+                />
+              );
+            })}
+          </g>
           {arrow(theta, 104, COLORS.d, 1.5, "4 4", "d")}
           {arrow(theta + 90 * DEG, 104, COLORS.q, 1.5, "4 4", "q")}
           {deltaDeg !== 0 && arrow(theta + delta + 90 * DEG, 104, COLORS.q, 1, "1 4", "qhat")}
-          {phases.map(([name, ang, i]) =>
-            Math.abs(i) > 0.02 ? arrow(i >= 0 ? ang : ang + Math.PI, (2 / 3) * Math.abs(i) * 70, COLORS[name], 2.5, undefined, `p${name}`) : null
-          )}
+          {contrib.map((c) => (Math.abs(c.tau) > 0.01 ? tangent(c.ang, c.tau, COLORS[c.name], `f${c.name}`) : null))}
+          {(() => {
+            const [ca, cb] = rot(s.idCmdNow, s.iqCmdNow, theta);
+            const l = Math.hypot(ca, cb);
+            return l > 0.02 ? arrow(Math.atan2(cb, ca), l * 70, COLORS.vec, 2, "5 4", "cmd") : null;
+          })()}
           {vecLen > 0.02 && arrow(vecAng, vecLen * 70, COLORS.vec, 4, undefined, "vec")}
           <text x={150} y={314} textAnchor="middle" className="foc-legend" fill={COLORS.q}>
             - - {t.rotorQ}
@@ -383,6 +547,61 @@ export default function FocDemo({ lang = "ko" }: { lang?: Lang }) {
             - - {t.rotorD}
           </text>
         </svg>
+        <div className="foc-plane">
+          <div className="foc-chart-title">{t.plane}</div>
+          <div className="foc-plane-pair">
+            {(() => {
+              const panel = (title: string, k: number, body: (P: (d: number, q: number) => number[]) => ReactNode, circle?: number) => {
+                const O = [75, 92];
+                const P = (d: number, q: number) => [O[0] + d * k, O[1] - q * k];
+                return (
+                  <figure>
+                    <svg viewBox="0 0 150 170" role="img" aria-label={title}>
+                      {circle !== undefined && <circle cx={O[0]} cy={O[1]} r={circle * k} fill="none" stroke={COLORS.v} strokeOpacity={0.55} strokeDasharray="3 3" />}
+                      <line x1={6} x2={144} y1={O[1]} y2={O[1]} stroke="#c9ccc4" />
+                      <line x1={O[0]} x2={O[0]} y1={164} y2={8} stroke="#c9ccc4" />
+                      <text x={142} y={O[1] - 4} className="foc-plane-axis" textAnchor="end">d</text>
+                      <text x={O[0] + 5} y={16} className="foc-plane-axis">q</text>
+                      {body(P)}
+                    </svg>
+                    <figcaption>{title}</figcaption>
+                  </figure>
+                );
+              };
+              const seg = (P: (d: number, q: number) => number[], from: [number, number], d: number, q: number, color: string, w: number, dash?: string) => {
+                if (Math.hypot(d, q) < 0.02) return null;
+                const [x1, y1] = P(from[0], from[1]);
+                const [x2, y2] = P(from[0] + d, from[1] + q);
+                return <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeWidth={w} strokeDasharray={dash} markerEnd={`url(#foc-arrow-${color.slice(1)})`} />;
+              };
+              const emf = OMEGA_BASE * s.w * P_LAMBDA;
+              return (
+                <>
+                  {panel(t.planeI, 58, (P) => (
+                    <>
+                      {seg(P, [0, 0], s.idCmdNow, s.iqCmdNow, COLORS.q, 2, "5 4")}
+                      {seg(P, [0, 0], s.id, s.iq, COLORS.vec, 3.5)}
+                    </>
+                  ))}
+                  {panel(t.planeV, 46, (P) => (
+                    <>
+                      {seg(P, [0, 0], 0, emf, COLORS.w, 3)}
+                      {seg(P, [0, emf], s.vd, s.vq - emf, COLORS.v, 3)}
+                    </>
+                  ), vbus)}
+                </>
+              );
+            })()}
+          </div>
+          <div className="foc-plane-legend">
+            <span style={{ color: COLORS.q }}>- - {t.iCmdV}</span>
+            <span style={{ color: COLORS.vec }}>━ {t.iMeasV}</span>
+            <span style={{ color: COLORS.w }}>━ {rich(t.emfV)}</span>
+            <span style={{ color: COLORS.v }}>━ {t.restV}</span>
+            <span style={{ color: COLORS.v }}>◌ {rich(t.limitV)}</span>
+          </div>
+        </div>
+        </div>
 
         <div className="foc-charts">
           <div className="foc-chart-title">{rich(t.phase)}</div>
@@ -475,6 +694,14 @@ export default function FocDemo({ lang = "ko" }: { lang?: Lang }) {
           </strong>
         </span>
       </output>
+      <div className="foc-notes">
+        <strong>{t.notesTitle}</strong>
+        <ul>
+          {t.notes.map((n) => (
+            <li key={n}>{rich(n)}</li>
+          ))}
+        </ul>
+      </div>
       <p className="demo-model-note">{t.note}</p>
     </section>
   );
