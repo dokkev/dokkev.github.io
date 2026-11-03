@@ -32,20 +32,24 @@ import HardwareComponentGrid from "../../../../src/components/demos/HardwareComp
   items={[
     { name: "CNC 가공 부품", en: "CNC machined part", layer: "구조", image: "/assets/img/hardware/component-selector/cnc-artemis-leg.jpg", alt: "테스트 스탠드에 매달린 휴머노이드 ARTEMIS의 하체와 가공 알루미늄 다리 링크", description: "금속 블록을 CNC 밀링·선반으로 깎아 만든 링크, 관절 하우징, 베어링 시트 같은 구조 부품입니다. 치수 정밀도와 강성이 높아 하중이 크게 걸리거나 축 정렬이 중요한 곳에 쓰지만, 무겁고 가공비가 비쌉니다. 사진은 UCLA RoMeLa의 휴머노이드 ARTEMIS 하체로, 다리 링크를 알루미늄 블록에서 5축 가공으로 깎아 만들었습니다.", refId: 1 },
     { name: "판금 부품", en: "Sheet metal part", layer: "구조", image: "/assets/img/hardware/component-selector/draco3-sheet-metal.jpg", alt: "판금 부품으로 몸체를 만든 휴머노이드 DRACO 3", description: "얇은 금속판을 레이저로 자르고 절곡해 만든 브래킷, 커버, 프레임 같은 구조 부품입니다. 가볍고 싸게 만들 수 있지만, 판 두께 방향으로 굽히는 하중에는 강성이 낮습니다. 사진은 몸체를 판금 부품으로 만든 UT Austin HCRL의 휴머노이드 DRACO 3입니다." },
-    { name: "모터", en: "Motor", layer: "구동", image: "/assets/img/hardware/component-selector/motor.jpg", alt: "권선이 보이는 외전형 브러시리스 모터", description: "전기 에너지를 관절의 회전 토크로 바꾸는 BLDC 모터입니다.", refId: 2 },
-    { name: "감속기", en: "Reducer", layer: "구동", image: "/assets/img/hardware/component-selector/speed-reducer.jpg", alt: "변형파 감속기의 웨이브 제너레이터, 플렉스플라인, 서큘러 스플라인", description: "모터의 속도를 낮추고 관절 토크를 증폭하는 감속기입니다. 사진은 변형파(하모닉) 감속기를 이루는 웨이브 제너레이터, 플렉스플라인, 서큘러 스플라인입니다.", refId: 3 },
-    { name: "기계식 전동계", en: "Transmission", layer: "구동", image: "/assets/img/hardware/component-selector/timing-belt-pulley.jpg", alt: "치형이 있는 타이밍 벨트와 알루미늄 타이밍 풀리", description: "링키지·벨트·케이블·풀리로 모터의 운동과 힘을 원하는 관절 축과 위치로 전달하는 기계식 전동계입니다. 사진은 타이밍 벨트와 타이밍 풀리 세트입니다.", refId: 4 },
-    { name: "모터 드라이버", en: "Motor driver", layer: "구동", image: "/assets/img/hardware/component-selector/motor-driver-servo.jpg", alt: "핀 헤더가 달린 소형 모듈형 서보 드라이브 보드", description: "전류·전압을 스위칭해 모터의 토크와 속도를 제어하는 모터 드라이버입니다. 사진은 관절 모듈에 넣을 수 있는 크기의 모듈형 서보 드라이브입니다.", refId: 5 },
-    { name: "엔코더", en: "Encoder", layer: "센싱", image: "/assets/img/hardware/component-selector/encoder-capacitive.jpg", alt: "모터 축에 끼워 쓰는 모듈형 정전용량식 엔코더 두 개", description: "관절 또는 모터 축의 위치와 속도를 측정하는 엔코더입니다. 사진은 회전자와 고정자 사이의 정전용량 변화로 위치를 읽는 모듈형 정전용량식 엔코더(AMT10 시리즈)입니다.", refId: 6 },
-    { name: "관성 센서", en: "IMU", layer: "센싱", image: "/assets/img/hardware/component-selector/imu.jpg", alt: "9축 관성 측정 장치 보드", description: "가속도·각속도·자기장을 측정해 몸체의 운동을 관측하는 IMU입니다.", refId: 7 },
-    { name: "힘 센서", en: "Force sensor", layer: "센싱", image: "/assets/img/hardware/component-selector/force-sensor.jpg", alt: "소형 S-빔 스트레인 게이지 로드셀", description: "구조물의 미세한 변형을 전기 신호로 바꿔 힘을 측정하는 스트레인 게이지 기반 힘 센서입니다. 다축 힘/토크(F/T) 센서는 힘과 토크를 함께 측정합니다.", refId: 8 },
-    { name: "촉각 센서", en: "Tactile sensor", layer: "센싱", image: "/assets/img/hardware/component-selector/tactile-gelsight-mini.jpg", alt: "그리퍼 손가락에 장착된 GelSight Mini 촉각 센서", description: "접촉면에서 접촉 위치와 압력·전단력의 분포를 측정하는 촉각 센서입니다. 사진은 그리퍼 손가락에 장착한 광학식 촉각 센서 GelSight Mini로, 접촉면 젤의 변형을 내부 카메라로 촬영해 접촉 형상과 힘을 추정합니다.", refId: 9 },
-    { name: "카메라", en: "Camera", layer: "센싱", image: "/assets/img/hardware/component-selector/camera.jpg", alt: "산업용 머신비전 카메라", description: "환경의 외관·색·텍스처를 영상으로 관측하는 머신비전 카메라입니다.", refId: 10 },
-    { name: "라이다", en: "LiDAR", layer: "센싱", image: "/assets/img/hardware/component-selector/lidar-hokuyo-ust.jpg", alt: "Hokuyo UST-10LX와 UST-20LX 2D 스캐닝 레이저 거리계", description: "레이저로 주변 구조와 거리를 측정하는 LiDAR입니다. 사진은 이동 로봇에서 널리 쓰는 Hokuyo UST-10LX/20LX로, 레이저를 한 평면에서 회전시켜 주변 거리를 재는 2D 스캐닝 레이저 거리계입니다.", refId: 11 },
-    { name: "마이크로​컨트롤러", en: "Microcontroller", layer: "연산·통신", image: "/assets/img/hardware/component-selector/microcontroller.jpg", alt: "STM32F103 마이크로컨트롤러 개발 보드", description: "센서 샘플링, 모터 제어 루프와 실시간 I/O를 결정론적으로 실행하는 마이크로컨트롤러입니다.", refId: 12 },
-    { name: "통신 모듈", en: "Communication", layer: "연산·통신", image: "/assets/img/hardware/component-selector/communication-module.jpg", alt: "Arduino 보드에 결합한 CAN 버스 통신 실드", description: "MCU와 제어 PC 사이에서 CAN·EtherCAT·RS-485 등의 물리 계층과 프로토콜 연결을 담당하는 통신 모듈입니다.", refId: 13 },
-    { name: "제어·AI 컴퓨터", en: "Control & AI PC", layer: "연산·통신", image: "/assets/img/hardware/component-selector/jetson-orin-agx.jpg", alt: "NVIDIA Jetson AGX Orin 개발자 키트와 포장 상자", description: "실시간 OS 위에서 제어 루프를 결정론적으로 실행하는 제어 PC와, GPU·NPU로 인지·학습 모델을 추론하는 AI PC입니다. 사진은 로봇의 온보드 AI 컴퓨터로 쓰이는 NVIDIA Jetson AGX Orin 개발자 키트입니다.", refId: 14 },
-    { name: "배터리", en: "Battery", layer: "전원", image: "/assets/img/hardware/component-selector/battery-48v.jpg", alt: "수축 튜브로 감싼 48 V 리튬이온 배터리 팩", description: "이동형 로봇에 전력을 저장·공급하는 배터리 팩입니다. 전압·용량·방전율이 운용 시간과 최대 출력을 좌우합니다. 사진은 18650 셀을 13직렬 7병렬(13S7P)로 묶은 48 V 21 Ah 리튬이온 팩입니다.", refId: 15 },
+    { name: "크로스 롤러 베어링", en: "Cross roller bearing", layer: "구조", image: "/assets/img/hardware/component-selector/cross-roller-bearing.jpg", alt: "원통 롤러가 교대로 직교 배치된 크로스 롤러 링", description: "원통 롤러를 하나씩 직각으로 엇갈려 배치해, 베어링 하나로 반경·축·모멘트 하중을 함께 받는 베어링입니다. 관절 출력부에 넣으면 링크에 걸리는 모멘트를 감속기 대신 받아 주고, 얇은 단면으로 높은 회전 정밀도와 강성을 얻습니다. 사진은 THK의 크로스 롤러 링(RB 모델)입니다.", refId: 2 },
+    { name: "접촉 패드", en: "Contact pad", layer: "구조", image: "/assets/img/hardware/component-selector/contact-pad-fin-ray.jpg", alt: "달걀 모양을 따라 휘어 감싸는 파란색 Fin Ray 그리퍼 손가락 두 개", description: "발바닥 패드나 그리퍼 손가락처럼 환경과 직접 닿는 접촉부로, 실리콘이나 우레탄을 몰드에 부어 만들거나 연질 소재로 성형합니다. 재료의 경도와 형상이 마찰, 충격 흡수와 접촉 면적을 정하므로 시뮬레이터의 접촉 파라미터와 직접 연결됩니다. 사진은 Festo의 Fin Ray 그리퍼 손가락(DHAS)으로, 폴리우레탄 리브 구조가 물체 표면을 따라 휘어 접촉 면적을 넓힙니다.", refId: 3 },
+    { name: "모터", en: "Motor", layer: "구동", image: "/assets/img/hardware/component-selector/motor.jpg", alt: "권선이 보이는 외전형 브러시리스 모터", description: "전기 에너지를 관절의 회전 토크로 바꾸는 BLDC 모터입니다.", refId: 4 },
+    { name: "감속기", en: "Reducer", layer: "구동", image: "/assets/img/hardware/component-selector/speed-reducer.jpg", alt: "변형파 감속기의 웨이브 제너레이터, 플렉스플라인, 서큘러 스플라인", description: "모터의 속도를 낮추고 관절 토크를 증폭하는 감속기입니다. 사진은 변형파(하모닉) 감속기를 이루는 웨이브 제너레이터, 플렉스플라인, 서큘러 스플라인입니다.", refId: 5 },
+    { name: "기계식 전동계", en: "Transmission", layer: "구동", image: "/assets/img/hardware/component-selector/timing-belt-pulley.jpg", alt: "치형이 있는 타이밍 벨트와 알루미늄 타이밍 풀리", description: "링키지·벨트·케이블·풀리로 모터의 운동과 힘을 원하는 관절 축과 위치로 전달하는 기계식 전동계입니다. 사진은 타이밍 벨트와 타이밍 풀리 세트입니다.", refId: 6 },
+    { name: "모터 드라이버", en: "Motor driver", layer: "구동", image: "/assets/img/hardware/component-selector/motor-driver-servo.jpg", alt: "핀 헤더가 달린 소형 모듈형 서보 드라이브 보드", description: "전류·전압을 스위칭해 모터의 토크와 속도를 제어하는 모터 드라이버입니다. 사진은 관절 모듈에 넣을 수 있는 크기의 모듈형 서보 드라이브입니다.", refId: 7 },
+    { name: "엔코더", en: "Encoder", layer: "센싱", image: "/assets/img/hardware/component-selector/encoder-capacitive.jpg", alt: "모터 축에 끼워 쓰는 모듈형 정전용량식 엔코더 두 개", description: "관절 또는 모터 축의 위치와 속도를 측정하는 엔코더입니다. 사진은 회전자와 고정자 사이의 정전용량 변화로 위치를 읽는 모듈형 정전용량식 엔코더(AMT10 시리즈)입니다.", refId: 8 },
+    { name: "관성 센서", en: "IMU", layer: "센싱", image: "/assets/img/hardware/component-selector/imu.jpg", alt: "9축 관성 측정 장치 보드", description: "가속도·각속도·자기장을 측정해 몸체의 운동을 관측하는 IMU입니다.", refId: 9 },
+    { name: "힘 센서", en: "Force sensor", layer: "센싱", image: "/assets/img/hardware/component-selector/force-sensor.jpg", alt: "소형 S-빔 스트레인 게이지 로드셀", description: "구조물의 미세한 변형을 전기 신호로 바꿔 힘을 측정하는 스트레인 게이지 기반 힘 센서입니다. 다축 힘/토크(F/T) 센서는 힘과 토크를 함께 측정합니다.", refId: 10 },
+    { name: "촉각 센서", en: "Tactile sensor", layer: "센싱", image: "/assets/img/hardware/component-selector/tactile-gelsight-mini.jpg", alt: "그리퍼 손가락에 장착된 GelSight Mini 촉각 센서", description: "접촉면에서 접촉 위치와 압력·전단력의 분포를 측정하는 촉각 센서입니다. 사진은 그리퍼 손가락에 장착한 광학식 촉각 센서 GelSight Mini로, 접촉면 젤의 변형을 내부 카메라로 촬영해 접촉 형상과 힘을 추정합니다.", refId: 11 },
+    { name: "카메라", en: "Camera", layer: "센싱", image: "/assets/img/hardware/component-selector/camera.jpg", alt: "산업용 머신비전 카메라", description: "환경의 외관·색·텍스처를 영상으로 관측하는 머신비전 카메라입니다.", refId: 12 },
+    { name: "라이다", en: "LiDAR", layer: "센싱", image: "/assets/img/hardware/component-selector/lidar-hokuyo-ust.jpg", alt: "Hokuyo UST-10LX와 UST-20LX 2D 스캐닝 레이저 거리계", description: "레이저로 주변 구조와 거리를 측정하는 LiDAR입니다. 사진은 이동 로봇에서 널리 쓰는 Hokuyo UST-10LX/20LX로, 레이저를 한 평면에서 회전시켜 주변 거리를 재는 2D 스캐닝 레이저 거리계입니다.", refId: 13 },
+    { name: "마이크로​컨트롤러", en: "Microcontroller", layer: "연산·통신", image: "/assets/img/hardware/component-selector/microcontroller.jpg", alt: "STM32F103 마이크로컨트롤러 개발 보드", description: "센서 샘플링, 모터 제어 루프와 실시간 I/O를 결정론적으로 실행하는 마이크로컨트롤러입니다.", refId: 14 },
+    { name: "통신 모듈", en: "Communication", layer: "연산·통신", image: "/assets/img/hardware/component-selector/communication-module.jpg", alt: "Arduino 보드에 결합한 CAN 버스 통신 실드", description: "MCU와 제어 PC 사이에서 CAN·EtherCAT·RS-485 등의 물리 계층과 프로토콜 연결을 담당하는 통신 모듈입니다.", refId: 15 },
+    { name: "제어·AI 컴퓨터", en: "Control & AI PC", layer: "연산·통신", image: "/assets/img/hardware/component-selector/jetson-orin-agx.jpg", alt: "NVIDIA Jetson AGX Orin 개발자 키트와 포장 상자", description: "실시간 OS 위에서 제어 루프를 결정론적으로 실행하는 제어 PC와, GPU·NPU로 인지·학습 모델을 추론하는 AI PC입니다. 사진은 로봇의 온보드 AI 컴퓨터로 쓰이는 NVIDIA Jetson AGX Orin 개발자 키트입니다.", refId: 16 },
+    { name: "배터리", en: "Battery", layer: "전원·배선", image: "/assets/img/hardware/component-selector/battery-48v.jpg", alt: "수축 튜브로 감싼 48 V 리튬이온 배터리 팩", description: "이동형 로봇에 전력을 저장·공급하는 배터리 팩입니다. 전압·용량·방전율이 운용 시간과 최대 출력을 좌우합니다. 사진은 18650 셀을 13직렬 7병렬(13S7P)로 묶은 48 V 21 Ah 리튬이온 팩입니다.", refId: 17 },
+    { name: "커넥터·케이블", en: "Connector & cable", layer: "전원·배선", image: "/assets/img/hardware/component-selector/connector-jst.jpg", alt: "전선에 압착된 빨간색 2핀 JST 커넥터 한 쌍", description: "모터, 센서와 보드 사이를 잇는 커넥터와 케이블 하네스입니다. 실험 중 빠지거나 접촉이 불량해지는 일이 가장 잦은 부품으로, 진동과 반복 굽힘을 받는 로봇에서는 락킹 구조, 압착 품질과 케이블 고정이 신뢰성을 좌우합니다. 사진은 소형 배터리와 기판 연결에 많이 쓰는 JST 커넥터입니다.", refId: 18 },
+    { name: "비상 정지 스위치", en: "E-stop", layer: "전원·배선", image: "/assets/img/hardware/component-selector/e-stop.jpg", alt: "노란 판 위의 빨간 버섯형 비상 정지 버튼", description: "로봇을 즉시 멈추는 비상 정지 스위치입니다. 가장 단순한 방식은 접점으로 모터 전원 회로를 직접 끊는 것이고, 서보 드라이브의 STO(Safe Torque Off)는 주전원은 유지한 채 인버터의 게이트 구동을 차단해 모터가 토크를 내지 못하게 합니다. 어느 방식이든 관절은 토크를 잃으므로, 중력을 받는 관절에는 브레이크나 기구적 지지가 함께 필요합니다.", refId: 19 },
   ]}
 />
 
@@ -65,9 +69,9 @@ import HardwareComponentGrid from "../../../../src/components/demos/HardwareComp
 
 로봇 하드웨어의 복잡성은 단순한 기계 설계의 문제를 넘어, 최신 AI 알고리즘을 실제 로봇에 적용할 때 마주치는 근본적인 장벽이 됩니다. 이 장벽은 크게 Sim-to-Real Gap과 Embodiment Gap이라는 두 가지 형태로 나타납니다.
 
-첫 번째는 Sim-to-Real Gap입니다. 시뮬레이션에서 정책을 학습하는 강화학습(Reinforcement Learning)에서 두드러지는 문제로, 보행 로봇과 드론 제어뿐 아니라 로봇 손의 in-hand manipulation 같은 조작 분야에서도 핵심 과제입니다 [16](#ref-16). 시뮬레이션은 마찰, 기어의 백래시(Backlash), 구조적 유연성, 통신 지연 같은 미세한 물리적 특성을 완벽히 재현하지 못합니다. 정책이 시뮬레이션 속 이상적인 물리에 과적합(Overfitting)되면, 실제 로봇에서는 작은 마찰이나 진동에도 불안정해지거나 엉뚱하게 동작하기 일쑤입니다.
+첫 번째는 Sim-to-Real Gap입니다. 시뮬레이션에서 정책을 학습하는 강화학습(Reinforcement Learning)에서 두드러지는 문제로, 보행 로봇과 드론 제어뿐 아니라 로봇 손의 in-hand manipulation 같은 조작 분야에서도 핵심 과제입니다 [20](#ref-20). 시뮬레이션은 마찰, 기어의 백래시(Backlash), 구조적 유연성, 통신 지연 같은 미세한 물리적 특성을 완벽히 재현하지 못합니다. 정책이 시뮬레이션 속 이상적인 물리에 과적합(Overfitting)되면, 실제 로봇에서는 작은 마찰이나 진동에도 불안정해지거나 엉뚱하게 동작하기 일쑤입니다.
 
-흥미롭게도 이 gap을 줄이는 효과적인 방법 중 하나는 하드웨어 자체를 더 정확히 모델링하는 것입니다. 예를 들어 ANYmal 보행 로봇 연구에서는 실제 액추에이터의 입출력 데이터로 학습한 액추에이터 네트워크(Actuator Network)를 시뮬레이터에 넣어, 시뮬레이션에서 학습한 정책을 실제 로봇으로 성공적으로 옮겼습니다 [17](#ref-17). 로봇이 환경과 주고받는 힘은 결국 시뮬레이터가 아니라 실제 하드웨어의 물리적 특성 위에서 결정되기 때문입니다.
+흥미롭게도 이 gap을 줄이는 효과적인 방법 중 하나는 하드웨어 자체를 더 정확히 모델링하는 것입니다. 예를 들어 ANYmal 보행 로봇 연구에서는 실제 액추에이터의 입출력 데이터로 학습한 액추에이터 네트워크(Actuator Network)를 시뮬레이터에 넣어, 시뮬레이션에서 학습한 정책을 실제 로봇으로 성공적으로 옮겼습니다 [21](#ref-21). 로봇이 환경과 주고받는 힘은 결국 시뮬레이터가 아니라 실제 하드웨어의 물리적 특성 위에서 결정되기 때문입니다.
 
 두 번째는 Embodiment Gap입니다. 이 용어는 사람의 시연을 로봇으로 옮길 때의 차이(Human-to-Robot)를 가리키기도 하지만, 여기서는 서로 다른 로봇 사이의 차이를 말합니다. 대량의 데이터로 정책(Policy)을 학습하는 데이터 기반 접근법(Data-Driven Approach), 즉 VLA 모델이나 모방 학습을 여러 로봇으로 확장할 때 가장 먼저 부딪히는 문제입니다.
 
@@ -75,7 +79,7 @@ import HardwareComponentGrid from "../../../../src/components/demos/HardwareComp
 
 예를 들어 물체를 쥐는 동작에서 목표 위치가 물체 표면보다 1 cm 안쪽에 잡혀 있다고 해봅시다. 낮은 강성으로 임피던스 제어되는 유연한(Compliant) 로봇은 준정적 선형 근사에서 대략 강성 × 위치 오차만큼의 힘으로 물체를 쥐지만, 높은 게인으로 위치 제어되는 단단한(Stiff) 로봇은 같은 명령으로 훨씬 큰 힘을 가하게 됩니다. 문제는 현재 많은 모방 학습·VLA 데이터셋에서 action이 위치 목표값으로 기록된다는 점입니다. 힘 정보는 데이터에 명시적으로 남지 않고, 데이터를 수집한 하드웨어의 임피던스 특성 안에 암묵적으로 묻혀 있습니다.
 
-그래서 하드웨어 플랫폼이 달라지면 같은 action이 만들어내는 물리적 결과도 달라지고, 수집한 데이터와 학습된 정책을 다른 로봇으로 전이(Transfer)하기가 어려워집니다. Open X-Embodiment처럼 여러 로봇의 데이터를 모아 학습하는 시도가 일부 긍정적인 전이를 보여주고 있지만 [18](#ref-18), 접촉이 많은 작업일수록 이러한 힘의 차이는 더 큰 걸림돌이 될 수밖에 없습니다.
+그래서 하드웨어 플랫폼이 달라지면 같은 action이 만들어내는 물리적 결과도 달라지고, 수집한 데이터와 학습된 정책을 다른 로봇으로 전이(Transfer)하기가 어려워집니다. Open X-Embodiment처럼 여러 로봇의 데이터를 모아 학습하는 시도가 일부 긍정적인 전이를 보여주고 있지만 [22](#ref-22), 접촉이 많은 작업일수록 이러한 힘의 차이는 더 큰 걸림돌이 될 수밖에 없습니다.
 
 결국 AI 기반 로봇 제어의 한계는 알고리즘 자체보다 하드웨어가 규정하는 물리적 조건에서 비롯되는 경우가 많습니다. 하드웨어를 깊이 이해하지 않고서는 Sim-to-Real Gap을 줄이기 어렵고, Embodiment Gap을 넘어설 범용 데이터셋을 구축하기도 어렵습니다.
 
@@ -95,68 +99,84 @@ import HardwareComponentGrid from "../../../../src/components/demos/HardwareComp
 
 <span id="ref-2"></span>
 
-[2] Unknownlfcg, “T-motor MT3506 Pro brushless motor,” Wikimedia Commons, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). [Source](https://commons.wikimedia.org/wiki/File:T-motor-mt3506-pro-short-shaft-brushless-motor-650kv-329-p%281%29.jpg)
+[2] THK, “Cross-Roller Ring Standard Model RB,” product image. [Source](https://www.thk.com/jp/en/products/cross_roller_ring/cross_roller_ring/rb/rb/)
 
 <span id="ref-3"></span>
 
-[3] Pieceofmetalwork, “Harmonic Drive AG strain wave gear set,” Wikimedia Commons, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). [Source](https://commons.wikimedia.org/wiki/File:Harmonic_Drive_AG_strain_wave_gear_set.jpg)
+[3] Festo, “DHAS adaptive gripper finger,” press photo via Design Engineering. [Source](https://www.design-engineering.com/products/gripper-finger-1004026235/)
 
 <span id="ref-4"></span>
 
-[4] Walther Flender, “Zahnriemenantriebe,” Wikimedia Commons, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). [Source](https://commons.wikimedia.org/wiki/File:Zahnriemenantriebe.jpg)
+[4] Unknownlfcg, “T-motor MT3506 Pro brushless motor,” Wikimedia Commons, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). [Source](https://commons.wikimedia.org/wiki/File:T-motor-mt3506-pro-short-shaft-brushless-motor-650kv-329-p%281%29.jpg)
 
 <span id="ref-5"></span>
 
-[5] INGENIA-CAT S.L., “Triton Modular Plug-In Servo Drive,” Wikimedia Commons, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). [Source](https://commons.wikimedia.org/wiki/File:Triton_Modular_Plug-In_Servo_Drive.png)
+[5] Pieceofmetalwork, “Harmonic Drive AG strain wave gear set,” Wikimedia Commons, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). [Source](https://commons.wikimedia.org/wiki/File:Harmonic_Drive_AG_strain_wave_gear_set.jpg)
 
 <span id="ref-6"></span>
 
-[6] Same Sky (formerly CUI Devices), “AMT10 Series modular incremental encoder,” product image. [Source](https://www.sameskydevices.com/product/motion/rotary-encoders/incremental/modular/amt10-series)
+[6] Walther Flender, “Zahnriemenantriebe,” Wikimedia Commons, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). [Source](https://commons.wikimedia.org/wiki/File:Zahnriemenantriebe.jpg)
 
 <span id="ref-7"></span>
 
-[7] SparkFun, “9DoF IMU Breakout LSM9DS1,” Wikimedia Commons, [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/). [Source](https://commons.wikimedia.org/wiki/File:SparkFun_9DoF-IMU-Breakout_LSM9DS1_13284-02.jpg)
+[7] INGENIA-CAT S.L., “Triton Modular Plug-In Servo Drive,” Wikimedia Commons, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). [Source](https://commons.wikimedia.org/wiki/File:Triton_Modular_Plug-In_Servo_Drive.png)
 
 <span id="ref-8"></span>
 
-[8] FUTEK Advanced Sensor Technology, “Miniature S-beam load cell,” Wikimedia Commons, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). [Source](https://commons.wikimedia.org/wiki/File:Miniature_S-beam_load_cell.jpg)
+[8] Same Sky (formerly CUI Devices), “AMT10 Series modular incremental encoder,” product image. [Source](https://www.sameskydevices.com/product/motion/rotary-encoders/incremental/modular/amt10-series)
 
 <span id="ref-9"></span>
 
-[9] GelSight, “GelSight Mini,” product image. [Source](https://www.gelsight.com/gelsightmini/)
+[9] SparkFun, “9DoF IMU Breakout LSM9DS1,” Wikimedia Commons, [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/). [Source](https://commons.wikimedia.org/wiki/File:SparkFun_9DoF-IMU-Breakout_LSM9DS1_13284-02.jpg)
 
 <span id="ref-10"></span>
 
-[10] Lg123456, “IDS machine vision cameras USB2,” Wikimedia Commons, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). [Source](https://commons.wikimedia.org/wiki/File:Ids-machine-vision-cameras-usb2-2004.jpg)
+[10] FUTEK Advanced Sensor Technology, “Miniature S-beam load cell,” Wikimedia Commons, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). [Source](https://commons.wikimedia.org/wiki/File:Miniature_S-beam_load_cell.jpg)
 
 <span id="ref-11"></span>
 
-[11] Hokuyo Automatic, “UST-10/20LX,” product image. [Source](https://www.hokuyo-aut.jp/search/single.php?serial=167)
+[11] GelSight, “GelSight Mini,” product image. [Source](https://www.gelsight.com/gelsightmini/)
 
 <span id="ref-12"></span>
 
-[12] Popolon, “Core Learning Board module Arduino STM32 F103 C8T6,” Wikimedia Commons, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). [Source](https://commons.wikimedia.org/wiki/File:Core_Learning_Board_module_Arduino_STM32_F103_C8T6.jpg)
+[12] Lg123456, “IDS machine vision cameras USB2,” Wikimedia Commons, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). [Source](https://commons.wikimedia.org/wiki/File:Ids-machine-vision-cameras-usb2-2004.jpg)
 
 <span id="ref-13"></span>
 
-[13] Snewkirk7953, “Arduino Uno with CAN-bus shield,” Wikimedia Commons, [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/). [Source](https://commons.wikimedia.org/wiki/File:Arduino_Uno_with_CAN-bus_shield.JPG)
+[13] Hokuyo Automatic, “UST-10/20LX,” product image. [Source](https://www.hokuyo-aut.jp/search/single.php?serial=167)
 
 <span id="ref-14"></span>
 
-[14] Auledas, “NVidia Jetson Orin AGX,” Wikimedia Commons, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). [Source](https://commons.wikimedia.org/wiki/File:NVidia_Jetson_Orin_AGX.png)
+[14] Popolon, “Core Learning Board module Arduino STM32 F103 C8T6,” Wikimedia Commons, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). [Source](https://commons.wikimedia.org/wiki/File:Core_Learning_Board_module_Arduino_STM32_F103_C8T6.jpg)
 
 <span id="ref-15"></span>
 
-[15] CMB, “48V 21Ah 18650 Li-ion Battery Pack for Small Inspection Robots,” product image. [Source](https://cmbatteries.com/project/48v-21ah-18650-battery-pack/)
+[15] Snewkirk7953, “Arduino Uno with CAN-bus shield,” Wikimedia Commons, [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/). [Source](https://commons.wikimedia.org/wiki/File:Arduino_Uno_with_CAN-bus_shield.JPG)
 
 <span id="ref-16"></span>
 
-[16] OpenAI et al., “Solving Rubik’s Cube with a Robot Hand,” arXiv:1910.07113, 2019. [Paper](https://arxiv.org/abs/1910.07113).
+[16] Auledas, “NVidia Jetson Orin AGX,” Wikimedia Commons, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). [Source](https://commons.wikimedia.org/wiki/File:NVidia_Jetson_Orin_AGX.png)
 
 <span id="ref-17"></span>
 
-[17] J. Hwangbo et al., “Learning agile and dynamic motor skills for legged robots,” Science Robotics, vol. 4, no. 26, 2019. [Paper](https://doi.org/10.1126/scirobotics.aau5872).
+[17] CMB, “48V 21Ah 18650 Li-ion Battery Pack for Small Inspection Robots,” product image. [Source](https://cmbatteries.com/project/48v-21ah-18650-battery-pack/)
 
 <span id="ref-18"></span>
 
-[18] Open X-Embodiment Collaboration, “Open X-Embodiment: Robotic Learning Datasets and RT-X Models,” arXiv:2310.08864, 2023. [Paper](https://arxiv.org/abs/2310.08864).
+[18] Mike mahoney aus4810, “JST RCY,” Wikimedia Commons, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). [Source](https://commons.wikimedia.org/wiki/File:JST_RCY.JPG)
+
+<span id="ref-19"></span>
+
+[19] Biso, “Emergency Stop,” Wikimedia Commons, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). [Source](https://commons.wikimedia.org/wiki/File:Emergency_Stop.jpg)
+
+<span id="ref-20"></span>
+
+[20] OpenAI et al., “Solving Rubik’s Cube with a Robot Hand,” arXiv:1910.07113, 2019. [Paper](https://arxiv.org/abs/1910.07113).
+
+<span id="ref-21"></span>
+
+[21] J. Hwangbo et al., “Learning agile and dynamic motor skills for legged robots,” Science Robotics, vol. 4, no. 26, 2019. [Paper](https://doi.org/10.1126/scirobotics.aau5872).
+
+<span id="ref-22"></span>
+
+[22] Open X-Embodiment Collaboration, “Open X-Embodiment: Robotic Learning Datasets and RT-X Models,” arXiv:2310.08864, 2023. [Paper](https://arxiv.org/abs/2310.08864).
