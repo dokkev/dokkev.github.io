@@ -52,6 +52,13 @@ def page_urls():
     return urls
 
 
+def redirect_routes():
+    """Old URLs that astro.config.mjs redirects to new pages."""
+    cfg = (ROOT / "astro.config.mjs").read_text(encoding="utf-8")
+    block = re.search(r"redirects:\s*\{(.*?)\}", cfg, re.S)
+    return set(re.findall(r'"(/[^"]+)"\s*:', block.group(1))) if block else set()
+
+
 def normalize(url):
     url = url.split("#")[0].split("?")[0]
     return url if url.endswith("/") or "." in url.rsplit("/", 1)[-1] else url + "/"
@@ -59,6 +66,7 @@ def normalize(url):
 
 def main():
     urls = page_urls()
+    redirects = redirect_routes()
     problems = 0
     for d in SERIES_DIRS:
         for f in sorted(list(d.glob("*.md")) + list(d.glob("*.mdx"))):
@@ -77,7 +85,7 @@ def main():
                 if target.startswith("/assets/") or "." in target.rsplit("/", 1)[-1]:
                     ok = (PUBLIC / target.lstrip("/")).exists()
                 else:
-                    ok = target in urls or target in STATIC_ROUTES
+                    ok = target in urls or target in STATIC_ROUTES or target in redirects
                 if not ok:
                     problems += 1
                     print(f"BROKEN  {rel}: {link}")

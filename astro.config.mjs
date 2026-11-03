@@ -10,6 +10,11 @@ export default defineConfig({
   site: "https://www.dongho.dev",
   output: "static",
   trailingSlash: "always",
+  redirects: {
+    // Robot Hardware restructure: old 05 (torque ripple) and 06 (backlash) merged into the new 04
+    "/hardware05-kr/": "/hardware-torque-ripple-backlash-kr/",
+    "/hardware06-kr/": "/hardware-torque-ripple-backlash-kr/",
+  },
   integrations: [react(), mdx(), sitemap()],
   markdown: {
     shikiConfig: { theme: "github-light" },

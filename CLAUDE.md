@@ -32,7 +32,7 @@ npm run dev     # 로컬 서버, 기본 http://127.0.0.1:4321
 
 내부 링크 검사: `python3 scripts/check-hardware-links.py`
 
-글에 React 컴포넌트를 넣으려면 `.md`를 `.mdx`로 바꿉니다(permalink는 front matter에 있으므로 URL은 그대로). 이때 front matter의 `layout: distill`은 지웁니다. MDX는 `layout` 값을 레이아웃 파일 경로로 import하려 해서 빌드가 실패합니다. MDX에는 Liquid 태그(`{% include figure.liquid %}`, `selective_figure`)가 변환되지 않으므로 HTML이나 컴포넌트로 바꿉니다.
+글에 React 컴포넌트를 넣으려면 `.md`를 `.mdx`로 바꿉니다(permalink는 front matter에 있으므로 URL은 그대로). 이때 front matter의 `layout: distill`은 지웁니다. MDX는 `layout` 값을 레이아웃 파일 경로로 import하려 해서 빌드가 실패합니다. 본문(참고문헌 포함)의 `<` 뒤에 숫자나 글자가 오면 JSX 태그로 읽히므로 `&lt;`로 씁니다. MDX에는 Liquid 태그(`{% include figure.liquid %}`, `selective_figure`)가 변환되지 않으므로 HTML이나 컴포넌트로 바꿉니다.
 
 글을 고친 뒤에는 렌더링된 페이지에서 다음을 확인합니다.
 

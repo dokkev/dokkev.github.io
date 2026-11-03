@@ -19,11 +19,9 @@ redirect: /hardware01-kr/
 
 [로봇 하드웨어 03 - 액추에이터 (2): 감속기](/hardware03-kr/)
 
+[로봇 하드웨어 04 - 액추에이터 (3): 반복되는 오차 — 토크 리플과 백래시](/hardware-torque-ripple-backlash-kr/)
+
 [로봇 하드웨어 04 - 액추에이터 (3): QDD 액추에이터](/hardware04-kr/)
-
-[로봇 하드웨어 05 - 액추에이터 (4): 토크 리플](/hardware05-kr/)
-
-[로봇 하드웨어 06 - 액추에이터 (5): 백래시](/hardware06-kr/)
 
 [로봇 하드웨어 07 - 액추에이터 (6): 발열](/hardware07-kr/)
 
