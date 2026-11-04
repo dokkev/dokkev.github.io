@@ -19,54 +19,8 @@ const WINDOW = 3; // seconds of history
 const COLORS = { a: "#c2410c", b: "#2563eb", c: "#15803d", vec: "#202725", d: "#6b7280", q: "#17695b", w: "#7c3aed", v: "#b45309" };
 
 const text = {
-  ko: {
-    eyebrow: "직접 조작 · BLDC 구동 방식",
-    title: "전류 명령, 측정 전류와 역기전력",
-    foc: "FOC",
-    six: "6-step",
-    iq: "토크 전류 명령 i_q*",
-    id: "자속 전류 명령 i_d*",
-    delta: "전기각 오차 δ",
-    load: "부하 토크",
-    vbus: "DC 버스 전압",
-    play: "재생",
-    pause: "정지",
-    reset: "정지 상태에서 다시 시작",
-    phase: "상 전류 i_a, i_b, i_c",
-    dq: "i_q 명령(점선)과 측정값, i_d",
-    speed: "속도 ω와 전압 사용률 |v|/V_bus",
-    iqCmd: "i_q 명령",
-    iqMeas: "i_q 측정",
-    idMeas: "i_d 측정",
-    w: "속도 ω",
-    vuse: "전압 사용률",
-    sat: "전압 포화",
-    x: "시간 [s]",
-    rotorD: "d축 (로터 N극)",
-    rotorQ: "q축",
-    estQ: "추정 q축",
-    plane: "로터 좌표계(d–q) 벡터",
-    iCmdV: "전류 명령 i*",
-    iMeasV: "측정 전류 i",
-    planeI: "전류",
-    planeV: "전압",
-    restV: "나머지 전압 (전류를 미는 몫)",
-    emfV: "역기전력 ω_eλ",
-    limitV: "전압 한계 V_bus",
-    aria: "3상 스테이터 코일, 영구자석 로터, 합성 전류 벡터와 d·q축을 보여 주는 모터 단면",
-    notesTitle: "관찰할 점",
-    notes: [
-      "부하 토크는 로터에 닿은 브레이크 패드로 표시하고, 불꽃의 양은 마찰로 사라지는 동력(부하 × 속도)에 비례합니다. 부하가 있으면 측정 i_q가 부하와 같아지는 속도에서 평형을 이룹니다.",
-      "i_d*를 음수로 주면 ω_e L i_d 항이 역기전력 일부를 상쇄해(약계자) 더 높은 속도까지 전류를 유지합니다.",
-      "각 코일은 전류 방향에 따라 로터 쪽 면이 N극이나 S극이 되는 전자석이어서 가까운 로터 극을 당기거나 밉니다. FOC에서는 상별 토크 기여 τ_k = (2/3) I sin²(θ_k − θ)가 항상 0 이상이라, 세 코일이 같은 방향으로 토크를 보태고 합이 일정합니다.",
-      "6-step에서는 한 코일이 쉬고 전류 벡터가 60°마다 건너뛰어 토크가 출렁입니다.",
-      "전기각 오차 δ가 있으면 같은 크기의 전류로 내는 토크가 cos δ배로 줄고, 그만큼 i_d가 생깁니다.",
-    ],
-    note:
-      "2극 표면부착형 영구자석 모터의 개념 모델입니다. 전류 제어기는 PI와 역기전력 피드포워드로 전압을 정하고, 전압 벡터의 크기를 DC 버스 전압으로 제한합니다. 모든 값은 정격 대비 단위이며 실측이 아닙니다. 속도 1은 역기전력이 버스 전압 1과 같아지는 속도입니다.",
-  },
   en: {
-    eyebrow: "Try it · Driving a BLDC motor",
+    eyebrow: "Interactive example · Driving a BLDC motor",
     title: "Current command, measured current and back-EMF",
     foc: "FOC",
     six: "6-step",
@@ -250,8 +204,9 @@ function rich(str: string, svg = false) {
 }
 const fmt = (v: number) => (Math.abs(v) < 0.005 ? "0.00" : v.toFixed(2));
 
-export default function FocDemo({ lang = "ko" }: { lang?: Lang }) {
-  const t = text[lang];
+// Demo text is English on every page; `lang` is accepted for compatibility with existing posts.
+export default function FocDemo(_props: { lang?: Lang }) {
+  const t = text.en;
   const [mode, setMode] = useState<Mode>("foc");
   const [iqCmd, setIq] = useState(0.8);
   const [idCmd, setId] = useState(0);

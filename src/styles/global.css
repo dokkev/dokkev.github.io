@@ -2840,3 +2840,66 @@ html:lang(ko) .article-body h2 {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Ball throw in the tip-inertia demo (Robot Hardware 04) */
+.ri-throw {
+  margin-top: 12px;
+}
+.ri-arrow:hover line {
+  stroke: #c2410c;
+}
+.ri-arrow:hover polygon {
+  fill: #c2410c;
+}
+.ri-apply {
+  font-size: 12px;
+  fill: #64748b;
+  pointer-events: none;
+}
+.ri-hit strong {
+  white-space: nowrap;
+  font-size: 20px;
+}
+.can-readout.ri-hit {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 20px;
+}
+
+/* Inverted pendulum demo (Robot Hardware 04) */
+.ip-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 18px;
+  align-items: start;
+}
+.ip-scene {
+  margin: 0;
+}
+.ip-scene svg {
+  width: 100%;
+  display: block;
+}
+.ip-fell {
+  font-size: 14px;
+  font-weight: 600;
+  fill: #dc2626;
+}
+.ip-note {
+  font-size: 10px;
+  fill: #64748b;
+}
+.can-readout.ip-readout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 20px;
+}
+.ip-readout strong {
+  white-space: nowrap;
+}
+@media (max-width: 760px) {
+  .ip-layout {
+    grid-template-columns: 1fr;
+  }
+}

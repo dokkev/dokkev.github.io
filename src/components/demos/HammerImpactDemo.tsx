@@ -3,48 +3,19 @@ import data from "../../lib/demos/data/hammer-impact.json";
 
 // Playback of a MuJoCo 1-DoF hammer (scripts/hardware/hammer_impact.py): the same head speed
 // hits a free stone, for several gear ratios. Rigid gearbox: rotor inertia is armature N^2 J_m.
-// Compliant gearbox: rotor and link are two inertias joined by the gear stiffness K_s.
 // After the hit the stone slides on ice with friction ice_mu (analytic).
 
 type Lang = "ko" | "en";
 type Result = (typeof data.results)[number];
-type Gear = "rigid" | "compliant";
-const sets: Record<Gear, Result[]> = { rigid: data.results as Result[], compliant: data.compliant as Result[] };
-const ALL = [...sets.rigid, ...sets.compliant];
+const ALL = data.results as Result[];
 const meta = data.meta;
 const DECEL = meta.ice_mu * 9.81;
 const COLORS = { sel: "#c2410c", other: "#cbd5e1", gear: "#7c3aed", hit: "#202725", ice: "#e0f2fe", stone: "#475569" };
 
 const text = {
-  ko: {
-    eyebrow: "직접 조작 · MuJoCo 시뮬레이션",
-    title: `같은 속도로 ${meta.stone_mass_kg} kg 스톤을 친 해머, 감속비만 다를 때`,
-    gear: "감속기 모델",
-    rigid: "강체 감속기",
-    compliant: "비틀림 강성 K_s = 1×10⁴ N·m/rad",
-    ratio: "감속비",
-    replay: "다시 재생",
-    force: "접촉력 [N] · 선택한 감속비를 진하게",
-    torque: "관절의 충격 토크 F·r(점선)과 감속기 치면이 전달하는 토크(실선) [N·m]",
-    x: "충돌 후 시간 [ms]",
-    ice: `빙판 위 스톤이 미끄러진 거리 [m] · μ = ${meta.ice_mu} 가정, 회색 선은 다른 감속비`,
-    I: "관절 관성 J_L + N²J_m",
-    m: "머리 기준 유효 질량",
-    J: "충격량 ∫F dt",
-    F: "최대 충돌력",
-    T: "접촉 시간",
-    Gt: "감속기 치면 토크 최대",
-    hits: "충돌 횟수",
-    v: "스톤 속도",
-    d: "미끄러진 거리",
-    note: `MuJoCo ${meta.mujoco}로 계산한 1자유도 해머입니다. 팔 ${meta.arm_m} m, 머리 ${meta.head_mass_kg} kg(링크 관성 약 0.09 kg·m²), 로터 관성 J_m = 1×10⁻⁵ kg·m²을 armature N²J_m으로 넣었고, 모든 경우에 머리 속도 ${meta.tip_speed_mps} m/s로 정지한 ${meta.stone_mass_kg} kg 스톤을 칩니다. 접촉 강성은 감속비와 상관없이 ${(meta.contact_stiffness_N_per_m / 1000).toFixed(0)} kN/m가 되도록 MuJoCo solref를 접촉의 유효 질량으로 맞췄습니다. 스톤은 충돌 중에는 마찰 없이 움직이고, 충돌 뒤의 미끄럼 거리는 마찰계수 ${meta.ice_mu}로 계산했습니다. 강체 감속기에서는 로터 관성을 armature N²J_m으로 넣었고, 비틀림 강성 모델에서는 로터를 별도 관성으로 두고 링크와 관절 기준 강성 K_s = 1×10⁴ N·m/rad(감쇠비 ${meta.gear_damping_ratio})로 연결했습니다. 백래시는 넣지 않았습니다.`,
-  },
   en: {
-    eyebrow: "Try it · MuJoCo simulation",
+    eyebrow: "Interactive example · MuJoCo simulation",
     title: `Same hammer swing into a ${meta.stone_mass_kg} kg stone, different gear ratios`,
-    gear: "Gearbox model",
-    rigid: "Rigid gearbox",
-    compliant: "Torsional stiffness K_s = 1×10⁴ N·m/rad",
     ratio: "Gear ratio",
     replay: "Replay",
     force: "Contact force [N] · selected ratio in bold",
@@ -57,10 +28,9 @@ const text = {
     F: "Peak contact force",
     T: "Contact time",
     Gt: "Peak gear-tooth torque",
-    hits: "Hits",
     v: "Stone speed",
     d: "Slide distance",
-    note: `1-DoF hammer simulated with MuJoCo ${meta.mujoco}. Arm ${meta.arm_m} m, head ${meta.head_mass_kg} kg (link inertia ≈ 0.09 kg·m²), rotor inertia J_m = 1×10⁻⁵ kg·m² added as armature N²J_m; every case hits a resting ${meta.stone_mass_kg} kg stone at ${meta.tip_speed_mps} m/s. MuJoCo solref is scaled by the effective contact mass so the contact stiffness is ${(meta.contact_stiffness_N_per_m / 1000).toFixed(0)} kN/m for every ratio. The stone moves without friction during the hit; its slide distance afterwards uses a friction coefficient of ${meta.ice_mu}. The rigid gearbox adds rotor inertia as armature N²J_m; the compliant model keeps the rotor as a separate inertia tied to the link by a joint-side stiffness K_s = 1×10⁴ N·m/rad (damping ratio ${meta.gear_damping_ratio}). Backlash is not modeled.`,
+    note: `1-DoF hammer simulated with MuJoCo ${meta.mujoco}. Arm ${meta.arm_m} m, head ${meta.head_mass_kg} kg (link inertia ≈ 0.09 kg·m²), rotor inertia J_m = 1×10⁻⁵ kg·m² added as armature N²J_m; every case hits a resting ${meta.stone_mass_kg} kg stone at ${meta.tip_speed_mps} m/s. MuJoCo solref is scaled by the effective contact mass so the contact stiffness is ${(meta.contact_stiffness_N_per_m / 1000).toFixed(0)} kN/m for every ratio. The stone moves without friction during the hit; its slide distance afterwards uses a friction coefficient of ${meta.ice_mu}. The gearbox is rigid, so gearbox compliance and backlash would change the real peak load.`,
   },
 };
 
@@ -81,11 +51,11 @@ const niceTicks = (max: number) => {
   return Array.from({ length: Math.floor(max / step) + 1 }, (_, i) => i * step);
 };
 
-export default function HammerImpactDemo({ lang = "ko" }: { lang?: Lang }) {
-  const t = text[lang];
-  const [gear, setGear] = useState<Gear>("rigid");
+// Demo text is English on every page; `lang` is accepted for compatibility with existing posts.
+export default function HammerImpactDemo(_props: { lang?: Lang }) {
+  const t = text.en;
   const [idx, setIdx] = useState(5); // N = 160
-  const results = sets[gear];
+  const results = ALL;
   const [elapsed, setElapsed] = useState(Infinity); // s since playback start
   const [run, setRun] = useState(0);
   const raf = useRef(0);
@@ -108,7 +78,7 @@ export default function HammerImpactDemo({ lang = "ko" }: { lang?: Lang }) {
     };
     raf.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf.current);
-  }, [idx, run, total, gear]);
+  }, [idx, run, total]);
 
   // map playback time to hammer angle, impact-window index and stone travel
   const pt = Math.min(elapsed, total);
@@ -191,13 +161,6 @@ export default function HammerImpactDemo({ lang = "ko" }: { lang?: Lang }) {
         <h3>{t.title}</h3>
       </header>
 
-      <div className="can-bit-select" role="group" aria-label={t.gear}>
-        {(["rigid", "compliant"] as Gear[]).map((g) => (
-          <button key={g} type="button" aria-pressed={g === gear} onClick={() => setGear(g)}>
-            {t[g]}
-          </button>
-        ))}
-      </div>
       <div className="can-bit-select" role="group" aria-label={t.ratio}>
         {results.map((x, i) => (
           <button key={x.N} type="button" aria-pressed={i === idx} onClick={() => setIdx(i)}>
@@ -307,10 +270,6 @@ export default function HammerImpactDemo({ lang = "ko" }: { lang?: Lang }) {
         <span>
           {t.Gt}
           <strong>{fmt(r.peak_gear_torque, 0)} N·m</strong>
-        </span>
-        <span>
-          {t.hits}
-          <strong>{r.hits}</strong>
         </span>
       </output>
       <p className="demo-model-note">{t.note}</p>

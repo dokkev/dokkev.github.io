@@ -27,39 +27,8 @@ interface Params {
 const DEFAULTS: Params = { R25: 0.09, Kt25: 0.32, Rth: 0.42, Cth: 105, Tamb: 25 };
 
 const text = {
-  ko: {
-    eyebrow: "직접 조작 · 권선 발열",
-    title: "같은 하중을 버티는 동안 모터가 데워지는 과정",
-    load: "부하 토크 (토크 전류 명령이 함께 움직임)",
-    nominal: "공칭 Kt로 명령",
-    corrected: "온도 보정한 Kt로 명령",
-    play: "재생",
-    pause: "정지",
-    reset: "25 °C에서 다시 시작",
-    spec: "모터 사양 (예시값)",
-    R25: "상저항 R₂₅ [Ω]",
-    Kt25: "토크 상수 K_t,25 [N·m/A]",
-    Rth: "열저항 R_th [K/W]",
-    Cth: "열용량 C_th [J/K]",
-    Tamb: "주변 온도 [°C]",
-    chartT: "권선 온도 [°C] · 점선은 예측한 정상상태 온도",
-    chartTau: "부하 토크(점선)와 출력 토크 [N·m]",
-    chartI: "전류 i_q [A]",
-    x: `시간 [s] · 열 시간 ×${SPEEDUP} 가속`,
-    T: "권선 온도",
-    Tss: "예측 정상상태",
-    R: "저항 R(T)",
-    Kt: "K_t(T)",
-    i: "전류 i_q",
-    P: "구리 손실",
-    out: "출력 / 부하",
-    derate: "디레이팅 구간",
-    tau: "열 시정수 R_thC_th",
-    note:
-      "속도 0으로 하중을 버티는 관절의 1차 집중 열 모델입니다. 손실은 구리 손실 R(T)·i_q²만 두었고, 80 °C부터 전류 한계를 줄여 115 °C에서 0이 되게 했습니다. 기본 사양은 본문 그림과 같은 예시값이며 실측이 아닙니다.",
-  },
   en: {
-    eyebrow: "Try it · Winding heat",
+    eyebrow: "Interactive example · Winding heat",
     title: "How the motor heats up while holding the same load",
     load: "Load torque (the torque current command follows)",
     nominal: "Command with nominal Kt",
@@ -154,8 +123,9 @@ function heatColor(T: number) {
   return `rgb(${stops[stops.length - 1][1].join(",")})`;
 }
 
-export default function ThermalDemo({ lang = "ko" }: { lang?: Lang }) {
-  const t = text[lang];
+// Demo text is English on every page; `lang` is accepted for compatibility with existing posts.
+export default function ThermalDemo(_props: { lang?: Lang }) {
+  const t = text.en;
   const [load, setLoad] = useState(11);
   const [corrected, setCorrected] = useState(false);
   const [p, setP] = useState<Params>(DEFAULTS);

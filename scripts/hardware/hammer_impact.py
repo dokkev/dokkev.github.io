@@ -174,18 +174,17 @@ def simulate(N: int, compliant: bool = False):
 
 def main():
     results = [simulate(N) for N in RATIOS]
-    compliant = [simulate(N, compliant=True) for N in RATIOS]
     meta = {
         "arm_m": ARM, "head_mass_kg": HEAD_MASS, "tip_speed_mps": TIP_SPEED, "rotor_inertia": J_M,
         "contact_stiffness_N_per_m": CONTACT_K, "contact_damping_ratio": CONTACT_ZETA, "timestep_s": DT,
         "stone_mass_kg": STONE_MASS, "ice_mu": ICE_MU,
         "gear_stiffness_Nm_per_rad": GEAR_K, "gear_damping_ratio": GEAR_ZETA,
         "mujoco": mujoco.__version__,
-        "note": "results: rigid gearbox; compliant: two-inertia model with gear stiffness; free stone; contact stiffness fixed in N/m by scaling solref with the effective contact mass.",
+        "note": "Rigid gearbox; free stone; contact stiffness fixed in N/m by scaling solref with the effective contact mass.",
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps({"meta": meta, "results": results, "compliant": compliant}, separators=(",", ":")))
-    for r in results + compliant:
+    OUT.write_text(json.dumps({"meta": meta, "results": results}, separators=(",", ":")))
+    for r in results:
         print(f"hits={r['hits']} N={r['N']:4d}  I={r['apparent_inertia']:.4f}  impulse={r['impulse']:.3f} N s  "
               f"peak={r['peak_force']:.0f} N  contact={r['contact_time_ms']:.2f} ms  "
               f"rebound={r['rebound_tip_speed']:.2f} m/s  gearT={r['peak_gear_torque']:.1f} N m  "

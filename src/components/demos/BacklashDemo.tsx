@@ -23,35 +23,8 @@ const DT = 1e-4;
 const COLORS = { qm: "#6b7280", q: "#2563eb", tau: "#c2410c", free: "#f59e0b", gearM: "#4b5563", gearL: "#2563eb" };
 
 const text = {
-  ko: {
-    eyebrow: "직접 조작 · 방향에 묶인 오차",
-    title: "방향이 바뀌는 순간 모터와 링크가 분리된다",
-    b: "유격 반폭 b",
-    f: "왕복 주파수",
-    pause: "정지",
-    play: "재생",
-    timePlot: "링크 끝의 위치 오차 ℓ·δ [mm] · 점선은 ±ℓb, 주황 띠는 유격 안",
-    loopPlot: "치면 확대도 · 빨간 테두리는 닿아 있는 치면",
-    gapLbl: "유격",
-    charPlot: "백래시 히스테리시스 · 루프 폭은 ×25 과장",
-    inAx: "입력(모터)",
-    outAx: "출력(링크)",
-    blLbl: "백래시 2b",
-    hold: "모터 Hold",
-    unhold: "Hold 해제",
-    ext: "외란",
-    x: "시간 [s]",
-    lm: "lost motion",
-    peak: "마지막 재접촉 충격량",
-    gear: "1:1 스퍼기어와 링크 · 유격과 링크 지연은 ×10 과장",
-    ghost: "유격이 없을 때",
-    tipErr: "링크 끝 오차 최대",
-    motor: "모터",
-    note:
-      "1:1 스퍼기어 한 쌍 뒤에 길이 0.4 m, 관성 0.09 kg·m²의 링크를 단 개념 모델입니다. 기어 이는 강체로 두어 다시 닿는 순간을 완전 비탄성 충돌로 처리했고, 링크에는 베어링과 실(seal)의 쿨롱 마찰 0.8 N·m가 있습니다. 모터는 진폭 30°의 위치 명령을 그대로 따른다고 가정했고, 중력은 없습니다. 모터 Hold 중에는 모터가 제자리에 서 있고, 링크에 진동이나 접촉처럼 ±1.5 N·m, 2 Hz로 흔드는 외란을 줍니다. 그림의 유격과 점선 링크와의 차이는 보이도록 10배 키웠고, 그래프는 실제 크기입니다. 실측이 아닙니다.",
-  },
   en: {
-    eyebrow: "Try it · Direction-locked error",
+    eyebrow: "Interactive example · Direction-locked error",
     title: "Motor and link separate the moment the direction reverses",
     b: "Backlash half-width b",
     f: "Reversal frequency",
@@ -98,8 +71,9 @@ function rich(str: string) {
   return out;
 }
 
-export default function BacklashDemo({ lang = "ko" }: { lang?: Lang }) {
-  const t = text[lang];
+// Demo text is English on every page; `lang` is accepted for compatibility with existing posts.
+export default function BacklashDemo(_props: { lang?: Lang }) {
+  const t = text.en;
   const [bDeg, setB] = useState(0.18);
   const [freq, setFreq] = useState(0.5);
   const [playing, setPlaying] = useState(false);

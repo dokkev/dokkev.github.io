@@ -21,38 +21,8 @@ const DEG = Math.PI / 180;
 const COLORS = { ideal: "#6b7280", gauss: "#7c3aed", ripple: "#2563eb", avg: "#c2410c", cursor: "#111827" };
 
 const text = {
-  ko: {
-    eyebrow: "직접 조작 · 위치에 묶인 오차",
-    title: "시뮬레이터가 가정하는 토크와 모터가 내는 토크",
-    speed: "모터 속도",
-    load: "부하 토크 τ_L",
-    play: "재생",
-    pause: "일시정지",
-    motorCap: "12슬롯 14극 외전형 모터 · 회색 패드가 부하 토크",
-    now: "지금 순간의 토크 − τ_L",
-    panels: {
-      ideal: ["시뮬레이터의 이상적 토크", "τ = τ_L"],
-      gauss: ["독립 Gaussian noise", "τ = τ_L + σ·n_k,  n_k ~ N(0, 1)"],
-      ripple: ["모델링한 토크 리플", "τ = τ_L + r(θ_e, τ_L)"],
-    } as Record<string, [string, string]>,
-    timeAxis: "지난 300 ms",
-    foldAxis: "전기각 θ_e [°]",
-    foldNote: "전기각으로 겹친 지난 3초",
-    avgNote: " · 주황선은 평균",
-    parts: "리플 성분 조절",
-    cog: "코깅 진폭 (12차)",
-    inv: "인버터 dead time 고조파 (6차)",
-    enc: "엔코더 각도 오차 (전기각 주기)",
-    pp: "리플 peak-to-peak",
-    rms: "리플 RMS = σ",
-    bias: "평균 토크 오차",
-    f6: "6차 주파수",
-    f12: "12차 주파수",
-    note:
-      "개념 모델이며 실측이 아닙니다. 전류 제어기가 평균 토크를 τ_L에 맞춘다고 보고, 그 위에 위치에 묶인 성분만 더했습니다. 코깅은 전류와 상관없이 남고, 인버터 고조파와 엔코더 오차는 부하에 비례합니다. 엔코더 오차는 평균 토크도 낮추는데, 이 편향은 이상 모델에도 독립 noise에도 나타나지 않습니다. 그림은 모터의 전자기 토크이며 링크 관성에 의한 감쇠는 넣지 않았습니다.",
-  },
   en: {
-    eyebrow: "Try it · Position-locked error",
+    eyebrow: "Interactive example · Position-locked error",
     title: "The torque a simulator assumes vs the torque a motor makes",
     speed: "Motor speed",
     load: "Load torque τ_L",
@@ -175,8 +145,9 @@ function prefill(rpm: number) {
   return { strip, fold, k: n, thm: (wm * n) / FS };
 }
 
-export default function TorqueRippleDemo({ lang = "ko" }: { lang?: Lang }) {
-  const t = text[lang];
+// Demo text is English on every page; `lang` is accepted for compatibility with existing posts.
+export default function TorqueRippleDemo(_props: { lang?: Lang }) {
+  const t = text.en;
   const [rpm, setRpm] = useState(30);
   const [load, setLoad] = useState(5);
   const [cog, setCog] = useState(0.15);
