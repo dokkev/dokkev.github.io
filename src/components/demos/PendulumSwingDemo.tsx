@@ -4,8 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 // controller with a 2 ms delay.
 // Rigid gearbox: joint inertia J_L + N^2 J_m. SEA: rotor N^2 J_m and link J_L joined by a spring
 // K_s (damping ratio 0.1); the PD acts on the motor angle (collocated, motor encoder).
-// Linear analysis (sin q ~ q, delay as 1st-order Pade) gives the closed-loop poles, the -3 dB
-// bandwidth of q/q_d, the tracking gain and lag at f, and a K_p sweep (stable range, root locus,
+// Linear analysis (sin q ~ q, delay as 1st-order Pade) gives the closed-loop poles, the
+// bandwidth of q/q_d (within +-3 dB), the tracking gain and lag at f, and a K_p sweep (stable range, root locus,
 // best bandwidth).
 // The animation is a separate time simulation (nonlinear gravity, true delay buffer).
 
@@ -242,7 +242,21 @@ export default function PendulumSwingDemo(_props: { lang?: Lang }) {
     }
     const st = pts.filter((p) => p.a.stable);
     const best = st.filter((p) => p.a.zeta >= ZMIN && p.a.bw).sort((a, b) => b.a.bw! - a.a.bw!)[0];
-    return { pts, lo: st[0]?.kp, hi: st[st.length - 1]?.kp, best };
+    // refine the stability edges between grid points by bisection
+    const isStable = (kp: number) => analyse(N, kp, kd, sea, Ks).stable;
+    const edge = (inside: number, outside: number) => {
+      for (let it = 0; it < 30; it++) {
+        const m = Math.sqrt(inside * outside);
+        if (isStable(m)) inside = m;
+        else outside = m;
+      }
+      return inside;
+    };
+    const iLo = pts.findIndex((p) => p.a.stable);
+    const iHi = pts.length - 1 - [...pts].reverse().findIndex((p) => p.a.stable);
+    const lo = iLo < 0 ? undefined : iLo === 0 ? pts[0].kp : edge(pts[iLo].kp, pts[iLo - 1].kp);
+    const hi = iLo < 0 ? undefined : iHi === pts.length - 1 ? pts[iHi].kp : edge(pts[iHi].kp, pts[iHi + 1].kp);
+    return { pts, lo, hi, best };
   }, [N, kd, sea, Ks]);
   const params = useRef({ N, Kp, kd, sea, Ks, f });
   params.current = { N, Kp, kd, sea, Ks, f };

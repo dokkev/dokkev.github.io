@@ -11,12 +11,14 @@ const Content = doc.mdx ? mdxPosts[`../../content/${doc.mdx}`]?.default : undefi
 if (doc.mdx && !Content) throw new Error(`Missing MDX article: ${doc.mdx}`);
 const html = doc.comingSoon || Content ? "" : await markdown(doc.body);
 const koreanEdition = doc.translations.find((t) => t.lang === "ko" && posts.some((p) => p.url === t.url && !p.comingSoon));
-const siblings = posts.filter((p) => doc.series && p.series === doc.series && p.lang === doc.lang && !p.comingSoon).sort((a, b) => a.seriesOrder - b.seriesOrder);
+const siblings = posts
+  .filter((p) => doc.series && p.series === doc.series && p.lang === doc.lang && !p.comingSoon)
+  .sort((a, b) => a.seriesOrder - b.seriesOrder);
 const parent = posts.find((p) => p.url === doc.parent);
 ---
 
 <Base title={doc.title} description={doc.description} lang={doc.lang} article>
-  <div class="article-container">
+  <div class={`article-container${siblings.length > 1 ? " has-series" : ""}`}>
     <header class="article-heading">
       <a class="back-link" href={doc.url.startsWith("/projects/") ? "/projects/" : "/blog/"}>
         ← {doc.url.startsWith("/projects/") ? "Projects" : "All writing"}
@@ -41,20 +43,30 @@ const parent = posts.find((p) => p.url === doc.parent);
         </nav>
       )}
     </header>
-    {doc.redirect && (
-      <p>
-        This project is available at <a href={doc.redirect}>{doc.redirect} ↗</a>.
-      </p>
-    )}
-    <article class="prose article-body">
-      {doc.comingSoon ? (
-        <>
-          <h2>Coming soon</h2>
-          <p>The English edition is being prepared.</p>
-          {koreanEdition && <p><a href={koreanEdition.url}>Read the Korean edition →</a></p>}
-        </>
-      ) : Content ? <Content /> : <Fragment set:html={html} />}
-    </article>
+    <div class="article-main">
+      {doc.redirect && (
+        <p>
+          This project is available at <a href={doc.redirect}>{doc.redirect} ↗</a>.
+        </p>
+      )}
+      <article class="prose article-body">
+        {doc.comingSoon ? (
+          <>
+            <h2>Coming soon</h2>
+            <p>The English edition is being prepared.</p>
+            {koreanEdition && (
+              <p>
+                <a href={koreanEdition.url}>Read the Korean edition →</a>
+              </p>
+            )}
+          </>
+        ) : Content ? (
+          <Content />
+        ) : (
+          <Fragment set:html={html} />
+        )}
+      </article>
+    </div>
     {siblings.length > 1 && (
       <aside class="article-series">
         <h2>In this series</h2>
