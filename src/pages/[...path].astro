@@ -1,7 +1,7 @@
 ---
 import type { MDXInstance } from "astro";
 import Base from "../layouts/Base.astro";
-import { posts, projects, markdown } from "../lib/content";
+import { posts, projects, markdown, seriesPosts, seriesNames } from "../lib/content";
 export function getStaticPaths() {
   return [...posts, ...projects].map((doc) => ({ params: { path: doc.url.replace(/^\//, "").replace(/\/$/, "") }, props: { doc } }));
 }
@@ -15,10 +15,28 @@ const siblings = posts
   .filter((p) => doc.series && p.series === doc.series && p.lang === doc.lang && !p.comingSoon)
   .sort((a, b) => a.seriesOrder - b.seriesOrder);
 const parent = posts.find((p) => p.url === doc.parent);
+const shortTitle = (title: string) => title.replace(/^\[[^\]]+\]\s*-?\s*/, "");
+const isBlogPost = !doc.url.startsWith("/projects/");
+// hidden top-level posts stay out of the sidebar unless they are the page being read (sub-posts carry hidden: true only to stay off the blog index)
+const seriesList = siblings.filter((p) => !p.hidden || p.parent || p.url === doc.url);
+// other series: link the series title to its first post, preferring this page's language
+const otherSeries = seriesNames
+  .filter((name) => name !== doc.series)
+  .map((name) => {
+    const all = posts.filter((p) => p.series === name && !p.comingSoon && !p.hidden && !p.parent);
+    const sameLang = all.filter((p) => p.lang === doc.lang);
+    const pool = (sameLang.length ? sameLang : seriesPosts.filter((p) => p.series === name && !p.hidden && !p.parent)).sort(
+      (x, y) => x.seriesOrder - y.seriesOrder
+    );
+    const label = pool[0]?.lang === "ko" && doc.lang !== "ko" ? name.replace("[EN/KR]", "[KR]") : name;
+    return { name: label, first: pool[0], count: pool.length };
+  })
+  .filter((s) => s.first);
+const showSidebar = isBlogPost && (seriesList.length > 1 || otherSeries.length > 0);
 ---
 
 <Base title={doc.title} description={doc.description} lang={doc.lang} article>
-  <div class={`article-container${siblings.length > 1 ? " has-series" : ""}`}>
+  <div class={`article-container${showSidebar ? " has-series" : ""}`}>
     <header class="article-heading">
       <a class="back-link" href={doc.url.startsWith("/projects/") ? "/projects/" : "/blog/"}>
         ← {doc.url.startsWith("/projects/") ? "Projects" : "All writing"}
@@ -67,33 +85,55 @@ const parent = posts.find((p) => p.url === doc.parent);
         )}
       </article>
     </div>
-    {siblings.length > 1 && (
-      <aside class="article-series">
-        <h2>In this series</h2>
-        <ol>
-          {siblings
-            .filter((p) => !p.parent)
-            .map((p) => (
-              <li>
-                <a href={p.url} aria-current={p.url === doc.url ? "page" : undefined}>
-                  {p.title}
-                </a>
-                {siblings.some((child) => child.parent === p.url) && (
-                  <ul>
-                    {siblings
-                      .filter((child) => child.parent === p.url)
-                      .map((child) => (
-                        <li>
-                          <a href={child.url} aria-current={child.url === doc.url ? "page" : undefined}>
-                            {child.title}
-                          </a>
-                        </li>
-                      ))}
-                  </ul>
-                )}
-              </li>
-            ))}
-        </ol>
+    {showSidebar && (
+      <aside class="article-series" aria-label="Series navigation">
+        {seriesList.length > 1 && (
+          <section>
+            <h2>In this series</h2>
+            <p class="series-name">{doc.series}</p>
+            <ol>
+              {seriesList
+                .filter((p) => !p.parent)
+                .map((p) => (
+                  <li>
+                    <a href={p.url} aria-current={p.url === doc.url ? "page" : undefined}>
+                      {shortTitle(p.title)}
+                    </a>
+                    {seriesList.some((child) => child.parent === p.url) && (
+                      <ul>
+                        {seriesList
+                          .filter((child) => child.parent === p.url)
+                          .map((child) => (
+                            <li>
+                              <a href={child.url} aria-current={child.url === doc.url ? "page" : undefined}>
+                                {shortTitle(child.title)}
+                              </a>
+                            </li>
+                          ))}
+                      </ul>
+                    )}
+                  </li>
+                ))}
+            </ol>
+          </section>
+        )}
+        {otherSeries.length > 0 && (
+          <section class="other-series">
+            <h2>{seriesList.length > 1 ? "Other series" : "Series"}</h2>
+            <ul>
+              {otherSeries.map((s) => (
+                <li>
+                  <a href={s.first!.url}>
+                    {s.name}
+                    <span class="series-count">
+                      {s.count} {s.count === 1 ? "note" : "notes"}
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </aside>
     )}
   </div>
