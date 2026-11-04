@@ -1,10 +1,10 @@
 ---
-title: "[로봇 하드웨어 06] - 액추에이터 (5): 발열"
-description: 토크 상수와 저항의 온도 의존성, 효율 지도와 QDD의 연속 토크 한계
+title: "[로봇 하드웨어 06] - 액추에이터 (5): 토크 상수와 발열"
+description: 전류로 토크를 읽고 쓰는 식 τ = ηNK_t i_q가 언제 맞는지를 토크 상수를 중심으로, 개체 차이·포화·온도·전류 기반 외력 추정과 액추에이터 파트 정리까지
 published: true
 hidden: true
 date: 2025-12-09 00:00:00
-img: /assets/img/hardware/models/07-thermal-transient.png
+updated: 2026-11-04
 permalink: /hardware07-kr/
 series: "[EN/KR] Robot Hardware"
 series_order: 6
@@ -17,422 +17,199 @@ translations:
   - lang: ko
     label: KR
     url: /hardware07-kr/
-tags: [Hardware Development]
+tags: [Hardware]
 ---
 
 import ThermalDemo from "../../../../src/components/demos/ThermalDemo";
 
+## 들어가며: 30초와 10분
 
-차가운 로봇으로 30초 동안 잘 되던 동작이 10분 뒤에는 흔들립니다. 같은 policy, 같은 관절각, 같은 토크 명령인데 발이 밀리거나 자세가 처지고 current limit에 더 자주 닿습니다. 로그에서 온도를 보지 않으면 controller가 갑자기 나빠진 것처럼 보입니다.
+차가운 로봇으로 30초 동안 잘 되던 동작이 10분 뒤에는 흔들립니다. 같은 정책, 같은 관절각, 같은 토크 명령인데 발이 밀리거나 자세가 처지고 전류 한계에 더 자주 닿습니다. 로그에서 온도를 보지 않으면 제어기가 갑자기 나빠진 것처럼 보입니다.
 
-하지만 열이 오른 액추에이터는 처음과 같은 plant가 아닙니다. 구리 권선의 저항이 커지고 영구자석의 자속이 변하며, 인버터와 베어링의 손실 특성도 변합니다. 전류 제어기가 이를 일부 가려주다가 voltage saturation 또는 thermal derating이 시작되면 torque command와 실제 출력의 관계가 빠르게 무너집니다.
-
-<figure>
-<img src="/assets/img/hardware/models/07-thermal-transient.png" alt="" loading="lazy" />
-<figcaption>
-
-초기·주변 온도 25°C에서 $R_{25}=0.09\,\Omega$, $K_{t,25}=0.32\,\mathrm{Nm/A}$, $R_{th}=0.42\,\mathrm{K/W}$, $C_{th}=105\,\mathrm{J/K}$로 둔 개념적 motor-side lumped thermal model입니다. 11 Nm는 감속기 없이($N=1$, $\eta_g=1$) 모터 축에서 요구한 토크이며, 80°C부터 derating하고 115°C를 최대 온도로 두었습니다. 여기서 $i_q$와 $R$은 서로 일관된 등가 convention을 사용합니다.
-
-</figcaption>
-</figure>
-
-## 하나의 숫자가 아닌 $K_t$
-
-모터 데이터시트에는 torque constant $K_t$가 $\mathrm{Nm/A}$로 적혀 있습니다. 이상적인 SPMSM에서는 $K_t$가 자석 자속과 극쌍 수로 결정되고,
+전류로 토크를 명령하고, 전류로 토크와 외력을 읽는 계산은 모두 한 줄에 기댑니다.
 
 $$
-\tau_e=K_t i_q
+\tau_j \approx \eta\,N\,K_t\,i_q
 $$
 
-로 쓸 수 있습니다. 이 식은 액추에이터를 설계할 때 매우 유용하지만 $K_t$가 모든 조건에서 일정하다는 뜻은 아닙니다.
+[03](/hardware03-kr/)에서 $\eta$와 $N$을, [05](/hardware-torque-ripple-backlash-kr/)에서 $i_q$에 섞이는 리플과 전기각 오차를 봤습니다. 이 글은 남은 하나, 토크 상수 $K_t$를 봅니다. $K_t$는 데이터시트에 숫자 하나로 적혀 있지만 실제로는 모터마다, 전류마다, 온도마다 다르고, 그중 온도는 실험 도중에 바뀝니다. [02](/hardware02-kr/#발열-시간에-따라-변하는-모델)에서 한 문단으로 소개한 발열을 여기서 자세히 다루고, 액추에이터 파트를 정리합니다.
 
-- 자석 온도가 오르면 remanence와 flux linkage가 달라집니다.
-- 큰 q축 전류와 d축 전류에서는 철심 포화와 cross-saturation이 생깁니다.
-- 생산 편차, air-gap과 자석 조립 오차가 모터별 $K_t$를 바꿉니다.
-- 엔코더 전기각이 틀리면 측정한 q축 전류 중 일부가 실제 d축으로 들어갑니다.
-- 데이터시트의 current 정의가 phase peak인지 RMS인지에 따라 숫자 해석이 달라집니다.
+## 토크 상수의 정의와 단위
 
-따라서 실제 torque map은 한 개의 상수보다 다음 함수에 가깝습니다.
+$K_t$는 q축 전류 1 A가 만드는 토크입니다. 이상적인 표면 부착형 영구자석 모터(SPMSM)에서는 자석의 자속 연계 $\lambda_m$과 극쌍 수 $p$로 정해지고, SI 단위에서는 역기전력 상수 $K_e$와 같은 값입니다. 그래서 $K_t$는 자석의 성질이고, 자석의 자속이 바뀌면 $K_t$도 바뀝니다.
 
-$$
-\tau_e=f(i_d,i_q,\theta_e,T_m)
-$$
+같은 모터라도 데이터시트의 $K_t$ 숫자는 전류를 어떻게 정의했는지에 따라 달라집니다. 상전류의 peak 기준인지 RMS 기준인지, 상 기준인지 선간 기준인지에 따라 $\sqrt 2$나 $\sqrt 3$배 차이가 납니다. 드라이버가 보고하는 $i_q$의 정의와 데이터시트의 정의가 다르면, 다른 오차가 하나도 없어도 토크 추정이 수십 % 틀립니다. 시스템 식별에서 가장 먼저 맞춰야 하는 것이 이 정의입니다.
 
-$T_m$은 rotor/magnet temperature입니다. 여기서 권선 온도 $T_w$와 자석 온도를 구분하는 것이 중요합니다. 둘은 열저항과 열용량으로 연결돼 있지만 같은 시점에 같은 온도가 아닙니다. stator thermistor 하나로 rotor magnet의 순간 온도를 그대로 안다고 가정하면 빠른 duty cycle에서 오차가 생깁니다.[1,2]
+<details className="math-details">
+<summary>수식: 토크 상수와 전류 정의</summary>
 
-정상 운전 온도 범위에서 자석의 자속이 온도에 따라 감소하는 현상은 대체로 가역적입니다. 자석이 식으면 자속도 상당 부분 회복됩니다. 반면 허용 온도를 넘거나 강한 역자계가 함께 작용하면 비가역적 감자가 생길 수 있으며, 이 경우 냉각한 뒤에도 원래의 $K_t$로 돌아오지 않습니다. 따라서 일반적인 thermal drift와 비가역적 demagnetization은 같은 현상으로 다루면 안 됩니다.
-
-## 온도에 따른 저항 변화
-
-구리 권선 저항은 온도에 따라 대략 다음처럼 증가합니다.
+진폭 불변(amplitude-invariant) dq 변환을 쓰면 SPMSM의 토크는
 
 $$
-R(T_w)=R_0\left[1+\alpha_{Cu}(T_w-T_0)\right]
+\tau_e = \tfrac{3}{2}\,p\,\lambda_m\,i_q, \qquad K_t = \tfrac{3}{2}\,p\,\lambda_m
 $$
 
-구리의 온도계수는 보통 $\alpha_{Cu}\approx0.0039/\mathrm{K}$ 근처입니다.[1] 권선이 25°C에서 75°C로 오르면 단순 근사에서 저항은 약 19.5% 증가합니다. 3상 copper loss는 사용하는 peak/RMS convention에 맞춰 쓰면 본질적으로 $I^2R$입니다.
+이고, 이때 $i_q$는 상전류의 peak 값과 같은 크기입니다. 같은 토크를 RMS 상전류로 쓰면 $K_{t,\mathrm{rms}} = \sqrt 2\,K_{t,\mathrm{pk}}$이고, 역기전력 상수를 선간 전압으로 쓰면 상 전압 기준보다 $\sqrt 3$배 큽니다. 동손도 같은 정의를 따라야 해서, 진폭 불변 dq에서는 $P_{Cu} = \tfrac{3}{2} R_s (i_d^2 + i_q^2)$, RMS 상전류로는 $P_{Cu} = 3 I_{\mathrm{rms}}^2 R_{\mathrm{phase}}$입니다. 아래 예시와 데모는 이 계수를 하나의 등가 $R$에 넣어 $P_{Cu} = R\,i_q^2$로 씁니다.
+
+</details>
+
+## 토크 상수를 바꾸는 것들
+
+[02의 표](/hardware02-kr/)에서 본 것처럼 같은 모델의 모터라도 자석과 공극의 제조 편차 때문에 $K_t$가 공칭값과 다릅니다. 이 차이는 관절마다 고정된 값이라 한 번 측정하면 보정할 수 있습니다. 나머지는 운전 조건에 따라 바뀝니다.
+
+**전류.** 큰 전류에서는 철심이 포화되어 같은 전류 증가에 대한 토크 증가가 줄어듭니다. $K_t$는 연속 전류 근처까지는 거의 일정하다가 peak 전류 근처에서 떨어지므로, 큰 토크를 쓰는 동작일수록 공칭 $K_t$가 토크를 과대평가합니다.
+
+**전기각.** 엔코더 영점이 $\Delta\theta_e$만큼 어긋나면 제어기가 q축이라고 믿는 전류 중 $\cos\Delta\theta_e$만 토크를 만듭니다([05](/hardware-torque-ripple-backlash-kr/#엔코더에-기대는-dq축-좌표계)). 측정에서는 $K_t$가 작아진 것처럼 보이지만, 원인은 모터가 아니라 각도입니다.
+
+**온도.** NdFeB 자석의 자속은 온도가 1 K 오를 때 약 0.1 %씩 줄어듭니다. 제조사 자료에는 50 °C 더 뜨거워질 때 $K_t$가 약 5 % 작아지는 예가 있습니다 [1](#ref-1). 이 변화는 정상 운전 온도 범위에서는 가역적이라 식으면 돌아옵니다. 허용 온도를 넘거나 강한 역자계가 함께 걸리면 비가역적 감자가 생기고, 이때는 식어도 원래 $K_t$로 돌아오지 않습니다. 가역적인 온도 변화는 모델로 따라갈 수 있는 상태이고, 비가역적 감자는 모터가 바뀐 것입니다.
+
+## 온도: 토크 상수와 저항이 함께 변할 때
+
+온도는 $K_t$만 바꾸지 않습니다. 구리 권선의 저항은 1 K에 약 0.39 %씩 커집니다 [1](#ref-1). 시리즈 예시대로 권선과 자석이 25 °C에서 75 °C로 오르면 저항은 약 19.5 % 커지고 $K_t$는 약 5 % 줄어듭니다.
+
+두 변화가 같은 방향으로 작용합니다. 같은 토크를 내려면 전류가 $1/0.95$배 필요하고, 그 전류가 더 큰 저항을 지나므로 동손은 약 32 % 커집니다. 손실이 커지면 다시 더 뜨거워지는 되먹임이 생기지만, 냉각이 충분하면 온도는 더 높은 평형점에서 멈춥니다. 이 되먹임이 곧 열 폭주를 뜻하지는 않고, 평형 온도를 끌어올립니다.
+
+저항이 커져도 전류 제어기는 처음에는 이 변화를 가립니다. 전압 여유가 있으면 더 큰 전압을 걸어 같은 전류를 유지하기 때문입니다. 그 여유가 줄어든 채로 속도가 올라 역기전력까지 커지면 인버터가 낼 수 있는 전압 한계에 더 일찍 닿고, 그때부터 전류가 명령을 따라가지 못해 토크가 떨어집니다. 저항 증가는 손실과 전압 여유로 먼저 나타나고, 토크 상수 감소는 같은 전류의 토크로 바로 나타납니다.
+
+<details className="math-details">
+<summary>수식: 온도에 따른 저항, 토크 상수와 동손</summary>
 
 $$
-P_{Cu}\propto I_{\mathrm{rms}}^2R(T_w)
+R(T) = R_{25}\,[1 + \alpha(T - 25)], \qquad K_t(T) = K_{t,25}\,[1 + \beta(T - 25)]
 $$
 
-예를 들어 phase RMS 전류와 상저항을 쓰면 $P_{Cu}=3I_{\mathrm{phase,rms}}^2R_{\mathrm{phase}}$이고, amplitude-invariant dq convention에서는 $P_{Cu}=\frac{3}{2}R_s(i_d^2+i_q^2)$입니다. 앞의 transient figure는 이 계수를 하나의 등가 $R$에 포함한 단순 모델이므로, 데이터시트나 측정값과 비교할 때는 전류와 저항의 정의를 먼저 맞춰야 합니다.
-
-여기서 자주 생기는 오해가 있습니다. **저항이 올랐다고 current controller가 즉시 같은 비율로 토크를 잃는 것은 아닙니다.** 충분한 bus voltage가 있으면 전류 루프가 더 큰 전압을 사용해 같은 전류를 유지할 수 있습니다. 대신 손실이 커지고 전압 여유가 줄어듭니다.
-
-PMSM의 q축 전압 방정식은 다음처럼 쓸 수 있습니다.
+구리는 $\alpha \approx 0.0039\,/\mathrm{K}$, NdFeB의 자속은 $\beta \approx -0.001\,/\mathrm{K}$ 정도입니다. 같은 토크 $\tau$를 유지하는 동손은 $P_{Cu} = R\,(\tau/K_t)^2$이므로
 
 $$
-v_q
-=R_s i_q
-+L_q\frac{di_q}{dt}
-+\omega_e\left(L_d i_d+\lambda_m\right)
+\frac{P_{Cu}(75\,^\circ\mathrm{C})}{P_{Cu}(25\,^\circ\mathrm{C})} = \frac{1.195}{0.95^2} \approx 1.32
 $$
 
-일반적인 정상상태 운전에서 $i_d\approx0$, $di_q/dt\approx0$로 보면 $v_q\approx R_s i_q+\omega_e\lambda_m$으로 단순화할 수 있습니다. 온도가 올라 $R_s i_q$ 항이 커지면 같은 전류를 유지하기 위해 더 높은 전압이 필요합니다. 속도가 높아 back-EMF 항도 큰 상태라면 inverter가 낼 수 있는 전압 한계에 더 일찍 닿습니다. 그때부터 current loop는 기준 전류를 따라가지 못하고 실제 토크가 내려갑니다.
+입니다. 정상상태 q축 전압은 $i_d \approx 0$에서 $v_q \approx R\,i_q + \omega_e \lambda_m$이고, 이 값이 인버터의 전압 한계를 넘으면 전류 루프가 포화됩니다. 온도는 첫 항을 키워 이 한계에 닿는 속도를 낮춥니다.
 
-## 온도 상승이 손실을 다시 키우는 자기 강화 효과
+</details>
 
-제조사 예시 자료에서는 neodymium-magnet motor가 50°C 더 뜨거워질 때 torque constant가 약 5% 작아지고 저항은 구리 온도계수에 따라 증가하는 경우를 보여줍니다.[1] 이 수치는 모든 모터에 그대로 적용할 법칙은 아니지만, 두 효과가 함께 작동하는 방향을 볼 수 있습니다.
-
-25°C에서 75°C로 오른 예시를 단순 계산해 보겠습니다.
-
-$$
-\frac{R_{hot}}{R_{cold}}\approx1.195,\qquad
-\frac{K_{t,hot}}{K_{t,cold}}\approx0.95
-$$
-
-같은 토크를 유지하려면 전류는 약 $1/0.95$배 필요합니다. 그러면 copper loss 비는
-
-$$
-\frac{P_{Cu,hot}}{P_{Cu,cold}}
-\approx
-\frac{1.195}{0.95^2}
-\approx1.32
-$$
-
-가 됩니다. 즉 이 **예시 조건에서는** 같은 토크를 유지하는 copper loss가 약 32% 커집니다. 온도가 올라 저항과 $K_t$가 불리해지고, 같은 토크를 위해 더 큰 손실을 내면 다시 더 뜨거워지는 자기 강화 효과가 생깁니다. 다만 냉각이 충분하거나 derating이 개입하면 온도는 더 높은 새로운 평형점에 도달할 수 있으므로, 이것이 항상 thermal runaway를 뜻하는 것은 아닙니다. 실제 값은 자석 등급, 권선, 냉각, current convention과 포화에 따라 달라지므로 반드시 해당 모터의 hot test로 확인해야 합니다.
-
-아래 데모는 앞 그림과 같은 예시 모터로, 속도 0에서 하중을 버티는 관절의 권선 온도를 계산합니다. 공칭 $K_t$로 전류를 명령하면 온도가 오를수록 출력 토크가 부하보다 작아지고, 온도에 맞춰 보정한 $K_t$로 명령하면 토크는 유지되지만 전류와 손실이 늘어 더 높은 온도에서 평형을 이루거나 디레이팅에 들어갑니다.
+아래 데모는 속도 0에서 하중을 버티는 관절의 권선 온도를 계산합니다. 예시 모터는 $R_{25} = 0.09\,\Omega$, $K_{t,25} = 0.32\,\mathrm{N\,m/A}$, 열저항 0.42 K/W, 열용량 105 J/K이고, 80 °C부터 전류 한계를 줄여 115 °C에서 0이 되게 했습니다(예시값). 모터 축에서 11 N·m를 공칭 $K_t$로 명령하면 전류는 34 A로 고정되고, 권선은 약 79 °C에서 평형을 이루지만 그때 실제 토크는 10.4 N·m로 약 5 % 모자랍니다. 온도에 맞춰 보정한 $K_t$로 명령하면 11 N·m는 유지되지만 전류가 37 A로 늘어 약 89 °C까지 오르고, 디레이팅 구간에 들어가 쓸 수 있는 전류 한계가 45 A로 줄어듭니다. 토크를 맞추면 열이 늘고, 열을 아끼면 토크가 모자랍니다.
 
 <ThermalDemo client:visible lang="ko" />
 
-## 속도에 따른 모터 효율
+## 같은 토크에 드는 열과 감속비
 
-효율은 에너지 흐름의 방향에 따라 구분해야 합니다. 구동 영역에서는
+동손을 토크로 다시 쓰면 $P_{Cu} = (\tau/K_m)^2$입니다. $K_m = K_t/\sqrt R$은 모터 상수로, 1 W의 동손으로 낼 수 있는 토크를 뜻합니다. 같은 토크를 버티는 데 드는 열은 $K_t$ 하나가 아니라 $K_t$와 저항의 비가 정하고, 온도가 오르면 $K_t$는 줄고 $R$은 커져서 $K_m$이 양쪽으로 나빠집니다. 예시 모터는 25 °C에서 $K_m \approx 1.07\,\mathrm{N\,m/\sqrt W}$이고, 11 N·m를 버티는 데 약 106 W가 듭니다.
 
-$$
-\eta_{\mathrm{mot}}
-=\frac{P_{\mathrm{mech,out}}}{P_{\mathrm{elec,in}}}
-$$
+관절 기준으로는 감속기가 모터 상수에 $\eta N$을 곱합니다. 같은 관절 토크의 동손은 $1/(\eta N K_m)^2$에 비례하므로, 감속비를 10배 낮추면 같은 모터에서 동손은 100배가 됩니다. [04](/hardware04-kr/#설계-공간-고감속-qdd-sea-직구동)에서 QDD가 치르는 비용으로 적은 발열이 이것이고, QDD가 공극 반경이 큰 외전형 모터를 쓰는 이유도 같은 부피에서 $K_m$을 키우기 위해서입니다 [2](#ref-2). 관절이 움직이지 않아도 동손은 그대로이므로 쪼그려 앉아 버티기, 팔을 수평으로 들고 있기, 지면을 오래 미는 동작이 열적으로 가장 비쌉니다. 기계 출력은 0인데 전력은 모두 열이 됩니다.
 
-이고, 회생 제동 영역에서는
+동손 밖의 손실은 속도와 함께 커집니다. 철손, 와전류 손실, 베어링과 감속기 마찰, 인버터 스위칭 손실은 모터 속도를 따라 늘어나므로, 감속비를 높이면 같은 관절 속도에서 이 손실이 커집니다. 그래서 모터 효율이 가장 좋은 운전점은 토크–속도 평면의 안쪽에 있고, 열 기준으로 가장 좋은 감속비는 duty cycle마다 다릅니다. 감속할 때 회생 제동으로 기계 에너지 일부를 되돌릴 수는 있지만, 이미 권선에서 난 $I^2R$ 손실은 되돌아오지 않습니다.
 
-$$
-\eta_{\mathrm{regen}}
-=\frac{\left|P_{\mathrm{elec,returned}}\right|}
-{\left|P_{\mathrm{mech,absorbed}}\right|}
-$$
+## 연속 토크와 열 시정수
 
-입니다. stall에서는 $\omega=0$이므로 관절을 큰 힘으로 버티고 있어도 기계 출력은 0입니다. 하지만 전류는 흐르고 copper loss는 계속 납니다. 그래서 정적 squat, 무거운 팔을 수평으로 들기, 지면을 오래 미는 동작은 열적으로 매우 비쌉니다.
+액추에이터가 얼마나 오래 힘을 낼 수 있는지는 peak 토크가 아니라 열이 정합니다. 열용량은 짧은 peak를 버티게 하고, 열저항은 오래 지속할 수 있는 손실을 정합니다. 예시 모터의 열 시정수는 약 44초라서, 몇 초짜리 peak는 거의 공짜이지만 1분이 넘는 하중은 평형 온도로 판단해야 합니다. 같은 peak 토크의 두 액추에이터도 권선과 고정자의 접촉, 포팅, 하우징 면적과 관절 안의 공기 흐름에 따라 연속 토크가 크게 다릅니다.
 
-속도가 조금 올라가면 같은 토크에서도 기계 출력 $\tau\omega$가 생기므로 효율이 좋아지는 영역이 있습니다. 이것이 “모터는 고속에서 효율이 좋다”는 말의 배경입니다. 그러나 끝까지 단조롭게 좋아지는 것은 아닙니다. 높은 속도에서는 iron loss, eddy-current loss, windage, bearing loss와 inverter switching loss가 증가하고, back-EMF 때문에 voltage limit에 접근합니다. 효율 peak는 보통 torque–speed 평면의 내부에 있습니다.[1]
+열 노드 하나로는 권선과 하우징의 서로 다른 시정수를 표현하지 못합니다. 큰 전류를 넣은 직후에는 권선이 먼저 뜨거워지고 하우징과 자석은 늦게 따라오므로, 하우징 온도가 같아도 그 직전의 운전 이력에 따라 권선과 자석 온도는 다릅니다.
 
-<figure>
-<img src="/assets/img/hardware/models/07-efficiency-map.png" alt="" loading="lazy" />
-<figcaption>
-
-구리손, 속도에 따라 증가하는 단순화된 철손, 기계 마찰과 인버터 손실을 합산한 개념적 효율 지도입니다. 그림은 $+\tau$, $+\omega$인 1사분면 motoring 영역만 나타냅니다. 실제 4사분면 지도는 회생 가능 여부, 인버터와 배터리 제한 때문에 구동·회생 영역이 서로 대칭이지 않을 수 있습니다.
-
-</figcaption>
-</figure>
-
-로봇의 duty cycle은 팬이나 펌프와 다릅니다. 일정 방향과 속도로 오래 돌기보다 양방향으로 가속하고, 멈춰 토크를 유지하고, 충돌 에너지를 받은 뒤 다시 반대로 가속합니다. 방향을 바꾸는 순간마다 속도는 0을 지나지만 관성·중력·접촉력을 버티기 위한 전류는 0이 아닐 수 있습니다. 이 구간에서는 효율이 구조적으로 낮습니다.
-
-제동 에너지는 회생할 수 있지만 “음의 토크면 손실이 없다”는 뜻도 아닙니다. bus와 battery가 에너지를 받아들일 수 있어야 하고, 모터 권선과 inverter에는 여전히 conduction 및 switching loss가 있습니다. battery가 full이거나 충전 전력 제한에 닿으면 brake resistor 또는 다른 에너지 경로가 필요합니다.
-
-## 낮은 감속비가 열에 불리한 이유와, 그래도 QDD를 쓰는 이유
-
-같은 모터와 이상적인 감속기를 가정하면 관절 토크는
+<details className="math-details">
+<summary>수식: 1노드와 2노드 열 모델</summary>
 
 $$
-\tau_j\approx\eta_g N K_t i_q
+C_{th}\,\dot T = P_{\mathrm{loss}} - \frac{T - T_{\mathrm{amb}}}{R_{th}}, \qquad \tau_{th} = R_{th} C_{th}
 $$
 
-이므로 필요한 전류는
+평형 온도는 $T_{\mathrm{amb}} + R_{th} P_{\mathrm{loss}}$이고, 예시 값에서 $\tau_{th} = 0.42 \times 105 \approx 44\,\mathrm{s}$입니다. 권선 $T_w$와 하우징 $T_h$를 나누면
 
 $$
-i_q\approx\frac{\tau_j}{\eta_g N K_t}
+C_w \dot T_w = P_{Cu} - \frac{T_w - T_h}{R_{wh}}, \qquad
+C_h \dot T_h = \frac{T_w - T_h}{R_{wh}} + P_{\mathrm{other}} - \frac{T_h - T_{\mathrm{amb}}}{R_{ha}}
 $$
 
-입니다. 같은 관절 토크에서 감속비 $N$을 낮추면 모터가 더 큰 토크와 전류를 직접 만들어야 합니다. 같은 모터라면 copper loss는 대략
+이고, 보통 $C_w \ll C_h$라서 권선의 시정수가 훨씬 짧습니다. 하우징에 붙인 센서는 $T_h$만 보므로, 같은 $T_h$에 여러 $T_w$가 대응합니다.
+
+</details>
+
+## 직접 잴 수 없는 회전자 온도
+
+$K_t$를 바꾸는 것은 자석 온도인데, 자석은 회전자에 붙어 돕니다. 권선과 고정자에는 서미스터를 쉽게 붙일 수 있지만, 회전자의 온도를 재려면 슬립 링이나 무선 텔레메트리가 필요하고 회전체의 질량, 배선과 고장 지점이 늘어납니다. 그래서 대부분의 로봇 액추에이터는 고정자 온도 하나만 잽니다.
+
+자석 온도는 전기 신호로 간접 추정합니다. 알려진 속도에서 역기전력을 재면 자속 연계가 나오고, 자속은 자석 온도에 따라 변하므로 자석 온도를 역산할 수 있습니다 [3](#ref-3). 권선 온도는 저항 변화로 추정합니다. 두 추정 모두 전류 측정, 전기각과 모터 파라미터의 정확도에 기대므로, 고정자 센서와 열 모델을 함께 쓰는 관측기(observer)로 묶는 경우가 많습니다.
+
+## 토크 상수의 측정과 보정
+
+$K_t$는 출력축에 로드셀이나 F/T 센서를 달고 전류를 단계적으로 바꿔 가며 토크를 재면 나옵니다. 정지 상태에서 재면 마찰이 섞이므로 양방향으로 재서 평균을 내고, 큰 전류까지 재면 포화 곡선이 함께 나옵니다. 차가운 상태와 충분히 데운 상태에서 반복하면 온도 계수가 나옵니다. 결과는 전류와 고정자 온도를 축으로 하는 lookup table이 됩니다.
+
+이 표에는 두 가지 한계가 있습니다. 첫째, 표의 온도 축은 고정자 온도인데 $K_t$를 정하는 것은 자석 온도이므로, 운전 이력이 다르면 같은 칸에서도 실제 $K_t$가 다릅니다. 둘째, 열저항과 열용량은 액추에이터 고유의 값이 아니라 장착 조건의 값입니다. 벤치의 큰 알루미늄 지그는 방열판 역할을 하지만, 로봇에서는 플라스틱 커버 안에 갇히거나 반대로 링크 전체가 방열판이 되기도 합니다. 단품 시험의 열 모델은 출발점으로 쓰고, 로봇에 장착한 뒤 운전 로그로 다시 맞춰야 합니다.
+
+## 전류로 읽는 토크와 외력
+
+관절 토크 센서가 없는 로봇은 전류로 관절 토크를 읽고, 거기서 로봇 자신의 동역학을 빼서 외력을 추정합니다 [4](#ref-4). 이 방식의 오차는 두 부분에서 옵니다. 하나는 전류에서 액추에이터 토크로 가는 부분으로, 이 글의 $K_t$, [03](/hardware03-kr/)의 효율과 마찰, [05](/hardware-torque-ripple-backlash-kr/)의 리플과 백래시가 여기에 들어갑니다. 다른 하나는 액추에이터 토크에서 외력으로 가는 부분으로, 링크 관성, 중력과 마찰 모델의 오차가 그대로 외력 추정에 섞입니다. 빠른 가속이나 큰 중력 하중이 있을 때는 빼야 할 항이 외력보다 커서, 작은 외력은 모델 오차에 묻힙니다.
+
+QDD가 전류만으로 접촉력을 제어할 수 있는 것은 이 두 부분을 모두 줄이기 때문입니다. 낮은 감속비가 마찰과 reflected inertia를 줄여 빼야 할 내부 토크가 작아지고, 같은 이유로 $K_t$ 오차의 비중이 커집니다. MIT Cheetah의 고유수용성 구동(Proprioceptive Actuation)이 이 구조를 보여 줬습니다 [5](#ref-5). 반대로 고감속 관절에서는 마찰과 효율의 불확실성이 $K_t$ 오차보다 커서, 전류 기반 추정보다 관절 토크 센서가 유리합니다.
+
+전류 루프가 빠르다고 토크가 빠른 것도 아닙니다. 전류 루프 대역폭은 측정한 전류가 명령을 빠르게 따른다는 뜻일 뿐, 측정 전류가 실제 전류와 같은지, 전기각이 맞는지, $K_t$가 일정한지, 감속기와 구조물이 그 토크를 그대로 전달하는지는 보장하지 않습니다.
+
+<details className="math-details">
+<summary>수식: 전류 기반 외력 추정</summary>
 
 $$
-P_{Cu}\propto
-\frac{\tau_j^2R}
-{\eta_g^2N^2K_t^2}
+\hat\tau_{\mathrm{act}} = \hat\eta\,N\,\hat K_t(i_q, T)\,i_q, \qquad
+\hat\tau_{\mathrm{ext}} = \hat\tau_{\mathrm{act}} - \hat M(q)\ddot q - \hat C(q,\dot q)\dot q - \hat G(q) - \hat\tau_f(q, \dot q)
 $$
 
-처럼 불리해집니다. 관절 속도가 같을 때 모터 속도 $\omega_m\approx N\omega_j$도 낮아져 효율이 좋은 operating region을 활용하기 어려울 수 있습니다.
+$\ddot q$는 잡음이 크므로 실제로는 운동량 관측기(momentum observer)처럼 가속도를 직접 쓰지 않는 형태로 구현합니다. 말단 힘은 $\hat F = J^{-\top}\hat\tau_{\mathrm{ext}}$로 옮깁니다. $\hat K_t$의 상대 오차 $\delta$는 외력이 아니라 액추에이터 토크 전체에 곱해지므로, 중력 하중 $G$를 버티는 관절에서는 외력 추정에 $\delta\,G$만큼의 편향을 만듭니다.
 
-반대로 높은 감속비는 모터의 reflected inertia를
+</details>
 
-$$
-J_{ref}=N^2J_m
-$$
+## 시뮬레이터와 정책이 보지 못하는 느린 상태
 
-로 키우고, seal·bearing·gear mesh의 마찰과 hysteresis를 관절에 더 강하게 보이게 합니다. 외력 투명성과 backdrivability, contact bandwidth가 나빠질 수 있습니다.[3,4] QDD는 바로 이 distortion을 줄이기 위해 감속비의 torque multiplication 일부를 포기합니다.
+시뮬레이터의 액추에이터는 보통 에피소드 처음과 끝에 같은 $K_t$, 같은 저항, 같은 토크 한계를 가집니다. 실제 로봇에서는 이전 동작이 다음 동작의 액추에이터를 바꿉니다. 온도를 관측하지 못하는 정책은 같은 상태와 행동에 다른 가속도가 나오는 이유를 알 수 없고, 디레이팅이 시작되면 토크 한계가 계단처럼 바뀝니다. 특정 관절만 먼저 뜨거워지면 좌우 대칭도 깨집니다.
 
-<figure>
-<img src="/assets/img/hardware/models/07-gear-ratio-tradeoff.png" alt="" loading="lazy" />
-<figcaption>
+정책이 모든 내부 온도를 볼 필요는 없습니다. 저수준 드라이버가 온도와 전압으로 지금 쓸 수 있는 토크를 계산해 넘기면, 정책은 센서 하나의 온도 대신 실제로 쓸 수 있는 토크 범위를 기준으로 행동할 수 있습니다. 학습 쪽에서는 관절마다 $K_t$와 저항을 따로 무작위화하고, 에피소드 안에서도 천천히 변하게 두면 이 변화를 견디는 정책을 얻을 수 있습니다. 정적 하중을 전류로만 버티지 않도록 스프링, 카운터밸런스, 브레이크와 자세를 쓰는 것도 같은 문제에 대한 하드웨어 쪽의 답입니다.
 
-관절 토크 30 Nm를 유지하는 단순 모델에서 감속비가 낮아질수록 필요한 전류와 동손은 $1/N^2$ 방향으로 커지고, 감속비가 높아질수록 reflected inertia는 $N^2$으로 증가합니다. QDD 설계가 열과 외력 투명성을 동시에 비교해야 하는 이유입니다.
+열은 제어 주기보다 훨씬 느려서 짧은 시연에는 보이지 않습니다. 토크 리플은 오실로스코프에, 백래시는 손에 바로 느껴지지만, 열은 처음 몇 분의 성공 뒤에 숨어 있습니다. 액추에이터의 사양은 차가운 상태의 peak 토크가 아니라, 주어진 환경과 duty cycle에서 열평형에 도달한 뒤에도 믿을 수 있는 토크입니다.
 
-</figcaption>
-</figure>
+## 정리
 
-따라서 “QDD는 효율이 나쁘다” 또는 “낮은 감속비가 항상 발열이 심하다”로 끝내면 절반만 맞습니다. 같은 크기와 같은 모터로 비교하면 감속기가 제공하는 열적 여유가 작지만, 실제 QDD는 큰 air-gap radius, 높은 copper fill, 짧은 end turn, housing으로의 직접 열전달, 강제 공랭·액랭과 회생 가능한 inverter를 함께 최적화합니다. MIT Cheetah 계열의 설계도 낮은 관성, torque density, 열적 거동을 motor와 transmission 수준에서 함께 다뤘습니다.[3–5,7]
+| 요소 | 시뮬레이터의 흔한 가정 | 실제 | 생기는 문제 | 자세히 |
+| --- | --- | --- | --- | --- |
+| 전류 정의 | $K_t$와 $i_q$의 정의가 같음 | peak/RMS, 상/선간 정의에 따라 $\sqrt 2$, $\sqrt 3$배 차이 | 토크 추정 전체의 비례 오차 | 이 글 |
+| 토크 상수 | 공칭값 하나 | 개체 차이, 큰 전류에서 포화 | 관절별 편향, 큰 토크의 과대평가 | 이 글, [02](/hardware02-kr/) |
+| 온도 | 항상 같음 | $K_t$ 감소, 저항 증가, 디레이팅 | 장시간 실험에서 토크 부족과 한계 변화 | 이 글 |
+| 연속 토크 | peak 토크를 계속 낼 수 있음 | 열 시정수와 장착 조건이 정함 | 실제로 유지할 수 없는 동작을 학습 | 이 글 |
+| 자석 온도 | 측정됨 또는 없음 | 고정자 센서로는 직접 보이지 않음 | 같은 센서값에서 다른 $K_t$ | 이 글 |
+| 전류 기반 외력 | 전류 = 외력 | $K_t$, 효율, 마찰, 동역학 모델 오차가 섞임 | 접촉 판단과 힘 제어의 편향 | 이 글, [03](/hardware03-kr/), [05](/hardware-torque-ripple-backlash-kr/) |
 
-QDD가 얻는 것은 무료 효율이 아니라 **외력 투명성, 낮은 reflected inertia와 제어 가능한 접촉**입니다. 잃는 것은 기어가 제공하던 torque multiplication과 정적 하중의 열적 여유입니다. 어떤 쪽이 중요한지는 로봇의 task와 duty cycle로 결정해야 합니다. exoskeleton처럼 사람과의 상호작용이 중요한 시스템에서도 QDD를 택하지만, peak torque만이 아니라 continuous thermal envelope가 핵심 설계 변수가 됩니다.[6]
+## 액추에이터 파트 정리
 
-## 동손 밖의 손실과 최적 감속비
+02부터 이 글까지 본 오차는 모두 같은 질문으로 정리됩니다. 시뮬레이터의 이상적인 토크 소스와 실제 액추에이터가 어디서 다르고, 그 차이를 측정해서 넣을지, 무작위화로 덮을지, 정책이 보게 할지입니다.
 
-관절 속도와 모터 속도의 관계는
+| 오차 | 식별 방법 | 시뮬레이터에 넣는 방식 | 자세히 |
+| --- | --- | --- | --- |
+| 속도에 따른 토크 한계 | 데이터시트의 $K_e$, 저항, 버스 전압 | 토크–속도 한계, 버스 전압 무작위화 | [02](/hardware02-kr/) |
+| reflected inertia | 토크 계단에 대한 가속도 | 관절 armature | [03](/hardware03-kr/) |
+| 마찰과 역구동성 | 일정 속도 sweep의 평균 전류, 역구동 개시 토크 | 쿨롱·점성 마찰, 관절별 무작위화 | [03](/hardware03-kr/) |
+| 감속기 강성과 공진 | 출력축을 고정한 토크–비틀림 곡선, chirp 응답 | 두 관성 모델 또는 관측 지연 | [03](/hardware03-kr/) |
+| 접촉 임피던스 | 저주파 토크–변위 기울기, 주파수 응답 | kp·kd에 armature와 마찰을 함께 맞춤 | [04](/hardware04-kr/) |
+| 토크 리플과 전기각 오차 | 저속 일정 속도에서 위치별 토크 | 전기각에 묶인 주기 외란 | [05](/hardware-torque-ripple-backlash-kr/) |
+| 백래시와 lost motion | 양방향 토크–변형 고리 | 데드존과 방향 이력, 최근 운동 방향 관측 | [05](/hardware-torque-ripple-backlash-kr/) |
+| 토크 상수와 온도 | 로드셀로 전류–토크, 냉·온 상태 반복 | 관절별 $K_t$·$R$ 무작위화, 느린 drift, 가용 토크 관측 | 이 글 |
 
-$$
-\omega_m=N\omega_j
-$$
-
-입니다. 감속비를 높이면 같은 관절 토크에 필요한 모터 전류와 동손은 줄지만, 모터 속도에 따라 철손·마찰손·풍손과 전압 요구량이 증가합니다. 감속기 자체의 마찰과 전달 손실도 감속비와 운전점에 따라 달라집니다. 이를 개념적으로 묶으면
-
-$$
-P_{\mathrm{loss}}(N)
-\approx
-\frac{A}{N^2}
-+P_{\mathrm{speed}}(N\omega_j)
-+P_{\mathrm{gear}}(N,\tau_j,\omega_j)
-$$
-
-로 볼 수 있습니다. 첫 항만 보면 높은 감속비가 항상 유리하지만, 속도 의존 손실과 감속기 손실, reflected inertia, backlash와 backdrivability까지 포함하면 최적점은 duty cycle마다 달라집니다. QDD는 이 열적 최적점 하나만을 따르는 설계가 아니라, 어느 정도의 동손 증가를 감수하고 외력 투명성과 충격 내성을 확보하는 시스템 수준의 절충입니다.
-
-## peak torque보다 중요한 RMS current와 열경로
-
-가장 단순한 lumped thermal model은 다음과 같습니다.
-
-$$
-C_{th}\frac{dT}{dt}
-=P_{loss}
--\frac{T-T_{amb}}{R_{th}}
-$$
-
-$C_{th}$는 열용량이라 짧은 peak를 버티게 하고, $R_{th}$는 주변으로 열을 버리는 능력이라 장시간 온도 상승을 결정합니다. 같은 peak torque를 가진 두 액추에이터도 motor mass, winding-to-stator 접촉, potting, housing 면적, joint 내부 airflow에 따라 continuous torque가 크게 달라집니다.
-
-이 1-node 모델은 전체 온도 상승을 빠르게 추정하는 데 유용하지만, 권선과 하우징의 서로 다른 시정수를 표현하지 못합니다. 최소한 두 개의 열 노드로 나누면 다음처럼 쓸 수 있습니다.
-
-$$
-C_w\dot T_w
-=P_{Cu}
--\frac{T_w-T_h}{R_{wh}}
-$$
-
-$$
-C_h\dot T_h
-=\frac{T_w-T_h}{R_{wh}}
-+P_{\mathrm{other}}
--\frac{T_h-T_{\mathrm{amb}}}{R_{ha}}
-$$
-
-여기에 rotor magnet, stator, inverter와 감속기 노드를 추가하면 실제 내부 온도 차이를 더 잘 표현할 수 있습니다. 다만 노드가 많아질수록 식별해야 할 열저항과 열용량도 늘어납니다.
-
-그래서 actuator를 비교할 때는 다음을 함께 봐야 합니다.
-
-- cold/hot $K_t$와 phase resistance
-- peak current의 허용 시간과 초기 온도
-- winding, stator, housing과 magnet의 열 시정수
-- 정해진 ambient와 냉각 조건에서의 continuous torque
-- 실제 trajectory의 RMS current와 speed–torque histogram
-- inverter와 battery의 회생·전압·온도 제한
-
-짧은 벤치 테스트에서 peak torque를 한 번 찍는 것은 쉽습니다. 로봇이 30분 동안 같은 policy를 수행한 뒤에도 torque tracking bandwidth와 contact behavior가 유지되는지를 확인하는 편이 훨씬 어렵고 중요합니다.
-
-## Lookup table 보정과 그 한계
-
-토크 상수와 저항이 온도에 따라 변한다면, 여러 온도와 운전점에서 액추에이터를 측정한 뒤 lookup table을 만들어 보정할 수 있습니다.
-
-예를 들어 다음과 같은 map을 실험적으로 식별할 수 있습니다.
-
-$$
-\hat{\tau}
-=f_{\mathrm{LUT}}\left(i_q,\omega_m,T_s,V_{\mathrm{bus}}\right)
-$$
-
-여기서 $T_s$는 stator 또는 housing에 부착된 온도 센서의 측정값입니다. 서로 다른 전류, 속도와 온도에서 실제 출력 토크를 측정하면 단일한 $K_t$ 대신 운전 조건에 따라 달라지는 유효 토크 상수를 사용할 수 있습니다.
-
-$$
-\hat K_t=K_t(i_q,\omega_m,T_s)
-$$
-
-이러한 보정은 자속 변화, 자기 포화, 인버터 전압 강하와 반복적인 전류–토크 오차를 줄이는 데 유용합니다. 그러나 lookup table의 정확도는 테이블의 입력값이 실제 액추에이터 내부 상태를 충분히 나타낸다는 가정에 의존합니다. 가장 큰 문제는 토크 상수에 직접 영향을 주는 영구자석이 회전하는 로터에 있다는 점입니다.
-
-### 직접 측정하기 어려운 로터 온도
-
-권선과 stator는 정지해 있으므로 thermistor, RTD 또는 열전대를 비교적 쉽게 부착할 수 있습니다. 반면 영구자석과 rotor core는 계속 회전합니다. 회전하는 부품에 센서를 부착하더라도 신호와 전원을 외부로 전달하려면 slip ring, 무선 telemetry 또는 별도의 회전자 전자장치가 필요합니다.
-
-이러한 구조는 일반적인 로봇 액추에이터에 다음 부담을 추가합니다.
-
-- 회전체 질량과 관성 증가
-- 배선과 패키징 복잡성
-- 무선 통신과 전원 공급의 신뢰성 문제
-- 고속 회전에서의 기계적 고정 문제
-- 비용과 고장 지점 증가
-
-따라서 실제 액추에이터에서는 rotor magnet temperature를 직접 측정하기보다 stator temperature와 전기적 신호를 이용해 간접적으로 추정하는 경우가 많습니다.
-
-$$
-\hat T_m
-=g\left(T_s,i_d,i_q,\omega_m,V_{\mathrm{bus}},t\right)
-$$
-
-예를 들어 역기전력 또는 자속 연계의 변화를 이용하면 자석 온도를 추정할 수 있고, 권선 저항의 변화를 이용하면 권선 온도를 추정할 수 있습니다. 하지만 이 추정은 모터 파라미터, 전류 측정 정확도, 전기각 오차와 운전 이력에 의존합니다.
-
-또한 권선, stator, housing과 rotor는 서로 다른 열 시정수를 가집니다. 빠르게 큰 전류를 인가한 직후에는 권선 온도가 먼저 오르고 rotor magnet과 housing은 더 느리게 반응할 수 있습니다. 따라서 housing thermistor가 같은 온도를 가리키더라도 이전 운전 이력에 따라 내부 권선과 자석 온도는 서로 다를 수 있습니다.
-
-즉, 측정 가능한 $T_s$ 하나에 대해 여러 내부 열 상태가 대응할 수 있습니다.
-
-$$
-T_s
-\;\not\Rightarrow\;
-\left(T_w,T_m\right)
-\text{가 유일하게 결정됨}
-$$
-
-이 때문에 온도를 축으로 하는 lookup table만으로 모든 thermal drift를 완전히 보상하기는 어렵습니다. lookup table에는 현재 센서값뿐 아니라 전류와 속도의 시간 이력, 냉각 조건 또는 thermal observer의 상태가 함께 필요할 수 있습니다.
-
-### 벤치와 로봇 장착 상태의 열 시스템 차이
-
-액추에이터 단품을 시험 장비에 고정해 충분한 system identification을 수행하더라도, 로봇에 장착하는 순간 열 경계조건이 달라집니다.
-
-모터에서 발생한 열은 권선에서 stator, 하우징, 로봇 링크와 주변 공기로 이동합니다. 따라서 액추에이터의 열적 거동은 모터 자체의 파라미터만으로 결정되지 않습니다.
-
-$$
-T
-=f\left(
-P_{\mathrm{loss}},R_{\mathrm{internal}},C_{\mathrm{internal}},
-\mathrm{mounting},\mathrm{housing},\mathrm{airflow},T_{\mathrm{amb}}
-\right)
-$$
-
-동일한 모터와 감속기를 사용하더라도 다음 조건이 달라지면 열저항과 열 시정수가 바뀔 수 있습니다.
-
-- 하우징의 재료, 두께와 표면적
-- 모터와 하우징 사이의 접촉면 및 thermal interface material
-- 볼트 체결력과 조립 공차
-- 링크로 이어지는 전도 경로
-- 관절 내부의 밀폐 여부
-- 팬, 자연대류, 강제 공랭 또는 액랭의 유무
-- 주변 관절과 전장 부품에서 전달되는 열
-- 로봇 자세에 따른 공기 흐름과 자연대류
-- 감속기 윤활유와 베어링에서 발생하는 추가 손실
-
-벤치에서는 액추에이터가 큰 알루미늄 지그에 단단히 고정되어 지그가 방열판 역할을 할 수 있습니다. 반대로 실제 로봇에서는 플라스틱 커버나 얇은 링크 내부에 밀폐되어 열이 더 느리게 빠져나갈 수 있습니다. 반대 상황도 가능합니다. 단품 시험에서는 자연대류만 사용했지만, 로봇에 장착한 뒤 링크 전체가 큰 방열 구조로 작용할 수도 있습니다.
-
-따라서 단품 시험에서 식별한 열저항 $R_{th}$와 열용량 $C_{th}$는 액추에이터 고유의 절대적인 상수가 아니라 특정 장착 및 냉각 조건에서 얻은 등가 파라미터에 가깝습니다.
-
-$$
-R_{th}=R_{th}(\mathrm{installation})
-$$
-
-$$
-C_{th}=C_{th}(\mathrm{installation})
-$$
-
-하우징을 바꾸면 단순히 냉각 속도만 달라지는 것도 아닙니다. 하우징 강성과 베어링 정렬, preload, 윤활 상태가 달라지면 마찰 손실과 전달 효율도 변할 수 있습니다. 즉, 기구 설계 변경은 열 모델뿐 아니라 토크 전달 모델까지 함께 바꿀 수 있습니다.
-
-### 반복이 필요한 system identification
-
-이 때문에 액추에이터 system identification은 다음 두 단계로 나누는 편이 현실적입니다.
-
-첫 번째는 액추에이터 자체의 비교적 이식 가능한 특성을 식별하는 것입니다.
-
-- 전류에 따른 모터 토크
-- 전기각 및 전류 센서 오차
-- 권선 저항의 온도 의존성
-- 자속 연계와 토크 상수의 온도 의존성
-- 모터와 인버터의 전압·전류 제한
-- 감속기의 마찰과 전달 효율
-
-두 번째는 로봇에 실제로 설치한 상태에서 시스템 수준의 특성을 다시 식별하는 것입니다.
-
-- 장착 상태의 열저항과 열 시정수
-- 실제 링크와 하우징을 통한 열전달
-- 관절별 냉각 조건
-- 로봇 자세와 동작에 따른 온도 변화
-- 연속 운전에서의 thermal derating
-- 주변 관절 사이의 열 간섭
-
-즉, 단품 벤치 테스트는 필요하지만 충분하지 않습니다. 최종적으로 policy와 제어기가 만나게 되는 plant는 모터와 감속기만이 아니라 하우징, 링크, 전원, 냉각과 운전 이력이 결합된 전체 액추에이터 시스템입니다.
-
-Lookup table 역시 로봇에 장착한 뒤 다시 검증해야 합니다. 벤치에서 만든 map을 그대로 사용하는 대신 단품 시험 결과를 초기 모델로 사용하고, 실제 로봇의 운전 로그를 통해 열 모델과 가용 토크 추정을 업데이트하는 방식이 더 안전합니다.
-
-결국 보정의 목표는 모든 조건에서 완벽한 하나의 torque map을 만드는 것이 아닙니다. 현재 내부 열 상태에 대한 불확실성을 추정하고, 그 불확실성을 고려해 안전한 토크 범위와 모델 신뢰도를 함께 제공하는 것입니다.
-
-$$
-\hat{\tau}_{\mathrm{available}},
-\qquad
-\sigma_{\tau},
-\qquad
-\hat T_w,
-\qquad
-\hat T_m
-$$
-
-## policy가 관측하지 못하는 느린 상태, 열
-
-시뮬레이터의 actuator는 보통 episode 시작과 끝에서 같은 $K_t$, 같은 resistance, 같은 torque limit을 가집니다. 실제 로봇에서는 이전 episode의 동작이 다음 episode의 plant를 바꿉니다.
-
-$$
-\tau_{actual}
-=f\!\left(
-u,\omega,T_w,T_m,V_{bus}
-\right)
-$$
-
-온도를 observation에 넣지 않으면 policy는 같은 상태·행동에 다른 가속도가 나오는 이유를 알 수 없습니다. current limit이나 thermal derating이 활성화되면 변화는 더 불연속적입니다. 특정 joint만 먼저 뜨거워지면 좌우 대칭도 깨집니다.
-
-상위 제어기나 policy가 모든 내부 온도를 직접 받을 필요는 없습니다. 저수준 액추에이터 제어기가 열·전압·회생 제한을 종합해 현재의 가용 토크를 계산할 수 있습니다.
-
-$$
-\tau_{\mathrm{available}}
-=f\left(T_w,T_m,T_{\mathrm{inv}},V_{\mathrm{bus}},\omega\right)
-$$
-
-이 인터페이스에는 양·음 방향의 가용 토크, thermal headroom, derating 상태, voltage margin과 회생 가능한 전력이 함께 포함되는 편이 좋습니다. 그러면 policy는 센서 하나의 온도를 plant 상태 전체로 오해하지 않고, 현재 실제로 사용할 수 있는 actuation envelope를 기준으로 행동을 정할 수 있습니다.
-
-실용적인 대응은 단순합니다.
-
-- winding sensor와 thermal observer로 보이지 않는 rotor temperature를 추정합니다.
-- temperature와 bus voltage에 따라 torque limit을 연속적으로 derating합니다.
-- 학습과 시뮬레이션에서 $R$, $K_t$, current/voltage saturation, thermal state를 함께 변화시킵니다.
-- trajectory를 peak torque가 아니라 RMS current와 회생 가능성까지 포함해 최적화합니다.
-- 정적 하중을 motor current로만 버티지 않도록 spring, counterbalance, brake와 기구학적 자세를 활용합니다.
-
-열은 제어 주기보다 느리기 때문에 당장 보이지 않습니다. 그래서 더 위험합니다. 토크 리플은 oscilloscope에 바로 나타나고 백래시는 손으로 방향을 바꾸면 느껴지지만, thermal drift는 처음 몇 분의 성공적인 demo 뒤에 숨어 있습니다.
-
-액추에이터의 진짜 사양은 차가운 상태의 peak torque가 아닙니다. **주어진 환경과 duty cycle에서 열평형에 도달한 뒤에도 policy가 믿을 수 있는 토크를 얼마나 반복해서 만드는가**입니다.
+모든 항목을 넣을 필요는 없습니다. 빠른 보행처럼 리플 주파수가 기계 대역보다 훨씬 높은 과제에서는 리플을 빼도 결과가 거의 같고, 위치 제어 위주의 과제에서는 토크 상수의 오차가 위치 루프에 가려집니다. 접촉, 힘 제어, 저속 정밀 동작과 오래 지속되는 하중처럼 오차가 과제의 대역 안으로 들어오는 경우에 해당 항목을 넣으면 됩니다. 액추에이터 사이의 공통점은 오차가 무작위가 아니라 상태에 묶여 있다는 점입니다. 그 상태가 위치, 방향, 속도인지 온도인지를 알면, 어떤 오차를 측정하고 무엇을 정책에 보여 줄지 정할 수 있습니다.
 
 ## References
 
+<span id="ref-1"></span>
+
 [1] maxon motor ag, “maxon Motor Data and Operating Ranges.” [Manufacturer PDF](https://www.maxongroup.com/medias/sys_master/8798985748510.pdf)
 
-[2] Y. Xiao and A. Griffo, “PWM-Based Flux Linkage and Rotor Temperature Estimations for Permanent Magnet Synchronous Machines,” _IEEE Transactions on Power Electronics_, vol. 35, no. 6, pp. 6061–6069, 2020. [doi:10.1109/TPEL.2019.2948578](https://doi.org/10.1109/TPEL.2019.2948578), [accepted manuscript](https://eprints.whiterose.ac.uk/id/eprint/152551/)
+<span id="ref-2"></span>
 
-[3] S. Seok et al., “Design Principles for Energy-Efficient Legged Locomotion and Implementation on the MIT Cheetah Robot,” _IEEE/ASME Transactions on Mechatronics_, vol. 20, no. 3, pp. 1117–1129, 2015. [doi:10.1109/TMECH.2014.2339013](https://doi.org/10.1109/TMECH.2014.2339013), [MIT Open Access](https://dspace.mit.edu/entities/publication/26489ffa-c684-4d0f-bb38-d28ddf99efbe)
+[2] S. Seok et al., “Design Principles for Energy-Efficient Legged Locomotion and Implementation on the MIT Cheetah Robot,” *IEEE/ASME Transactions on Mechatronics*, vol. 20, no. 3, pp. 1117–1129, 2015. [Paper](https://doi.org/10.1109/TMECH.2014.2339013)
 
-[4] P. M. Wensing, A. Wang, S. Seok, D. Otten, J. Lang, and S. Kim, “Proprioceptive Actuator Design in the MIT Cheetah: Impact Mitigation and High-Bandwidth Physical Interaction for Dynamic Legged Robots,” _IEEE Transactions on Robotics_, vol. 33, no. 3, pp. 509–522, 2017. [doi:10.1109/TRO.2016.2640183](https://doi.org/10.1109/TRO.2016.2640183), [MIT manuscript](https://dspace.mit.edu/bitstream/handle/1721.1/119863/Proprioceptive-TRO-RG.pdf)
+<span id="ref-3"></span>
 
-[5] B. Katz, J. Di Carlo, and S. Kim, “Mini Cheetah: A Platform for Pushing the Limits of Dynamic Quadruped Control,” _IEEE International Conference on Robotics and Automation_, pp. 6295–6301, 2019. [doi:10.1109/ICRA.2019.8793865](https://doi.org/10.1109/ICRA.2019.8793865)
+[3] Y. Xiao and A. Griffo, “PWM-Based Flux Linkage and Rotor Temperature Estimations for Permanent Magnet Synchronous Machines,” *IEEE Transactions on Power Electronics*, vol. 35, no. 6, pp. 6061–6069, 2020. [Paper](https://doi.org/10.1109/TPEL.2019.2948578)
 
-[6] S. Yu et al., “Quasi-Direct Drive Actuation for a Lightweight Hip Exoskeleton With High Backdrivability and High Bandwidth,” _IEEE/ASME Transactions on Mechatronics_, vol. 25, no. 4, pp. 1794–1802, 2020. [doi:10.1109/TMECH.2020.2995134](https://doi.org/10.1109/TMECH.2020.2995134), [arXiv](https://arxiv.org/abs/2004.00467)
+<span id="ref-4"></span>
 
-[7] B. Katz, “A Low Cost Modular Actuator for Dynamic Robots,” M.S. thesis, Massachusetts Institute of Technology, 2018. [MIT DSpace](https://dspace.mit.edu/handle/1721.1/118671)
+[4] A. Wahrburg, J. Bös, K. D. Listmann, F. Dai, B. Matthias, and H. Ding, “Motor-Current-Based Estimation of Cartesian Contact Forces and Torques for Robotic Manipulators and Its Application to Force Control,” *IEEE Transactions on Automation Science and Engineering*, vol. 15, no. 2, pp. 879–886, 2018. [Paper](https://doi.org/10.1109/TASE.2017.2691136)
+
+<span id="ref-5"></span>
+
+[5] P. M. Wensing, A. Wang, S. Seok, D. Otten, J. Lang, and S. Kim, “Proprioceptive Actuator Design in the MIT Cheetah: Impact Mitigation and High-Bandwidth Physical Interaction for Dynamic Legged Robots,” *IEEE Transactions on Robotics*, vol. 33, no. 3, pp. 509–522, 2017. [Paper](https://doi.org/10.1109/TRO.2016.2640183)
