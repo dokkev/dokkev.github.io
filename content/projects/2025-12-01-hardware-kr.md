@@ -27,44 +27,44 @@ redirect: /hardware01-kr/
 
 앞으로 다룰 주제들은 다음과 같습니다 (COMING SOON):
 
-08 - 케이블 구동 메커니즘 (1): 케이블과 Capstan Drive
+07 - 센서 (1) - Position Encoder
 
-09 - 메카니즘 (1): Proximal Actuation (Linkage, Belt, Cable)
+08 - 센서 (2) - Force Torque Sensor
 
-10 - 메카니즘 (2) - Differential (Cooperative) Mechanism
+09 - 센서 (3) - Tactile Sensor
 
-11 - 메카니즘 (3) - Parallel Mechanism
+10 - 센서 (4) - IMU
 
-12 - 메카니즘 (4) - Underactuated Mechanism
+11 - 케이블 구동 메커니즘 (1): 케이블과 Capstan Drive
 
-13 - 메카니즘 (5) - Compliant/Adaptive Mechanism
+12 - 메카니즘 (1): Proximal Actuation (Linkage, Belt, Cable)
 
-14 - 메카니즘 (6) - Polycentric Joint
+13 - 메카니즘 (2) - Differential (Cooperative) Mechanism
 
-15 - 탄성 기반 메카니즘 (1) - Series Elastic Actuator
+14 - 메카니즘 (3) - Parallel Mechanism
 
-16 - 탄성 기반 메카니즘 (2) - Parallel Elastic Actuator
+15 - 메카니즘 (4) - Underactuated Mechanism
 
-17 - 탄성 기반 메카니즘 (3) - Variable Stiffness Actuator
+16 - 메카니즘 (5) - Compliant/Adaptive Mechanism
 
-18 - 동역학 제어 (1) - Lagrangian Mechanics and Equations of Motion
+17 - 메카니즘 (6) - Polycentric Joint
 
-19 - 동역학 제어 (2) - Floating Base (Underactuated) System
+18 - 탄성 기반 메카니즘 (1) - Series Elastic Actuator
 
-20 - 동역학 제어 (3) - Impedance/Admittance Control
+19 - 탄성 기반 메카니즘 (2) - Parallel Elastic Actuator
 
-21 - 동역학 제어 (4) - Operational Space / Whole Body Controller
+20 - 탄성 기반 메카니즘 (3) - Variable Stiffness Actuator
 
-22 - 센서 (1) - Position Encoder
+21 - 동역학 제어 (1) - Lagrangian Mechanics and Equations of Motion
 
-23 - 센서 (2) - Force Torque Sensor
+22 - 동역학 제어 (2) - Floating Base (Underactuated) System
 
-24 - 센서 (3) - Tactile Sensor
+23 - 동역학 제어 (3) - Impedance/Admittance Control
 
-25 - 센서 (4) - IMU
+24 - 동역학 제어 (4) - Operational Space / Whole Body Controller
 
-26 - 통신 (1) - I2C/SPI/SSI/UART
+25 - 통신 (1) - I2C/SPI/SSI/UART
 
-27 - 통신 (2) - CAN/RS485/EtherCAT
+26 - 통신 (2) - CAN/RS485/EtherCAT
 
-28 - 제어 시스템 아키텍처 (1) - Real-Time Control
+27 - 제어 시스템 아키텍처 (1) - Real-Time Control

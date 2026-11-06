@@ -76,7 +76,7 @@ npm run dev     # 로컬 서버, 기본 http://127.0.0.1:4321
 
 리디렉트는 `astro.config.mjs`의 `redirects` 옵션으로 넣습니다(예: `redirects: { "/hardware07-kr/": "/hardware06-kr/" }`). Astro 7.4.2 정적 빌드에서 이 옵션은 옛 경로에 `<meta http-equiv="refresh">`, `noindex`, canonical 링크가 들어간 리디렉트 HTML을 만듭니다(2026-11-02 테스트 빌드로 확인). 옛 URL의 글이 아직 존재하면 경로가 충돌하므로, 해당 글을 합치거나 permalink를 바꾼 뒤에 리디렉트를 추가합니다. front matter의 `redirect` 필드는 외부 링크 안내 문구용이며 리디렉트가 아닙니다.
 
-KR 08(케이블·Capstan, `published: false`)은 이번 재구성 범위 밖입니다. 03-4 서브포스트로 넣을지 별도 파트로 둘지는 Phase 8 이후에 정합니다.
+2026-11-05 사용자 결정: 액추에이터 파트(01–06) 다음 파트는 센서입니다. 프로젝트 페이지 로드맵에서 센서를 07–10으로 올리고 나머지를 한 칸씩 밀었습니다(케이블·Capstan은 11). KR 08(케이블·Capstan, `published: false`)은 이번 재구성 범위 밖입니다. 03-4 서브포스트로 넣을지 별도 파트로 둘지는 Phase 8 이후에 정합니다.
 
 ### 수정본 원고
 

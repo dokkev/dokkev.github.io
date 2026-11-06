@@ -56,7 +56,7 @@ const text = {
     derate: "derating zone",
     tau: "Thermal time constant R_thC_th",
     note:
-      "First-order lumped thermal model of a joint holding a load at zero speed. Only copper loss R(T)·i_q² is modeled; the current limit falls from 80 °C to zero at 115 °C. Default parameters are the example values used in the post's figure, not measurements.",
+      "First-order lumped thermal model of a joint holding a load at zero speed. Only copper loss R(T)·i_q² is modeled; the current limit starts at 60 A and falls from 80 °C to zero at 115 °C. Default parameters are the example values used in the post, not measurements.",
   },
 };
 

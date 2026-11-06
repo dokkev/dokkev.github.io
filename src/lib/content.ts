@@ -99,7 +99,7 @@ function documents(folder: "blog" | "projects"): Document[] {
         body: data.coming_soon === true ? "" : content,
         date,
         updated: data.updated,
-        mdx: filename.endsWith(".mdx") ? path.relative(root, filename) : undefined,
+        mdx: filename.endsWith(".mdx") ? path.relative(root, filename).split(path.sep).join("/") : undefined,
         lang: data.lang || "en",
         hidden: data.hidden === true,
         comingSoon: data.coming_soon === true,
