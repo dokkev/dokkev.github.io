@@ -154,7 +154,7 @@ description(부제)은 내용을 설명하는 한 줄로 쓴다. "Physical AI �
 "다음 포스트" 링크의 제목은 대상 글의 title과 글자 하나까지 같게 쓴다.
 front matter의 series_order, series_label을 로드맵 번호와 맞춘다.
 KR과 EN은 같은 구조, 같은 그림, 같은 참고문헌 번호를 유지한다. 한쪽을 고치면 다른 쪽도 고친다.
-번호가 바뀌어 URL이 겹치는 글은 번호 대신 내용 기반 permalink를 쓰고, 옛 URL은 새 글로 리디렉트한다 (CLAUDE.md의 URL 계획 참조).
+KR permalink는 글 번호를 따른다(/hardwareNN-kr/). 번호가 바뀌어 옛 URL이 생기면 새 글로 리디렉트한다 (CLAUDE.md의 URL 계획 참조).
 9. 참고문헌과 이미지
 형식은 IEEE 스타일을 따른다: 저자, “제목,” 학술지, 권, 호, 쪽, 연도. DOI 링크를 단다.
 번호는 본문에 처음 나오는 순서대로 매긴다.

@@ -11,9 +11,9 @@ export default defineConfig({
   output: "static",
   trailingSlash: "always",
   redirects: {
-    // Robot Hardware restructure: old 05 (torque ripple) and 06 (backlash) merged into the new 04
-    "/hardware05-kr/": "/hardware-torque-ripple-backlash-kr/",
-    "/hardware06-kr/": "/hardware-torque-ripple-backlash-kr/",
+    // Robot Hardware: KR permalinks follow the post numbers (01-06); old content-based/shifted URLs redirect
+    "/hardware-torque-ripple-backlash-kr/": "/hardware05-kr/",
+    "/hardware07-kr/": "/hardware06-kr/",
   },
   integrations: [react(), mdx(), sitemap()],
   markdown: {

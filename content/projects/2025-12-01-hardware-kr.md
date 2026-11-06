@@ -21,9 +21,9 @@ redirect: /hardware01-kr/
 
 [로봇 하드웨어 04 - 액추에이터 (3): 기계적 임피던스](/hardware04-kr/)
 
-[로봇 하드웨어 05 - 액추에이터 (4): 토크 리플과 백래시](/hardware-torque-ripple-backlash-kr/)
+[로봇 하드웨어 05 - 액추에이터 (4): 토크 리플과 백래시](/hardware05-kr/)
 
-[로봇 하드웨어 06 - 액추에이터 (5): 토크 상수와 발열](/hardware07-kr/)
+[로봇 하드웨어 06 - 액추에이터 (5): 토크 상수와 발열](/hardware06-kr/)
 
 앞으로 다룰 주제들은 다음과 같습니다 (COMING SOON):
 

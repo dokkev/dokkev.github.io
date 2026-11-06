@@ -64,19 +64,17 @@ npm run dev     # 로컬 서버, 기본 http://127.0.0.1:4321
 | `/hardware07-kr/` (발열) | 새 06의 재료. 효율 지도와 열 기준 최적 감속비는 새 04로 |
 | (없음) | 새 07 "시뮬레이터를 위한 액추에이터 모델" |
 
-### URL 계획 (제안 — 실행 전 사용자 확인)
+### URL 계획
 
-번호가 바뀌면 기존 번호 URL과 겹치므로, 04 이후의 글은 내용 기반 permalink를 씁니다. EN은 `-kr`를 뺀 같은 slug를 씁니다.
+2026-11-05 사용자 결정: KR permalink는 글 번호를 따릅니다(`/hardware01-kr/` ~ `/hardware06-kr/`). 내용 기반 slug는 쓰지 않습니다.
 
-| 새 글 | 제안 permalink (KR) | 리디렉트할 옛 URL |
+| 글 | permalink (KR) | 리디렉트되는 옛 URL |
 | --- | --- | --- |
-| 04 기계적 임피던스 | `/hardware04-kr/` 유지 (번호가 맞으므로 리디렉트 불필요, 내용 기반 slug로 바꿀지는 사용자 확인) | (없음) |
-| 05 토크 리플과 백래시 | `/hardware-torque-ripple-backlash-kr/` (적용됨) | `/hardware05-kr/`, `/hardware06-kr/` (적용됨) |
-| 05-1 전류 측정과 샘플링 | `/hardware-current-sensing-kr/` | (없음) |
-| 06 토크 추정과 발열 | `/hardware-torque-estimation-heat-kr/` | `/hardware07-kr/` |
-| 07 액추에이터 모델 | `/hardware-actuator-model-kr/` | (없음) |
+| 04 기계적 임피던스 | `/hardware04-kr/` | (없음) |
+| 05 토크 리플과 백래시 | `/hardware05-kr/` | `/hardware-torque-ripple-backlash-kr/` |
+| 06 토크 상수와 발열 | `/hardware06-kr/` | `/hardware07-kr/` |
 
-리디렉트는 `astro.config.mjs`의 `redirects` 옵션으로 넣습니다(예: `redirects: { "/hardware05-kr/": "/hardware-torque-ripple-backlash-kr/" }`). Astro 7.4.2 정적 빌드에서 이 옵션은 옛 경로에 `<meta http-equiv="refresh">`, `noindex`, canonical 링크가 들어간 리디렉트 HTML을 만듭니다(2026-11-02 테스트 빌드로 확인). 옛 URL의 글이 아직 존재하면 경로가 충돌하므로, 해당 글을 합치거나 permalink를 바꾼 뒤에 리디렉트를 추가합니다. front matter의 `redirect` 필드는 외부 링크 안내 문구용이며 리디렉트가 아닙니다.
+리디렉트는 `astro.config.mjs`의 `redirects` 옵션으로 넣습니다(예: `redirects: { "/hardware07-kr/": "/hardware06-kr/" }`). Astro 7.4.2 정적 빌드에서 이 옵션은 옛 경로에 `<meta http-equiv="refresh">`, `noindex`, canonical 링크가 들어간 리디렉트 HTML을 만듭니다(2026-11-02 테스트 빌드로 확인). 옛 URL의 글이 아직 존재하면 경로가 충돌하므로, 해당 글을 합치거나 permalink를 바꾼 뒤에 리디렉트를 추가합니다. front matter의 `redirect` 필드는 외부 링크 안내 문구용이며 리디렉트가 아닙니다.
 
 KR 08(케이블·Capstan, `published: false`)은 이번 재구성 범위 밖입니다. 03-4 서브포스트로 넣을지 별도 파트로 둘지는 Phase 8 이후에 정합니다.
 
