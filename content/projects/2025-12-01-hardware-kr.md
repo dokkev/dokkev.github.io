@@ -1,6 +1,6 @@
 ---
 layout: distill
-title: Robot Hardware Series [KR]
+title: Robot Hardware Series
 description: Robot hardware notes from a Physical AI perspective
 img: assets/img/hardware/draco_writing.jpg
 importance: 7
@@ -8,7 +8,14 @@ category: robotics
 project_group: technical
 related_publications: false
 published: true
-redirect: /hardware01-kr/
+redirect: /hardware01/
+translations:
+  - lang: en
+    label: EN
+    url: /hardware01/
+  - lang: ko
+    label: KR
+    url: /hardware01-kr/
 ---
 
 영문판: [EN](/hardware01/)

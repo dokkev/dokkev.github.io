@@ -25,22 +25,38 @@ const groups = [
       <div class:list={["project-grid", { "project-grid-small": key === "earlier" }]}>
         {projects
           .filter((p) => p.group === key)
-          .map((project) => (
-            <a class="project-card" href={project.redirect || project.url}>
-              {project.image && (
-                <div class="project-image">
-                  <img src={project.image} alt={project.title} loading="lazy" />
+          .map((project) => {
+            const href = project.redirect || project.url;
+            const body = (
+              <>
+                {project.image && (
+                  <div class="project-image">
+                    <img src={project.image} alt={project.title} loading="lazy" />
+                  </div>
+                )}
+                <div class="project-copy">
+                  <h3>
+                    {project.title}
+                    <span>↗</span>
+                  </h3>
+                  <p>{project.description}</p>
                 </div>
-              )}
-              <div class="project-copy">
-                <h3>
-                  {project.title}
-                  <span>↗</span>
-                </h3>
-                <p>{project.description}</p>
+              </>
+            );
+            // projects with editions in several languages get EN / KR links under the card body
+            return project.translations.length > 1 ? (
+              <div class="project-card">
+                <a class="project-card-link" href={href}>{body}</a>
+                <nav class="project-langs" aria-label={`${project.title} language`}>
+                  {project.translations.map((t) => (
+                    <a href={t.url} lang={t.lang}>{t.label}</a>
+                  ))}
+                </nav>
               </div>
-            </a>
-          ))}
+            ) : (
+              <a class="project-card" href={href}>{body}</a>
+            );
+          })}
       </div>
     </section>
   ))}

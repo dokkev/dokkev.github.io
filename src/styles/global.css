@@ -422,6 +422,27 @@ h3 {
   transform: translateY(-3px);
   border-color: var(--accent);
 }
+.project-card-link {
+  display: block;
+}
+.project-langs {
+  display: flex;
+  gap: 8px;
+  padding: 0 22px 22px;
+  margin-top: -6px;
+}
+.project-langs a {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+}
+.project-langs a:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
 .project-image {
   background: var(--surface);
   overflow: hidden;
