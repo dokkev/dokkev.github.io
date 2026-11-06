@@ -1,0 +1,251 @@
+---
+title: "[Robot Hardware 05] - Actuators (4): Torque Ripple and Backlash"
+description: Why torque ripple tied to electrical angle and backlash tied to direction history cannot be modeled as state-independent noise, and how to measure and handle them
+published: true
+hidden: false
+date: 2025-12-07 00:00:00
+updated: 2026-11-05
+permalink: /hardware05/
+series: "[EN/KR] Robot Hardware"
+series_order: 5
+series_label: "05"
+lang: en
+translations:
+  - lang: en
+    label: EN
+    url: /hardware05/
+  - lang: ko
+    label: KR
+    url: /hardware05-kr/
+tags: [Hardware]
+---
+
+import TorqueRippleDemo from "../../../../src/components/demos/TorqueRippleDemo";
+import BacklashDemo from "../../../../src/components/demos/BacklashDemo";
+
+## Introduction: A Wavering Contact Force, a Finger One Beat Late
+
+Push an object slowly with a robot finger and the contact force is not constant; it wavers at regular intervals. Turn the same joint the other way and the motor moves first, while the finger stays still for a moment and then snaps along one beat late. Both look like noise at first, but if you repeat the same motion, they come back in the same place with the same shape.
+
+That is because neither error is random. Both are tied to a **hidden state** and repeat with it. The low-order components of torque ripple repeat with the same shape every time the rotor passes through the same electrical angle $\theta_e$, and backlash depends on which tooth flank is currently in contact and which direction the joint came from. To a controller or estimator that does not know this state, the error becomes a bias that shows up in the same direction every time under the same conditions.
+
+$$
+\tau_{\mathrm{joint}}(t) = \bar\tau + r(\theta_e, i_q, T) + f(\delta, z) + n(t)
+$$
+
+$r$ is the position-bound torque ripple, $f$ is the direction-dependent error tied to the transmission deflection $\delta$ and the contact flank state $z$, and $n(t)$ is the remainder that does not correlate with position or direction; sensor noise and the high-frequency ripple tied to the PWM carrier go here. This post looks at the first two terms in turn and then explains why both errors lead to the same conclusion.
+
+## Errors Tied to Position: Torque Ripple
+
+### Types of Ripple
+
+Seeing the joint torque fluctuate does not mean there is a single cause. Torque ripple splits into at least five sources.
+
+1. **Torque that exists even without current:** Cogging torque, which arises because the magnetic reluctance between a slotted stator and the permanent magnets changes with rotor position. The slot and pole counts set the period ($\mathrm{LCM}(N_s, 2p)/p$ times per electrical cycle), and the magnet shape and skew set the amplitude [1](#ref-1). For the 12-slot, 14-pole combination common in pancake motors, that is 12 times per electrical cycle.
+2. **Spatial harmonics of current-produced torque:** If the winding distribution and back-EMF are not perfectly sinusoidal, or the iron saturates, torque varies with rotor position even when the average $i_q$ is constant.
+3. **PWM switching ripple:** The inverter produces its average voltage by switching the DC bus, so current ripple appears around the switching frequency and its multiples. This component is tied to the carrier, that is, to time, not to the electrical angle, and at tens of kHz it barely reaches the link.
+4. **Inverter nonlinearity:** Dead time and device voltage drops make the actual phase voltage differ from the command, producing low-order current and torque harmonics such as the 5th and 7th in the stationary frame and the 6th in the rotor frame [2](#ref-2), [3](#ref-3).
+5. **Sensing and coordinate transform errors:** Offset and gain errors in the current sensors and electrical angle errors from the encoder mix the d and q axes, so the $i_q$ the controller believes in differs from the actual $i_q$ [4](#ref-4), [5](#ref-5).
+
+These components overlap in a measured torque spectrum. So rather than asking "what percent is the torque ripple," it is more useful for finding the cause to separate them: does it remain at zero current, is it synchronized to rotor position, does its frequency shift with speed, is it attached to the PWM frequency?
+
+The demo below plots the same joint torque three ways side by side while a loaded motor spins at constant speed. The simulator's ideal actuator outputs exactly the commanded torque, and a common fix adds Gaussian noise drawn independently at each step. The third trace is the torque with cogging, inverter harmonics, and encoder angle error added. On the time axis, the ripple frequency moves when the speed changes, but if you overlay the same samples against electrical angle, the same shape remains regardless of speed. Independent Gaussian noise with the same RMS looks much the same if you only look at the distribution of values, but overlaid on electrical angle it becomes a band with no structure. Drop the load to zero and the inverter harmonics and encoder error vanish, leaving only cogging. What separates the two is not the distribution but the correlation with electrical angle.
+
+What you see here is the electromagnetic torque produced by the motor. In torque or position measured at the joint, the link inertia and reducer filter out high frequencies, so as speed rises and the ripple frequency moves past the mechanical bandwidth, the ripple looks smaller and smaller.
+
+<TorqueRippleDemo client:visible lang="en" />
+
+### The d-q Frame Depends on the Encoder
+
+FOC transforms the three phase currents into a frame that rotates with the rotor flux [6](#ref-6). For a surface-mounted permanent magnet motor, the torque is
+
+$$
+\tau_e = \frac{3}{2}\,p\,\lambda_m\, i_q
+$$
+
+where $p$ is the number of pole pairs and $\lambda_m$ is the permanent magnet flux linkage; the factor $3/2$ assumes the amplitude-invariant d–q transform. The problem is that this frame is built on the angle the encoder reports. If the encoder zero is wrong, or there is mounting eccentricity or pole-spacing error in the magnet ring, the q axis the controller assumes and the actual q axis are offset by $\Delta\theta_e$. If the controller has produced $\hat i_d = 0$, $\hat i_q = I$, the actual axes see the following (the sign depends on the angle convention):
+
+$$
+|i_d| \approx I\,|\sin\Delta\theta_e|, \qquad i_q \approx I\cos\Delta\theta_e
+$$
+
+A constant angle error reduces average torque and creates an unwanted $i_d$. For small errors, $i_d$ grows at first order while the torque loss starts at second order, so the error is hard to notice by looking at torque alone. An angle error that varies with position is worse. Since $\Delta\theta_e$ changes periodically with the rotor, the torque oscillates with the same period. You can see this directly by adding an electrical angle error in [the FOC demo in post 02](/hardware02/).
+
+The electrical angle turns $p$ times faster than the mechanical angle ($\Delta\theta_e = p\,\Delta\theta_m$). In an outrunner pancake motor with many pole pairs, even a small mechanical angle error becomes a large electrical angle error. Sensor and computation delay $T_d$ also creates an angle error $\omega_e T_d$ proportional to speed, so a high-resolution encoder spec alone is not enough. Apart from resolution, you have to look at absolute accuracy, eccentricity, zero calibration, and delay together.
+
+### The Current the Controller Reads vs. the Actual Current
+
+The current a digital controller sees is a sample taken at a specific instant within the PWM period. Right after switching, the measurement path's transient response gets mixed in; depending on the number of shunts, there are intervals where phase current cannot be read; and if PWM and sampling are not synchronized, aliasing makes ripple at tens of kHz look like slow variation at a few Hz [7](#ref-7). Of these, the intervals where phase current cannot be read occur when the voltage vector crosses a sector boundary, so they are again tied to the electrical angle and repeat with it. Aliasing, by contrast, is a beat between the PWM and sampling frequencies, so it is tied to time, not position. Sampling timing and shunt configurations will be covered in a subpost on current measurement and sampling (planned).
+
+### Ripple After the Reducer
+
+The reducer is not a filter that removes ripple either. At low frequency, torque passes through reduced by the efficiency, but near the reducer's torsional resonance the ripple can actually grow. At a given joint speed the motor turns $N$ times faster than the joint, so ripple tied to motor position repeats $N$ times more densely per revolution when viewed in joint angle.
+
+The reducer also adds position-bound error of its own. Tooth profile errors, eccentricity, and assembly errors cause transmission error: even under constant load, the output position deviates periodically in step with input rotation. In a harmonic drive, the component that repeats twice per input revolution is the largest, and vibration grows at speeds where that period coincides with the joint resonance ([Harmonic Drive](/hardware03-01/)).
+
+### Measurement and Mitigation
+
+Position-bound errors can be separated by cause if you measure while changing what they are synchronized to.
+
+1. **Slow backdriving at zero current:** Measures the position dependence of cogging and transmission friction.
+2. **Slow rotation at constant current:** Turn very slowly with constant $i_q$ and record torque against both mechanical and electrical angle.
+3. **Current angle sweep with the rotor locked:** Lock the rotor and measure torque while changing the electrical angle of the current vector to find the electrical angle zero. Large currents held for long heat the motor quickly, so use short pulses and a current limit.
+4. **Synchronous averaging over electrical angle:** Averaging over electrical angle instead of time leaves only the repeating components.
+5. **Changing the PWM frequency and ADC trigger position:** If the ripple moves with them, suspect the switching and measurement path before the motor geometry.
+6. **Input-angle analysis of the input–output encoder difference:** At low constant speed, record $\theta_m/N - q$ and run a frequency analysis against input angle. Which component per input revolution dominates lets you estimate where the reducer's transmission error comes from.
+
+Errors that repeat can be compensated. Cogging maps, encoder error maps, dead time compensation, and Iterative Learning Control are the typical tools [8](#ref-8). But the error maps themselves change with saturation, bus voltage, temperature, and load, so assuming one map covers every operating point brings the problem back.
+
+## Errors Tied to Direction: Backlash and Lost Motion
+
+### A Gap Left on Purpose
+
+Meshing gears cannot be made gap-free to their theoretical profile. Because of machining and assembly errors, elastic deformation under load, thermal expansion, and the space needed for a lubricant film, a gap is left so that the flanks do not bind even at worst-case tolerance. Too small a gap lowers efficiency and life and causes binding at certain positions; too large a gap increases position loss and impact at direction reversals. Backlash is a design margin among manufacturability, lubrication, heat, and reliability.
+
+### Backlash, Lost Motion, and Hysteresis
+
+| Phenomenon | Meaning | Where it mainly shows up |
+| --- | --- | --- |
+| Backlash | Geometric play before the opposite flank makes contact | When torque direction reverses |
+| Compliance | Elastic deformation of teeth, shafts, and housing under torque | Under load |
+| Hysteresis | Torque–deflection loop that depends on approach direction and past load | Reciprocating load |
+| Lost motion | Total input–output position loss measured in a defined reversal test | Low-torque reciprocating motion |
+
+Lost motion includes not only backlash but also elastic deformation and friction history in the low-torque region. So a datasheet's "zero backlash" and lost motion measured during an actual torque reversal are not the same number. Harmonic drives nearly eliminate flank play, but hysteresis and lost motion remain because of flexspline deformation and friction [9](#ref-9), [10](#ref-10), [11](#ref-11). Test definitions vary by manufacturer, so check the measurement procedure and load conditions as well.
+
+The simplest model is a dead zone that transmits no torque while the difference between input angle $\theta_m/N$ and output angle $q$, $\delta = \theta_m/N - q$, lies within a width $2b$.
+
+$$
+\tau_t(\delta)=
+\begin{cases}
+k(\delta-b), & \delta>b \\
+0, & |\delta|\le b \\
+k(\delta+b), & \delta<-b
+\end{cases}
+$$
+
+This is a memoryless model in which torque is determined by $\delta$ alone. To represent the direction-dependent loop of a real transmission, the flank currently in contact has to be kept as an internal state [12](#ref-12), [13](#ref-13).
+
+$$
+\tau_t = f(\delta, z), \qquad z \in \{-1, 0, +1\}
+$$
+
+$z$ denotes negative-flank contact, the free-play region, and positive-flank contact. This $z$ is the hidden state of backlash.
+
+The demo below mounts a 1:1 pair of spur gears on the motor to remove the effect of reduction, and attaches a 0.4 m link to the output gear. The motor reciprocates slowly following a position command, and the dashed line marks where the link would be with no play. When the load torque is near zero, link friction dominates inertia at low speed, so at the moment of reversal $z$ passes through 0, the link is held by friction and stays put, and only the motor crosses the gap. When the opposite flank makes contact again there is an impact in the transmitted torque, and in the meantime the link tip is off the dashed line by $\ell\,\delta$. The demo treats the flanks as rigid ($k \to \infty$), so $\delta = \pm b$ while in contact and re-engagement appears as a collision. With a 0.4 m link, a half-width of 0.18° of play is about 1.3 mm at the tip. Raise the reciprocation frequency until inertial torque exceeds friction, and the flank switch moves from the direction reversal to mid-stroke, where the acceleration flips. Plot input and output angle together and each reversal produces a flat segment where the output stands still, forming a parallelogram hysteresis loop of width $2b$. Press Hold motor and the motor stays in place, but whenever a disturbance that shakes the link, such as vibration or contact, exceeds friction, the link rattles between the two flanks. Even with perfect position control, the link's position inside the play is not controlled. Conversely, if a load that pushes one way, such as gravity, exceeds the inertial torque needed for the reciprocation plus friction, only one flank stays in contact and the play does not show up even in the same reducer. It appears only in postures or contacts where the load direction changes.
+
+<BacklashDemo client:visible lang="en" />
+
+### Preload: Load Instead of a Gap
+
+Split a gear into two halves and preload them against each other with a spring, and both flanks stay in contact at no load. This is useful where loads are small and reversal accuracy matters, as in precision positioning. But the larger the preload, the more flank friction and bearing load increase, worsening efficiency, temperature, and wear; and once external torque exceeds the preload, one gear unloads and lost motion reappears. In joints that take large bidirectional torque and impacts, such as a humanoid's knee, increasing preload alone does not solve the problem.
+
+### Temporary Separation of Motor and Link
+
+Backlash makes control hard not only because it creates position error. At the moment torque direction reverses, the transmitted torque drops out and the motor and link move independently of each other. Written in output-shaft coordinates,
+
+$$
+N^2J_m\,\ddot q_m = \tau_{\mathrm{act}} - \tau_t,
+\qquad
+J_L\,\ddot q + B\dot q + \tau_{\mathrm{load}} = \tau_t + \tau_{\mathrm{ext}}
+$$
+
+and inside the play ($|\delta| \le b$), $\tau_t \approx 0$. A position controller that uses only the motor encoder sees the motor following quickly and judges everything normal, but the link may not have moved yet. The joint angle corresponding to a single motor-side position is spread over the range $q \in [q_m - b,\ q_m + b]$, so an instantaneous measurement alone cannot determine the joint angle or the contact flank.
+
+When the opposite flank engages again, the relative velocity gained while crossing the gap produces an impact torque. The higher the gains used to cross the gap quickly, the larger the impact, and repeated reversals show up as limit cycles or noise. In a dual encoder setup, with encoders on both the motor and the output shaft, you can compute $\delta$ directly and know whether you are inside the play and which flank is in contact.
+
+### External Force Estimation Vulnerable to Backlash
+
+In robots that estimate external force from motor current without joint torque sensors, backlash breaks the observation itself. Inside the play, torque on the motor ($\tau_m \ne 0$) is not transmitted to the output shaft ($\tau_t \approx 0$). This leads to two failures. The current the motor draws while crossing the gap, and the current spike when the flanks collide, can be mistaken for external contact; conversely, an external force can move the link within the play while the motor shaft barely moves, so the contact is missed. Errors in current-based external force estimation in general are covered in [the post on torque estimation](/hardware06/).
+
+### Play That Changes Over Time
+
+Lost motion measured on a new reducer is not a fixed value. Wear on flanks and bearings enlarges the gap, the temperature and distribution of the lubricant change the friction history even for the same gap, preload springs relax, and impacts leave local deformation. The actual relationship is closer to a function that includes the contact flank, load history, temperature, and hours of use than to $\tau = f(\delta)$, which is why research continues on modeling backlash as a dynamic nonlinearity with hidden state or estimating it from data [12](#ref-12), [13](#ref-13), [14](#ref-14).
+
+### End-Effector Error That Grows with Posture
+
+Joint error $\delta q$ becomes end-effector error through the Jacobian ($\delta x \approx J(q)\,\delta q$). The same 0.1° produces end-effector error of different magnitude and direction with the arm extended or folded, and in a humanoid, where the joint chain runs long from foot to hand, the direction histories of many joints all feed into fingertip position and force at once. Approaching from the same direction engages the same flank, so repeatability can be good; but approaching from the opposite direction or reversing the load direction uses the other flank, so a robot with good repeatability is not guaranteed to be accurate in bidirectional force tasks.
+
+### Measurement and Mitigation
+
+- **Torque–deflection loop:** Lock the output shaft, slowly ramp motor torque up and down in both directions, and record $\theta_m/N - q$. The flat region near the origin is lost motion, the loop width is hysteresis, and the slope of the outer region is stiffness. Repeat at different loads and temperatures.
+- **Design:** Rather than a single backlash number, look at lost motion curves by load, torsional stiffness, and temperature range.
+- **Control:** Do not blindly raise gains near reversals; if needed, use an output-shaft encoder or a joint torque sensor.
+- **Policy observations:** If you cannot feed in output-shaft angle or the dual encoder difference, at least put the recent direction of motion into the observation so the policy has a cue for estimating the contact flank.
+
+## Why Neither Error Can Be Represented as Independent Noise
+
+Torque ripple and backlash come from different physics, but from the simulator's point of view they share the same properties.
+
+| Property | Torque ripple | Backlash and lost motion |
+| --- | --- | --- |
+| Hidden state it is tied to | Electrical angle $\theta_e$, current, temperature, bus voltage | Contact flank $z$, direction history, deflection $\delta$ |
+| When the same condition recurs | Repeats with the same shape | Same error from the same direction |
+| When speed or direction changes | Time-domain frequency shifts with it | Reappears at every reversal |
+| Over time | Amplitude changes with temperature and load | Width changes with wear and lubrication |
+
+The noise commonly used in simulators is Gaussian drawn independently at each step. The problem is not that the distribution is Gaussian but that it assumes the error is unrelated to state. On a real robot the same error repeats at the same position and in the same direction, so instead of an error that averages away over many steps like independent noise, it becomes a bias that persists for as long as the robot stays in that state.
+
+That does not mean these errors always need to be modeled separately. When the ripple frequency is far above the mechanical bandwidth, as in fast walking, the link filters out most of the ripple, so approximating it as independent noise may make little difference. For slow motions where the ripple frequency drops into the control and mechanical bandwidth, force control, contact tasks, and motions with frequent reversals, it is better to keep the position-bound periodic error and the direction-dependent play as separate terms. Which terms to identify and which to randomize is collected in [Actuator Part Summary](/hardware06/#actuator-part-summary).
+
+If ripple and backlash are errors that repeat quickly with position and direction, the one that remains changes much more slowly. The next post looks at how the torque constant, which links current to torque, changes with temperature.
+
+[Next post: [Robot Hardware 06] - Actuators (5): Torque Constant and Heat](/hardware06/)
+
+## References
+
+<span id="ref-1"></span>
+
+[1] Z. Q. Zhu and D. Howe, “Influence of Design Parameters on Cogging Torque in Permanent Magnet Machines,” *IEEE Transactions on Energy Conversion*, vol. 15, no. 4, pp. 407–412, 2000. [Paper](https://doi.org/10.1109/60.900501)
+
+<span id="ref-2"></span>
+
+[2] Texas Instruments, “48-V Three-Phase Inverter With Shunt-Based In-Line Motor Phase Current Sensing,” TIDUCE8A. [PDF](https://www.ti.com/lit/ug/tiduce8a/tiduce8a.pdf)
+
+<span id="ref-3"></span>
+
+[3] Texas Instruments, “Current Sensing With &lt;1-µs Settling for 1-, 2-, and 3-Shunt FOC Inverter,” TIDUCY7. [PDF](https://www.ti.com/lit/ug/tiducy7/tiducy7.pdf)
+
+<span id="ref-4"></span>
+
+[4] R. Raja, T. Sebastian, M. Wang, A. Gebregergis, and M. S. Islam, “Effect of Position Sensor Error on the Performance of Permanent Magnet Machine Drives,” *IEEE Transactions on Industry Applications*, vol. 53, no. 6, pp. 5518–5526, 2017. [Paper](https://doi.org/10.1109/TIA.2017.2704898)
+
+<span id="ref-5"></span>
+
+[5] M. Pramod, “Position Sensing Errors in Synchronous Motor Drives,” arXiv:2310.00977, 2023. [arXiv](https://arxiv.org/abs/2310.00977)
+
+<span id="ref-6"></span>
+
+[6] Texas Instruments, “Sensored Field Oriented Control of 3-Phase Permanent Magnet Synchronous Motors Using TMS320F2837x,” SPRABZ0. [PDF](https://www.ti.com/lit/an/sprabz0/sprabz0.pdf)
+
+<span id="ref-7"></span>
+
+[7] Texas Instruments, “Sensorless-FOC for PMSM With Single DC-Link Shunt,” SPRACT7. [PDF](https://www.ti.com/lit/an/spract7/spract7.pdf)
+
+<span id="ref-8"></span>
+
+[8] W. Qian, S. K. Panda, and J.-X. Xu, “Torque Ripple Minimization in PM Synchronous Motors Using Iterative Learning Control,” *IEEE Transactions on Power Electronics*, vol. 19, no. 2, pp. 272–279, 2004. [Paper](https://doi.org/10.1109/TPEL.2003.820537)
+
+<span id="ref-9"></span>
+
+[9] R. Dhaouadi, F. H. Ghorbel, and P. S. Gandhi, “A New Dynamic Model of Hysteresis in Harmonic Drives,” *IEEE Transactions on Industrial Electronics*, vol. 50, no. 6, pp. 1165–1171, 2003. [Paper](https://doi.org/10.1109/TIE.2003.819661)
+
+<span id="ref-10"></span>
+
+[10] C. Preissner, T. J. Royston, and D. Shu, “A High-Fidelity Harmonic Drive Model,” *Journal of Dynamic Systems, Measurement, and Control*, vol. 134, no. 1, 011002, 2012. [Paper](https://doi.org/10.1115/1.4005041)
+
+<span id="ref-11"></span>
+
+[11] Harmonic Drive LLC, “Reducer Catalog: Component Sets FB — Engineering Data.” [PDF](https://www.harmonicdrive.net/_hd/content/documents/FB_Component.pdf)
+
+<span id="ref-12"></span>
+
+[12] M. Nordin and P.-O. Gutman, “Controlling Mechanical Systems With Backlash—A Survey,” *Automatica*, vol. 38, no. 10, pp. 1633–1649, 2002. [Paper](https://doi.org/10.1016/S0005-1098(02)00047-X)
+
+<span id="ref-13"></span>
+
+[13] M. Ruderman, F. Hoffmann, and T. Bertram, “Modeling and Identification of Elastic Robot Joints With Hysteresis and Backlash,” *IEEE Transactions on Industrial Electronics*, vol. 56, no. 10, pp. 3840–3847, 2009. [Paper](https://doi.org/10.1109/TIE.2009.2015752)
+
+<span id="ref-14"></span>
+
+[14] E. Giovannitti, S. Nabavi, G. Squillero, and A. Tonda, “A Virtual Sensor for Backlash in Robotic Manipulators,” *Journal of Intelligent Manufacturing*, vol. 33, no. 7, pp. 1921–1937, 2022. [Paper](https://doi.org/10.1007/s10845-022-01934-z)

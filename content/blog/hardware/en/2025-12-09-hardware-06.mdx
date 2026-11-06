@@ -1,0 +1,227 @@
+---
+title: "[Robot Hardware 06] - Actuators (5): Torque Constant and Heat"
+description: A hot actuator is a different actuator. How the torque constant and resistance shift with temperature, when τ = ηNK_t i_q holds for reading and commanding torque through current, and why QDD, which leans on that equation the most, is also the most vulnerable to heat
+published: true
+hidden: false
+date: 2025-12-09 00:00:00
+updated: 2026-11-05
+permalink: /hardware06/
+series: "[EN/KR] Robot Hardware"
+series_order: 6
+series_label: "06"
+lang: en
+translations:
+  - lang: en
+    label: EN
+    url: /hardware06/
+  - lang: ko
+    label: KR
+    url: /hardware06-kr/
+tags: [Hardware]
+---
+
+import ThermalDemo from "../../../../src/components/demos/ThermalDemo";
+
+## Introduction: 30 Seconds and 10 Minutes
+
+A motion that works fine for the first 30 seconds after power-on starts to drift ten minutes later. Same policy, same joint angles, same torque commands, yet the standing posture sags, the jumps get lower, and the current limit is hit more often. The first suspects are the policy and the controller. Plot temperature alongside the logs and the cause shows up, but one odd thing remains. The winding temperature never came close to the protection limit, and the driver never once reduced the current.
+
+If heat is only a protection problem, the explanation stops here. Too hot and the current is cut, touch it and you get burned, run it long enough and the insulation degrades; so if the limit was never crossed, nothing should have happened. But even below the limit, winding resistance rises and magnet flux falls, so the same current produces a different torque and the same torque produces more heat. What changed over those ten minutes was neither the policy nor the controller. It was the actuator itself.
+
+Commanding torque with current, and reading torque and external force from current, all rest on one line.
+
+$$
+\tau_j \approx \eta\,N\,K_t\,i_q
+$$
+
+[03](/hardware03/) covered $\eta$ and $N$, and [05](/hardware05/) covered the ripple and electrical angle error mixed into $i_q$. This post looks at the one left, the torque constant $K_t$, because it is the value temperature changes most directly. A datasheet lists $K_t$ as a single number, but in practice it differs from motor to motor, with current, and with temperature, and temperature changes in the middle of an experiment. Here I expand on the heat that [02](/hardware02/#heat-a-model-that-changes-over-time) introduced in one paragraph, look at why QDD, which depends on this equation the most, is also the most vulnerable to heat, and then wrap up the actuator part.
+
+## Definition and Units of the Torque Constant
+
+$K_t$ is the torque produced by 1 A of q-axis current. In an ideal surface-mounted permanent magnet motor (SPMSM) it is set by the magnet flux linkage $\lambda_m$ and the number of pole pairs $p$, and the flux linkage includes the number of turns and layout of the winding along with the magnet strength. So $K_t$ is determined by the magnets and the winding together, and when the magnet flux changes, $K_t$ changes with it.
+
+The torque constant and the back-EMF constant $K_e$ are a pair that come from the same flux. If the current and voltage conventions are chosen so that power is conserved, the two are equal in SI units. Real datasheets and drivers, however, each use their own convention, so the numbers written for the same motor differ by factors such as $3/2$, $\sqrt 2$, or $\sqrt 3$, depending on whether phase current is given as peak or RMS, and whether quantities are per phase or line-to-line. If the definition of $i_q$ reported by the driver differs from the datasheet's, the torque estimate is off by tens of percent even with no other error at all. This definition is the first thing to align in system identification.
+
+<details className="math-details">
+<summary>Math: torque constant, back-EMF constant, and current definitions</summary>
+
+With the amplitude-invariant dq transform, the q-axis back-EMF is $e_q = p\,\lambda_m\,\omega_m$, and $i_q$ and $e_q$ have the same magnitude as the peak phase current and phase voltage. Three-phase power is $P = \tfrac{3}{2}(v_d i_d + v_q i_q)$, so from the mechanical output $\tau\,\omega_m = \tfrac{3}{2}\,e_q\,i_q$,
+
+$$
+\tau_e = \tfrac{3}{2}\,p\,\lambda_m\,i_q, \qquad K_t = \tfrac{3}{2}\,p\,\lambda_m, \qquad K_{e,\mathrm{pk}} = p\,\lambda_m
+$$
+
+That is, in this convention $K_t = \tfrac{3}{2}K_{e,\mathrm{pk}}$, and with the power-invariant transform the two become equal. Written in terms of RMS phase current, the same torque gives $K_{t,\mathrm{rms}} = \sqrt 2\,K_{t,\mathrm{pk}}$, and a back-EMF constant given in line-to-line voltage is $\sqrt 3$ times larger than one given in phase voltage. Copper loss must follow the same definition: $P_{Cu} = \tfrac{3}{2} R_s (i_d^2 + i_q^2)$ in amplitude-invariant dq, and $P_{Cu} = 3 I_{\mathrm{rms}}^2 R_{\mathrm{phase}}$ in RMS phase current. The examples and demo below fold these factors into a single equivalent $R$ and write $P_{Cu} = R\,i_q^2$.
+
+</details>
+
+## What Changes the Torque Constant
+
+As the [table in 02](/hardware02/) showed, even motors of the same model have a $K_t$ that differs from the nominal value because of manufacturing variation in the magnets and air gap. This difference is fixed for each joint, so it can be corrected after one measurement. The rest changes with operating conditions.
+
+**Current.** At high current the iron core saturates, and each added amp produces less added torque. $K_t$ is nearly constant up to around the continuous current and drops near the peak current, so the more torque a motion uses, the more the nominal $K_t$ overestimates the torque.
+
+**Electrical angle.** If the encoder zero is off by $\Delta\theta_e$, only $\cos\Delta\theta_e$ of the current the controller believes is on the q-axis produces torque ([05](/hardware05/#the-d-q-frame-depends-on-the-encoder)). In a measurement it looks as if $K_t$ has shrunk, but the cause is the angle, not the motor.
+
+**Temperature.** The flux of NdFeB magnets drops by about 0.1% for every 1 K rise. Manufacturer material gives an example in which $K_t$ falls by about 5% when the motor is 50 °C hotter [1](#ref-1). Within the normal operating temperature range this change is reversible and recovers when the motor cools. Beyond the allowed temperature, or with a strong reverse field applied at the same time, irreversible demagnetization occurs, and then $K_t$ does not return to its original value even after cooling.
+
+This distinction shows the point of view of this post. Irreversible demagnetization is exactly the case where the protection view is right: crossing the limit damages the motor, so the limit must not be crossed. Reversible temperature change, on the other hand, happens continuously far below the limit, and it is not something to prevent but a state to track with a model. Irreversible demagnetization means the motor is broken; a reversible change means the motor has temporarily become a different motor.
+
+## Same Current, Different Torque: What Temperature Changes
+
+Temperature does not change only $K_t$. The resistance of a copper winding rises by about 0.39% per 1 K [1](#ref-1). Following the series example, if the winding and magnets go from 25 °C to 75 °C, resistance rises by about 19.5% and $K_t$ falls by about 5%. The same current produces 5% less torque, and the same torque costs more heat.
+
+The two changes push in the same direction. Producing the same torque takes $1/0.95$ times the current, and that current passes through a larger resistance, so copper loss rises by about 32%. Higher loss means more heat, which forms a feedback loop, but with enough cooling the temperature settles at a higher equilibrium. This feedback does not by itself mean thermal runaway; it raises the equilibrium temperature.
+
+At first, the current controller hides the rise in resistance. As long as there is voltage headroom, it applies more voltage and keeps the current the same. If speed then rises with that headroom already reduced and the back-EMF grows too, the voltage limit the inverter can deliver is reached sooner, and from that point the current can no longer follow the command and torque drops. Rising resistance shows up first as loss and lost voltage headroom; falling torque constant shows up directly as less torque for the same current.
+
+<details className="math-details">
+<summary>Math: resistance, torque constant, and copper loss versus temperature</summary>
+
+$$
+R(T) = R_{25}\,[1 + \alpha(T - 25)], \qquad K_t(T) = K_{t,25}\,[1 + \beta(T - 25)]
+$$
+
+For copper $\alpha \approx 0.0039\,/\mathrm{K}$, and for NdFeB flux $\beta \approx -0.001\,/\mathrm{K}$. The copper loss needed to hold the same torque $\tau$ is $P_{Cu} = R\,(\tau/K_t)^2$, so
+
+$$
+\frac{P_{Cu}(75\,^\circ\mathrm{C})}{P_{Cu}(25\,^\circ\mathrm{C})} = \frac{1.195}{0.95^2} \approx 1.32
+$$
+
+The steady-state q-axis voltage with $i_d \approx 0$ is $v_q \approx R\,i_q + \omega_e \lambda_m$, and when this exceeds the inverter's voltage limit, the current loop saturates. Temperature increases the first term and lowers the speed at which this limit is reached.
+
+</details>
+
+The demo below computes the winding temperature of a joint holding a load at zero speed. The example motor is much larger than the series example joint from 02–04; it is the size used in QDD joints, with $R_{25} = 0.09\,\Omega$, $K_{t,25} = 0.32\,\mathrm{N\,m/A}$, a thermal resistance of 0.42 K/W, and a heat capacity of 105 J/K. The current limit starts at 60 A, decreases linearly from 80 °C, and reaches zero at 115 °C (example values). Commanding 11 N·m at the motor shaft with the nominal $K_t$ fixes the current at 34 A, and the winding settles at about 79 °C, but the actual torque there is 10.4 N·m, about 5% short. Commanding with a $K_t$ corrected for temperature keeps 11 N·m, but the current rises to 37 A, the winding climbs to about 89 °C, and it enters the derating range, cutting the usable current limit to 45 A. Match the torque and the heat goes up; save on heat and the torque falls short. In both cases the temperature stays far below the 115 °C protection limit. The protection circuit did nothing, and the actuator is already a different actuator.
+
+<ThermalDemo client:visible lang="en" />
+
+## Heat per Unit Torque and the Gear Ratio
+
+Rewriting copper loss in terms of torque gives $P_{Cu} = (\tau/K_m)^2$. $K_m = K_t/\sqrt R$ is the motor constant, the torque that can be produced per 1 W of copper loss. The heat it takes to hold a given torque is set not by $K_t$ alone but by the ratio of $K_t$ to resistance, and as temperature rises $K_t$ falls while $R$ rises, so $K_m$ gets worse from both sides. The example motor has $K_m \approx 1.07\,\mathrm{N\,m/\sqrt W}$ at 25 °C and needs about 106 W to hold 11 N·m.
+
+At the joint, the reducer multiplies the motor constant by $\eta N$. Copper loss for a given joint torque is proportional to $1/(\eta N K_m)^2$, so lowering the gear ratio by 10 times makes the copper loss 100 times larger with the same motor. This is the heat that [04](/hardware04/#design-space-high-reduction-qdd-sea-direct-drive) listed as a cost QDD pays, and it is also why QDD uses outrunner motors with a large air-gap radius: to raise $K_m$ for the same volume [2](#ref-2). Copper loss stays even when the joint does not move, so holding a squat, holding an arm out horizontally, and pushing against the ground for a long time are the most expensive motions thermally. Mechanical output is zero, and all the power becomes heat. That for QDD this cost does not end with heat is something we come back to later.
+
+Losses other than copper loss grow with speed. Iron loss, eddy current loss, bearing and reducer friction, and inverter switching loss all increase with motor speed, so a higher gear ratio raises these losses at the same joint speed. That is why the motor's most efficient operating point lies inside the torque–speed plane, and the best gear ratio from a thermal standpoint differs for each duty cycle. Regenerative braking during deceleration can return part of the mechanical energy, but the $I^2R$ loss already dissipated in the winding does not come back.
+
+## What Changes Before It Stops: Continuous Torque and Thermal Time Constant
+
+How long an actuator can keep producing force is decided by heat, not by peak torque. Heat capacity lets it ride through short peaks, and thermal resistance sets the loss it can sustain. The example motor has a thermal time constant of about 44 seconds, so peaks lasting a few seconds are nearly free, while loads lasting over a minute must be judged by the equilibrium temperature. Two actuators with the same peak torque can have very different continuous torque depending on the contact between winding and stator, potting, housing area, and airflow inside the joint.
+
+The datasheet's continuous torque and the driver's derating answer the question of when to stop. The question this post asks is what changes before it stops. Even running below continuous torque, the winding rises to its equilibrium temperature, and $K_t$ and resistance at that temperature differ from their cold values. Continuous torque is the range in which the motor is not damaged, not the range in which the motor does not change.
+
+A single thermal node cannot represent the different time constants of the winding and the housing. Right after a large current is applied, the winding heats up first and the housing and magnets follow later, so even at the same housing temperature, the winding and magnet temperatures differ depending on the recent operating history.
+
+<details className="math-details">
+<summary>Math: one-node and two-node thermal models</summary>
+
+$$
+C_{th}\,\dot T = P_{\mathrm{loss}} - \frac{T - T_{\mathrm{amb}}}{R_{th}}, \qquad \tau_{th} = R_{th} C_{th}
+$$
+
+The equilibrium temperature is $T_{\mathrm{amb}} + R_{th} P_{\mathrm{loss}}$, and with the example values $\tau_{th} = 0.42 \times 105 \approx 44\,\mathrm{s}$. Splitting into winding $T_w$ and housing $T_h$,
+
+$$
+C_w \dot T_w = P_{Cu} - \frac{T_w - T_h}{R_{wh}}, \qquad
+C_h \dot T_h = \frac{T_w - T_h}{R_{wh}} + P_{\mathrm{other}} - \frac{T_h - T_{\mathrm{amb}}}{R_{ha}}
+$$
+
+and since usually $C_w \ll C_h$, the winding's time constant is much shorter. A sensor on the housing sees only $T_h$, so many values of $T_w$ correspond to the same $T_h$.
+
+</details>
+
+## The Rotor Temperature That Cannot Be Measured Directly
+
+What changes $K_t$ is the magnet temperature, and the magnets are attached to the rotor and spin with it. A thermistor is easy to attach to the winding and stator, but measuring rotor temperature requires a slip ring or wireless telemetry, which adds mass to the rotating part, wiring, and failure points. So most robot actuators measure only a single stator temperature. For protection this is enough, because the winding is the first thing to become dangerous. For tracking $K_t$, though, it means not seeing the temperature that actually matters.
+
+Magnet temperature is estimated indirectly from electrical signals. Measuring back-EMF at a known speed gives the flux linkage, and since flux varies with magnet temperature, the magnet temperature can be back-calculated [3](#ref-3). Winding temperature is estimated from the change in resistance. Both estimates depend on the accuracy of current measurement, electrical angle, and motor parameters, so they are often combined into an observer together with the stator sensor and a thermal model.
+
+## Measuring and Calibrating the Torque Constant
+
+$K_t$ is obtained by mounting a load cell or F/T sensor on the output shaft and measuring torque while stepping the current. Measuring at standstill mixes in friction, so measure in both directions and average, and measuring up to large currents gives the saturation curve as well. Repeating this cold and fully warmed up gives the temperature coefficient. The result is a lookup table indexed by current and stator temperature.
+
+This table has two limitations. First, its temperature axis is stator temperature, while $K_t$ is set by magnet temperature, so with a different operating history the actual $K_t$ differs even within the same cell. Second, thermal resistance and heat capacity are not intrinsic to the actuator but depend on how it is mounted. A large aluminum jig on the bench acts as a heat sink, while on the robot the actuator may be enclosed under a plastic cover or, conversely, the whole link may become a heat sink. Use the thermal model from single-unit tests as a starting point, and refit it with operating logs after the actuator is mounted on the robot.
+
+## Reading Torque and External Force from Current
+
+A robot without joint torque sensors reads joint torque from current and subtracts its own dynamics to estimate external force [4](#ref-4). The error in this approach comes from two parts. One is the path from current to actuator torque, which includes this post's $K_t$, the efficiency and friction from [03](/hardware03/), and the ripple and backlash from [05](/hardware05/). The other is the path from actuator torque to external force, where errors in the link inertia, gravity, and friction models go straight into the external force estimate. During fast acceleration or under large gravity loads, the terms to subtract are larger than the external force, and small external forces get buried in model error.
+
+QDD can control contact force from current alone because it reduces friction and reflected inertia, two of these error sources, in hardware. The low gear ratio makes the internal torques to be subtracted small, and Proprioceptive Actuation in the MIT Cheetah demonstrated this structure [5](#ref-5). As a result, the main remaining error in QDD is $K_t$. In a high-reduction joint, by contrast, the uncertainty in friction and efficiency is larger than the $K_t$ error, so a joint torque sensor has the advantage over current-based estimation.
+
+A fast current loop does not mean fast torque either. Current loop bandwidth only means the measured current follows the command quickly. It does not guarantee that the measured current equals the actual current, that the electrical angle is correct, that $K_t$ is constant, or that the reducer and structure transmit that torque as is.
+
+<details className="math-details">
+<summary>Math: current-based external force estimation</summary>
+
+$$
+\hat\tau_{\mathrm{act}} = \hat\eta\,N\,\hat K_t(i_q, T)\,i_q, \qquad
+\hat\tau_{\mathrm{ext}} = \hat\tau_{\mathrm{act}} - \hat M(q)\ddot q - \hat C(q,\dot q)\dot q - \hat G(q) - \hat\tau_f(q, \dot q)
+$$
+
+Since $\ddot q$ is noisy, in practice this is implemented in a form that does not use acceleration directly, such as a momentum observer. The end-effector force is obtained as $\hat F = J^{-\top}\hat\tau_{\mathrm{ext}}$. A relative error $\delta$ in $\hat K_t$ multiplies the entire actuator torque, not the external force, so in a joint holding a gravity load $G$ it creates a bias of $\delta\,G$ in the external force estimate.
+
+</details>
+
+## The Actuator That Relies Most on the Torque Constant
+
+Putting all of this together leads to an irony for QDD. QDD is designed to read and produce contact force from current alone, without joint torque sensors, so it is the actuator that relies most on the proportionality between current and torque. Yet because of its low gear ratio it must produce a given joint torque with the largest current, and large current is exactly what breaks that proportionality.
+
+The example motor from the demo makes the difference clear. 11 N·m at the motor shaft is 66 N·m at a 6:1 QDD joint. Holding the same 66 N·m with a 50:1 joint takes 1.3 N·m of motor torque, about 4 A of current, and about 1.5 W of copper loss, so the temperature rises by less than 1 K. At 6:1 it takes 34 A and about 106 W, the winding rises to about 79 °C, and $K_t$ falls by about 5% (example values, ignoring efficiency). Just standing with bent knees is enough to create this difference.
+
+Large current pulls $K_t$ away from its nominal value along two paths. During momentary high torque, as in landing or jumping, core saturation lowers $K_t$; under sustained loads, copper loss turns into heat, lowering $K_t$ and raising resistance. 34 A is already more than half of the example motor's 60 A current limit, so QDD routinely operates close to the region where both effects grow large. In a high-reduction joint, a few percent of $K_t$ error is buried in friction and efficiency uncertainty, but QDD has reduced that uncertainty in hardware, so $K_t$ error becomes most of what remains.
+
+This error shows up directly in the robot's posture and force. A knee joint whose $K_t$ has dropped 5% holds 5% weaker than the torque commanded with the nominal $K_t$, and the robot sags until the position controller makes up the difference. Seen from the external force estimation side, the same error reads about 5% of the gravity load as external force. The robot whose posture sags after ten minutes in the introduction is this case.
+
+That does not mean QDD is the wrong choice. QDD designs reduce this cost by raising $K_m$ with outrunner motors that have a large air-gap radius and by designing a heat path out through the housing [2](#ref-2). And this error is not random; it is tied to current and temperature, so it can be measured and corrected. The cost of QDD is that this correction becomes mandatory rather than optional. In a high-reduction joint, temperature compensation of the torque constant slightly improves precision, but in QDD it preserves the very premise of the design: reading force through current.
+
+## The Slow State That Simulators and Policies Do Not See
+
+What the simulator models and the policy learns is a cold actuator. In a simulator, an actuator usually has the same $K_t$, the same resistance, and the same torque limit at the start and end of an episode. On a real robot, earlier motions change the actuator for later ones. A policy that cannot observe temperature has no way to know why the same state and action produce a different acceleration, and once derating begins, the torque limit shrinks in a way it never saw in training. If some joints heat up before others, left–right symmetry breaks too.
+
+The policy does not need to see every internal temperature. If the low-level driver computes the torque currently available from temperature and voltage and passes it up, the policy can act based on the torque range it can actually use instead of the temperature of a single sensor. This amounts to moving the temperature sensor from an input of the protection circuit to an input of the policy. On the training side, randomizing $K_t$ and resistance separately for each joint and letting them drift slowly within an episode yields a policy that tolerates this change. Using springs, counterbalances, brakes, and posture so that static loads are not held by current alone is the hardware-side answer to the same problem.
+
+## Actuator Part Summary
+
+Every error covered from 02 through this post comes down to the same question: where does the real actuator differ from the simulator's ideal torque source, and should that difference be measured and modeled, covered with randomization, or shown to the policy?
+
+| Error | Identification | How to put it in the simulator | Details |
+| --- | --- | --- | --- |
+| Current loop bandwidth and delay | Current step response, time delay between commanded and measured torque | Actuator delay, first-order filter | [02](/hardware02/), [04](/hardware04/) |
+| Speed-dependent torque limit | Datasheet $K_e$, resistance, bus voltage | Torque–speed limit, bus voltage randomization | [02](/hardware02/) |
+| reflected inertia | Acceleration in response to a torque step | Joint armature | [03](/hardware03/) |
+| Friction and backdrivability | Mean current in constant-speed sweeps, backdrive breakaway torque | Coulomb and viscous friction, per-joint randomization | [03](/hardware03/) |
+| Reducer stiffness and resonance | Torque–twist curve with output locked, chirp response | Two-inertia model or observation delay | [03](/hardware03/) |
+| Contact impedance | Low-frequency torque–displacement slope, frequency response | Fit kp·kd together with armature and friction | [04](/hardware04/) |
+| Torque ripple and electrical angle error | Torque versus position at low constant speed | Periodic disturbance tied to electrical angle | [05](/hardware05/) |
+| Reducer transmission error | Input-angle analysis of input–output encoder difference at low constant speed | Periodic position error tied to input rotation | [05](/hardware05/), reducer subposts |
+| Backlash and lost motion | Bidirectional torque–deflection loop | Dead zone and direction hysteresis, observation of recent motion direction | [05](/hardware05/) |
+| Momentary load limit | Momentary peak torque and shock limit per reducer (datasheet) | Impact torque monitoring, penalty or episode termination when exceeded | [03](/hardware03/), reducer subposts |
+| Torque constant unit variation, saturation, temperature | Current–torque with a load cell, up to large currents, repeated cold and warm | Per-joint $K_t$ and $R$ randomization, slow drift, available-torque observation | This post |
+
+Not every item needs to be included. In tasks such as fast walking, where the ripple frequency is far above the mechanical bandwidth, leaving ripple out gives nearly the same result, and in position-control-oriented tasks the torque constant error is masked by the position loop. Include an item when its error falls inside the task's bandwidth, as in contact, force control, slow precise motion, and sustained loads. What the errors in this table have in common is that they are tied to state, not random. Knowing whether that state is position, direction, speed, or temperature tells you which errors to measure and what to show the policy.
+
+Of these, temperature is the slowest, and so it is discovered last. Torque ripple shows up on an oscilloscope and backlash can be felt by hand right away, but heat hides behind the first few minutes of success. If the temperature sensor is used only as an input to the protection circuit, the robot looks fine until it hits the limit. Long before that, though, the torque constant and resistance are slowly changing, and the policy, unable to see the change, is controlling a different actuator. And this change is largest in actuators that read force through current. Before heat stops an actuator, it turns it into a different actuator.
+
+This concludes the actuators that move a single joint. The next part looks at the sensors a robot uses to read its own state and forces.
+
+## References
+
+<span id="ref-1"></span>
+
+[1] maxon motor ag, “maxon Motor Data and Operating Ranges.” [Manufacturer PDF](https://www.maxongroup.com/medias/sys_master/8798985748510.pdf)
+
+<span id="ref-2"></span>
+
+[2] S. Seok et al., “Design Principles for Energy-Efficient Legged Locomotion and Implementation on the MIT Cheetah Robot,” *IEEE/ASME Transactions on Mechatronics*, vol. 20, no. 3, pp. 1117–1129, 2015. [Paper](https://doi.org/10.1109/TMECH.2014.2339013)
+
+<span id="ref-3"></span>
+
+[3] Y. Xiao and A. Griffo, “PWM-Based Flux Linkage and Rotor Temperature Estimations for Permanent Magnet Synchronous Machines,” *IEEE Transactions on Power Electronics*, vol. 35, no. 6, pp. 6061–6069, 2020. [Paper](https://doi.org/10.1109/TPEL.2019.2948578)
+
+<span id="ref-4"></span>
+
+[4] A. Wahrburg, J. Bös, K. D. Listmann, F. Dai, B. Matthias, and H. Ding, “Motor-Current-Based Estimation of Cartesian Contact Forces and Torques for Robotic Manipulators and Its Application to Force Control,” *IEEE Transactions on Automation Science and Engineering*, vol. 15, no. 2, pp. 879–886, 2018. [Paper](https://doi.org/10.1109/TASE.2017.2691136)
+
+<span id="ref-5"></span>
+
+[5] P. M. Wensing, A. Wang, S. Seok, D. Otten, J. Lang, and S. Kim, “Proprioceptive Actuator Design in the MIT Cheetah: Impact Mitigation and High-Bandwidth Physical Interaction for Dynamic Legged Robots,” *IEEE Transactions on Robotics*, vol. 33, no. 3, pp. 509–522, 2017. [Paper](https://doi.org/10.1109/TRO.2016.2640183)

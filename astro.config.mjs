@@ -14,6 +14,7 @@ export default defineConfig({
     // Robot Hardware: KR permalinks follow the post numbers (01-06); old content-based/shifted URLs redirect
     "/hardware-torque-ripple-backlash-kr/": "/hardware05-kr/",
     "/hardware07-kr/": "/hardware06-kr/",
+    "/hardware07/": "/hardware06/",
   },
   integrations: [react(), mdx(), sitemap()],
   markdown: {

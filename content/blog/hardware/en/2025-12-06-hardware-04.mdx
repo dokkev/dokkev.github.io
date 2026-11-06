@@ -1,0 +1,224 @@
+---
+title: "[Robot Hardware 04] - Actuators (3): Mechanical Impedance"
+description: The output-side impedance that decides how a joint feels in contact, and which part of it the hardware sets and which part the controller creates
+published: true
+hidden: false
+date: 2025-12-06 00:00:00
+updated: 2026-11-05
+permalink: /hardware04/
+series: "[EN/KR] Robot Hardware"
+series_order: 4
+series_label: "04"
+lang: en
+translations:
+  - lang: en
+    label: EN
+    url: /hardware04/
+  - lang: ko
+    label: KR
+    url: /hardware04-kr/
+tags: [Hardware]
+---
+
+import PendulumSwingDemo from "../../../../src/components/demos/PendulumSwingDemo";
+import ReflectedInertiaDemo from "../../../../src/components/demos/ReflectedInertiaDemo";
+
+## Introduction: Same Command, Different Force
+
+Holding 1 N·m of torque and moving with 1 N·m of torque are entirely different things. The rated torque on a datasheet tells you about the first, but when a robot grasps a cup or lands on the floor, it is the second that decides the outcome. If one robot grasps a cup gently and another crushes it under the same position command, the difference between them is not a torque limit but how each joint responds to its environment.
+
+The [previous post](/hardware03/) went through the reflected inertia, friction, and torsional stiffness that a reducer adds to a joint, one at a time. This post combines them into mechanical impedance, which describes how those elements feel from the environment's side. The main point is simple. In slow contact the controller sets the impedance, but in fast contact such as an impact, the impedance set by the hardware shows through unchanged.
+
+## Output-Side Mechanical Impedance
+
+Mechanical impedance describes how much external torque it takes to produce a given motion of the joint, as a function of how fast that motion is (its frequency) [1](#ref-1). At the output shaft it is written as the ratio of external torque to joint velocity, $Z(s) = \tau_{ext}(s)/\dot q(s)$.
+
+The reflected inertia and friction from [03](/hardware03/) are terms set by the hardware, and a position controller adds stiffness $K_p$ and damping $B_c$ on top of them. These terms dominate at different speeds. Push slowly and the joint feels like the spring the controller creates; strike it quickly and it feels like the joint's inertia, that is, like a mass. For the series' example 100:1 joint ($K_p = 100\,\mathrm{N\,m/rad}$, efficiency ignored), the boundary between the two regions is about 3.6 Hz. A hand pushing more slowly than this feels the controller, and an impact faster than this feels the hardware. Terms that cannot be written linearly, such as Coulomb friction or backdrive breakaway torque, are left out of this picture.
+
+<details className="math-details">
+<summary>Math: joint impedance in the s-plane</summary>
+
+Treating the reducer as rigid, the joint's equation of motion is $I_{\mathrm{BWD}}\ddot q + (B + B_c)\dot q + K_p q = \tau_{ext}$, and its Laplace transform gives
+
+$$
+Z(s) = I_{\mathrm{BWD}}\,s + (B + B_c) + \frac{K_p}{s} = \frac{I_{\mathrm{BWD}}\,s^2 + (B + B_c)\,s + K_p}{s}
+$$
+
+The zeros of $Z$ are the poles of the joint's response to external force, $1/Z$. Writing the numerator in standard second-order form gives
+
+$$
+\omega_n = \sqrt{\frac{K_p}{I_{\mathrm{BWD}}}}, \qquad \zeta = \frac{B + B_c}{2\sqrt{K_p I_{\mathrm{BWD}}}}, \qquad s = -\zeta\omega_n \pm j\,\omega_n\sqrt{1-\zeta^2}
+$$
+
+The distance from a pole to the origin is $\omega_n$, and the cosine of its angle from the negative real axis is $\zeta$. The frequency response $|Z(j\omega)|$ tends to $K_p/\omega$ (spring) for $\omega \ll \omega_n$ and to $I_{\mathrm{BWD}}\,\omega$ (mass) for $\omega \gg \omega_n$; at $\omega = \omega_n$ the two terms cancel and only the damping $B + B_c$ remains. The boundary in the main text is this $\omega_n$. With $I \approx 0.19\,\mathrm{kg\,m^2}$ and $K_p = 100$, $\omega_n \approx 23\,\mathrm{rad/s}$, about 3.6 Hz. Raising $K_p$ tenfold raises $\omega_n$ by only $\sqrt{10} \approx 3.2$ times.
+
+</details>
+
+## Torque vs. Impedance
+
+Let's take the two tasks from the introduction one at a time.
+
+When holding, the joint is at rest; the torque simply equals the load and does no work. Whatever produces that 1 N·m, it looks the same from outside. It may be the result of the position controller sagging slightly (about 0.57° at $K_p = 100\,\mathrm{N\,m/rad}$), or static friction or a brake may be carrying it. So a static 1 N·m tells you nothing about how the joint will respond once it starts moving.
+
+When moving, the same 1 N·m goes into overcoming inertia, friction, and damping, and the impedance decides what motion results. In the series example, applying 1 N·m to the joint accelerates a 1:1 joint ($I \approx 0.09\,\mathrm{kg\,m^2}$) at about 11 rad/s² and a 100:1 joint ($I \approx 0.19\,\mathrm{kg\,m^2}$) at about half that, 5.3 rad/s². Adding friction widens the gap. As shown in [03](/hardware03/), 0.01 N·m of Coulomb friction on the motor side becomes 1 N·m at the joint with a 100:1 ratio, so on the 100:1 joint 1 N·m is the same size as the friction and cannot move the joint. Both are joints that "can produce 1 N·m," yet they move completely differently under 1 N·m.
+
+| | Holding 1 N·m | Moving with 1 N·m |
+| --- | --- | --- |
+| Joint state | At rest | Accelerating, decelerating, in contact |
+| What the torque does | Balances the load, does zero work | Overcomes inertia, friction, and damping to create motion |
+| What decides the outcome | The load | The joint impedance $Z(s)$ |
+| What it tells you | A single torque value | The response as torque changes |
+
+The same holds when an external force pushes on the joint. If the environment pushes with 1 N·m, a high-friction joint just holds, while an easily backdrivable joint is pushed into motion by that torque. The rated torque on a datasheet or the torque limit in a simulator only says "how much it can hold or produce"; to know how the joint will move in contact, you have to look at its impedance.
+
+## Inside and Outside the Control Bandwidth
+
+Hardware impedance and control impedance each produce torque in response to the same joint velocity, so they add. The controller's torque, however, has to pass through delay, sampling, the current loop, and torque limits. The controller can therefore set the impedance only within the frequency range this path can follow, that is, within the control bandwidth; for faster inputs, only the hardware impedance remains. Adding stiffness and damping through control is easy, but removing the inertia and friction set by the hardware requires measuring torque or external force, and even that works only within this bandwidth. Remove too much and the joint loses passivity and becomes unstable in contact. An impact that is over within a few ms almost always lies outside this range.
+
+<details className="math-details">
+<summary>Math: sum of hardware and control impedance</summary>
+
+$$
+Z(s) = Z_{\mathrm{hw}}(s) + Z_{\mathrm{ctrl}}(s), \qquad
+Z_{\mathrm{hw}} \approx I_{\mathrm{BWD}}\,s + B, \qquad
+Z_{\mathrm{ctrl}} \approx \Big(B_c + \frac{K_p}{s}\Big)\,G(s)
+$$
+
+$G(s)$ is the transfer function from commanded torque to actual torque. The earlier equation set $G = 1$. The current loop and sampling reduce $|G(j\omega)|$ at high frequency, driving $Z \to Z_{\mathrm{hw}}$. A pure delay $G = e^{-sT}$ leaves the magnitude unchanged and only lags the phase. The real part of the control impedance, i.e. the effective damping the controller produces, is then
+
+$$
+\mathrm{Re}\,Z_{\mathrm{ctrl}}(j\omega) = B_c\cos\omega T - \frac{K_p \sin\omega T}{\omega}
+$$
+
+Looking only at the damping term, it turns negative only for $\omega > \pi/(2T)$ (about 125 Hz at $T = 2\,\mathrm{ms}$), so delay looks like a problem only at high frequency. But the stiffness term also acquires a real part once it passes through the delay, and at low frequency the second term is about $-K_p T$. In effect, delay turns part of the controller's stiffness into negative damping even at low frequency. If the effective damping, including hardware damping, becomes negative, the joint becomes an impedance that releases energy, i.e. a joint that has lost passivity. In the low-frequency approximation the condition is
+
+$$
+B + B_c > K_p T \quad\Longleftrightarrow\quad K_p < \frac{B + B_c}{T}
+$$
+
+which has the same form as the stability bound $K_d/T$ obtained from the Routh criterion in the demo math below. Ignoring hardware damping, with $B_c = 1.5\,\mathrm{N\,m\,s/rad}$ and $T = 2\,\mathrm{ms}$, it is about 750 N·m/rad.
+
+</details>
+
+The demo below swings an upright 1-DOF arm (0.3 m, 1 kg) through ±60° under PD position control (2 ms control delay; $K_d$ is the $B_c$ from above). The frequency range over which the arm follows the command is the range over which the controller sets the joint's impedance.
+
+The pole plot in the demo shows the closed-loop poles in the s-plane. The farther a pole is from the origin, the faster the arm follows; the closer it is to the imaginary axis, the less damping there is, and the arm swings more than commanded near resonance. At the same gains, raising the gear ratio moves the poles toward both the origin and the imaginary axis because of reflected inertia, and raising $K_p$ eventually pushes the poles into the right half-plane because of the delay. An SEA adds another pole pair formed by the spring and the link, and the spring shows up only when the swing frequency approaches that resonance.
+
+<PendulumSwingDemo client:visible lang="en" />
+
+<details className="math-details">
+<summary>Math: tracking, the delay limit, and SEA read from the poles</summary>
+
+**Rigid joint.** For the upright arm, linearizing with $\sin q \approx q$ makes gravity act as a negative stiffness $-mgl$. Without delay, the closed-loop characteristic equation is
+
+$$
+I s^2 + (B + K_d)\,s + (K_p - mgl) = 0, \qquad I = J_L + N^2 J_m
+$$
+
+with $\omega_n = \sqrt{(K_p - mgl)/I}$ and $\zeta = (B + K_d)/\big(2\sqrt{(K_p - mgl)I}\big)$. If $K_p < mgl$, one real root lies in the right half-plane and the arm cannot stand up. At the same gains, raising $N$ increases $I$, moving the poles toward both the origin ($\omega_n \propto 1/\sqrt I$) and the imaginary axis ($\zeta \propto 1/\sqrt I$). At 50:1, $\omega_n/2\pi \approx 3.5$ Hz and $\zeta \approx 0.30$; at 160:1, about 2.0 Hz and $\zeta \approx 0.17$. The amplitude ratio from command $q_d$ to $q$ peaks higher at resonance the smaller $\zeta$ is (maximum $\approx 1/2\zeta$); past resonance it falls off as $(\omega_n/\omega)^2$ and the phase lag approaches 180°.
+
+**Delay.** Replacing the delay $e^{-sT}$ with the first-order Padé approximation $(1 - sT/2)/(1 + sT/2)$ introduces a pole at $s = -2/T$ and a right-half-plane zero at $s = +2/T$. As $K_p$ increases, the root locus is drawn toward this zero and crosses the imaginary axis (the gray locus in the demo). Applying the Routh criterion to the third-order characteristic equation gives the stability condition
+
+$$
+K_p < \frac{K_d}{T} - \frac{K_d^2}{4I}
+$$
+
+(a first-order approximation without friction and gravity). The second term is usually small, so the bound is close to $K_d/T$. This says the same thing as the passivity condition above: the negative damping $K_p T$ that delay creates at low frequency must not exceed $K_d$. With $K_d = 1.5$, $T = 2\,\mathrm{ms}$, and 50:1, it is about 745; solving exactly with friction and gravity included gives the demo's value of about 770. Because this bound grows with $K_d$, it does not by itself prevent scaling the gains in proportion to inertia. Torque limits and velocity measurement noise, which this model lacks, set the real bound.
+
+**SEA.** If the PD acts on the motor angle $\theta$, the link is a mass pulled along by a spring attached to the motor angle.
+
+$$
+\frac{q}{\theta}(j\omega) \approx \frac{K_s}{K_s - mgl - J_L\,\omega^2}, \qquad f_s = \frac{1}{2\pi}\sqrt{\frac{K_s - mgl}{J_L}}
+$$
+
+For $f \ll f_s$ the ratio is close to 1 and the spring is invisible; as $f$ approaches $f_s$, the link swings more than the motor. This resonance is set by $K_s$ and $J_L$ regardless of the control gains, so no matter how high the motor-side gains go, the link's tracking bandwidth can hardly exceed $f_s$.
+
+</details>
+
+The difference becomes clear if you compute a 1-DOF joint pushed by a torque of the same size (a half-sine with a 10 N·m peak) while varying only how long the push lasts. The calculation ignores efficiency and control delay and sets the position controller's damping ratio to 0.7; the shares below are taken at the moment of peak external force. Push the series' example 100:1 joint slowly over 1 second and the controller carries almost all of the external force, with the joint deflecting by $\tau_{ext}/K_p$. Strike the same joint over 5 ms and the controller's share drops to about 5%; the rest is carried by the link inertia (about 45%) and the rotor's reflected inertia (about 50%). Even raising $K_p$ tenfold to 1000 N·m/rad only brings the controller's share to about 15%.
+
+The entire share carried by the rotor's reflected inertia passes through the reducer's gear teeth. This is why the high-ratio joint in the hammer simulation in 03 saw large tooth torque, and this share cannot be reduced with control gains.
+
+### The Effect of Series Stiffness
+
+A spring between the reducer and the link changes the story. The torque through a spring grows only as the spring deflects, so in a fast impact the link briefly separates from the rotor, and the high-frequency impedance approaches the link inertia. Adding a 500 N·m/rad series spring to the same calculation, the link inertia carries about 97% of the same 5 ms impact, and the peak torque passed to the reducer drops from about 5.5 N·m to 1.6 N·m.
+
+As shown in [short impacts](/hardware03/#how-the-link-separates-from-the-rotor-in-short-impacts) in 03, the reducer's own torsional stiffness plays the same role. Reducer stiffness is usually high, though, so the separation is brief, and the rotor's momentum eventually passes through the spring into the environment. What series stiffness reduces is the instantaneous load, not the total momentum the environment receives.
+
+## End-Effector Impedance and Direction
+
+On a multi-joint robot, the environment meets the end effector, not a joint. Each joint's inertia maps differently into each direction at the end effector depending on the configuration, so the same arm feels heavier in some directions than others. This direction-dependent heaviness is the effective mass.
+
+The demo below draws the effective mass at the end effector of a 2-DOF arm as an ellipse. Raising the gear ratio enlarges the ellipse as reflected inertia increases each joint's inertia, and the ellipse's shape becomes determined more by the arm's kinematics than by how the link mass is distributed. At low gear ratios the FWD ellipse, in which the link inertia appears enlarged by the forward efficiency, is larger; at high gear ratios the BWD ellipse, in which the reflected inertia appears enlarged by the backward efficiency, becomes larger. In other words, the end effector feels different in mass depending on whether the motor is pushing or the environment is pushing.
+
+In the demo, clicking an arrow around the arm tip sends the same ball (1 kg, 3 m/s) flying in from that direction. If the effective mass in that direction is sufficiently heavier than the ball, the ball bounces back; if it is lighter, the ball pushes the arm tip and keeps going. Because the end-effector inertia differs by direction, the arm tip is pushed at an angle to the ball's incoming direction. The graph below shows the end-effector displacement while the position controller brings the arm back after the collision.
+
+<ReflectedInertiaDemo client:visible lang="en" />
+
+The stiffness the controller creates also has direction at the end effector. Even with the same gain on every joint, the end-effector stiffness differs by direction depending on the configuration.
+
+<details className="math-details">
+<summary>Math: end-effector inertia, ball rebound, and end-effector stiffness</summary>
+
+With the joint-space inertia $M$ and Jacobian $J$, the inverse of the end-effector inertia is $\Lambda^{-1} = J M^{-1} J^{\top}$, and the effective mass in direction $u$ (a unit vector) is
+
+$$
+m_u = \frac{1}{u^{\top}\Lambda^{-1}u}
+$$
+
+The demo's ellipse $x^{\top}\Lambda^{-1}x = k^2$ has radius $k\sqrt{m_u}$ in direction $u$. At high gear ratios, $M \approx N^2 J_m \mathbf{1}$, so $\Lambda \approx N^2 J_m (J J^{\top})^{-1}$ and the ellipse's shape is set by the kinematics. FWD uses $M = M_L/\eta_f + N^2 J_m$, and BWD uses $M = M_L + N^2 J_m/\eta_b$.
+
+When a ball of mass $m_b$ and speed $v$ hits along direction $u$ with coefficient of restitution $e$, the impulse is $P = (1+e)\,\frac{m_b m_u}{m_b + m_u}\,v$ and the ball's velocity becomes $v' = v\,\frac{m_b - e\,m_u}{m_b + m_u}$. The ball therefore bounces back only when $m_b < e\,m_u$. The change in arm-tip velocity is $\Lambda^{-1}u\,P$, which points in a different direction from $u$ unless $u$ is an eigenvector of $\Lambda^{-1}$.
+
+Away from singular configurations, a joint stiffness $K_q$ appears at the end effector as $K_x = J^{-\top} K_q J^{-1}$ (ignoring gravity and $\dot J$ terms). Even with $K_q = k\,\mathbf{1}$, $K_x = k\,(J J^{\top})^{-1}$, so it differs by direction.
+
+</details>
+
+## What Simulator kp and kd Reproduce
+
+In simulators such as MuJoCo or Isaac, a position-controlled joint is usually defined by kp and kd. These two values reproduce the stiffness $K_p$ and damping $B_c$ that the controller creates, that is, the slow-contact impedance. Fast-contact impedance is set by the reflected inertia entered as armature and by the friction model, and as 02 and 03 showed, these values are easy to leave out or get wrong. Simulators also usually lack the fact that delay and torque limits in the real controller make the real joint's effective stiffness differ from the nominal kp. So simulation and reality can match well in slow pushing experiments and then diverge sharply at first contact or under impact. Series stiffness from a reducer or an SEA can only be represented by splitting the joint into two degrees of freedom.
+
+The compliant vs. stiff example from [01](/hardware01/) can be revisited from this angle. If the target position for a grasp is 1 cm inside the object's surface, the quasi-static force is end-effector stiffness × 1 cm. A robot with 300 N/m end-effector stiffness grasps the object with about 3 N, and one with 5000 N/m grasps the same object with about 50 N (illustrative values). Many demonstration datasets record actions as position targets, so this force is not stored explicitly in the data but is buried in the impedance of the robot that collected it. Run a policy trained on that data on a robot with different impedance, and the positions are reproduced but the forces are not. The force at first contact is set by inertia, not gains, so this difference remains even if the gains are matched.
+
+The impedance of a real joint can be measured directly. Pushing a position-controlled joint slowly with a torque wrench and measuring the torque–displacement slope gives the low-frequency stiffness; applying external force to the output shaft at varying frequencies and recording joint velocity gives the frequency response of $Z(j\omega)$. These are collected, along with measurement methods for other actuator errors, in the [Actuator Part Summary](/hardware06/#actuator-part-summary).
+
+## Design Space: High Reduction, QDD, SEA, Direct Drive
+
+Actuator design is also a choice of which part of the impedance to fix in hardware and which part to create with control. A high-reduction joint locks in a high impedance in hardware through large reflected inertia and friction, and achieves high position stiffness on top of it. Designs in the opposite direction lower the hardware impedance and create the needed stiffness with control.
+
+**QDD** (Quasi-Direct Drive) combines a high-torque motor with a low gear ratio, roughly 6:1 to 15:1, to reduce reflected inertia and friction themselves. The MIT Cheetah used this structure to demonstrate proprioceptive actuation, controlling contact force from motor current alone, and reported impact mitigation comparable to legged robots with series springs [2](#ref-2). To produce large torque at a low gear ratio, an outrunner motor with a large air-gap radius is advantageous, and some modules place a planetary gear inside the motor to shorten the axial length.
+
+What a low gear ratio solves is the impedance in fast contact and quasi-static torque transparency, where small torques are not buried in friction. Transparency, however, is not determined by gear ratio alone. Torque ripple, cogging, and backlash remain even at low gear ratios ([next post](/hardware05/)), and since the same joint torque must be made with more current, heating under sustained load increases. The cost of this heat is covered in detail in the [post on torque estimation and heat](/hardware06/).
+
+**SEA** (Series Elastic Actuator) deliberately places a spring between the reducer and the load [3](#ref-3). In a fast impact, as shown above, the link separates from the rotor and the peak load on the reducer drops, and measuring the spring's deflection gives a direct measurement of output torque. In exchange, the softer the spring, the harder it is to deliver large torque quickly, so together with the motor's torque and speed limits, the achievable torque bandwidth is limited [4](#ref-4). It is also at a disadvantage for tasks that hold position rigidly.
+
+**Direct drive** removes the reducer, minimizing reflected inertia and reducer friction. The price is that the motor must produce all the required torque, so for the same torque the motor is the largest and heaviest and generates the most heat.
+
+| Design | Impedance set by hardware | Part created by control | Cost |
+| --- | --- | --- | --- |
+| High reduction (about 50:1 or more) | Large reflected inertia and friction | High position stiffness | Impact loads concentrate on gear teeth; poor backdrivability and current-based torque estimation |
+| QDD (about 6:1–15:1) | Small reflected inertia and friction | Most of the stiffness and damping | High current and heat for the same torque, a large motor, torque read from current depends heavily on the torque constant ([06](/hardware06/#the-actuator-that-relies-most-on-the-torque-constant)) |
+| SEA | Link inertia and series spring at high frequency | Torque and impedance control using spring deflection | Limited torque bandwidth, low position stiffness, bulk and complexity |
+| Direct drive | Smallest inertia and friction | Nearly all of it | Largest motor mass and heat |
+
+No design gives the desired impedance at every frequency. High-reduction joints are stiff in slow contact, QDD and direct drive are light in fast contact, and SEA hands impacts to the spring. In every design, control sits on top of the impedance set by the hardware, and how accurate the control can be on top of that depends on how even the torque produced by the actuator itself is. The next post looks at the errors mixed into that torque that repeat with position and direction.
+
+[Next post: [Robot Hardware 05] - Actuators (4): Torque Ripple and Backlash](/hardware05/)
+
+## References
+
+<span id="ref-1"></span>
+
+[1] N. Hogan, “Impedance Control: An Approach to Manipulation: Part I—Theory,” *Journal of Dynamic Systems, Measurement, and Control*, vol. 107, no. 1, pp. 1–7, 1985. [Paper](https://doi.org/10.1115/1.3140702)
+
+<span id="ref-2"></span>
+
+[2] P. M. Wensing, A. Wang, S. Seok, D. Otten, J. Lang, and S. Kim, “Proprioceptive Actuator Design in the MIT Cheetah: Impact Mitigation and High-Bandwidth Physical Interaction for Dynamic Legged Robots,” *IEEE Transactions on Robotics*, vol. 33, no. 3, pp. 509–522, 2017. [Paper](https://doi.org/10.1109/TRO.2016.2640183)
+
+<span id="ref-3"></span>
+
+[3] G. A. Pratt and M. M. Williamson, “Series Elastic Actuators,” in *Proc. IEEE/RSJ International Conference on Intelligent Robots and Systems*, vol. 1, pp. 399–406, 1995. [Paper](https://doi.org/10.1109/IROS.1995.525827)
+
+<span id="ref-4"></span>
+
+[4] C. Lee and S. Oh, “Performance Analysis of Series Elastic Actuator Based on Maximum Torque Transmissibility,” *IEEE Transactions on Control Systems Technology*, vol. 30, no. 1, pp. 392–399, 2022. [Paper](https://doi.org/10.1109/TCST.2021.3059284)

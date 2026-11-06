@@ -11,7 +11,7 @@ published: true
 redirect: /hardware01-kr/
 ---
 
-영문판은 준비 중입니다. [EN · Coming soon](/hardware01/)
+영문판: [EN](/hardware01/)
 
 [로봇 하드웨어 01 - 로봇 하드웨어란?](/hardware01-kr/)
 
