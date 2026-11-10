@@ -111,11 +111,9 @@ These are illustrative encoding ranges, not an actuator rating. The increment is
 
 <MitCanDemo client:visible />
 
-Move velocity while watching byte 3, or damping while watching byte 6. Each shares a byte with the next field. Edit the shared min/max limits below the byte diagram. The same range is used for encoding and decoding; each row shows the resulting integer code and decoded value.
+The demo uses the same range for encoding and decoding. Each row shows the integer code and reconstructed value, including the quantization error.
 
 **A wider range gives coarser resolution at the same bit width.** For a 12-bit torque field, widening both encoding and decoding ranges from ±10 to ±20 N·m doubles the step from about 0.004884 to 0.009768 N·m/code. Shifting both endpoints by the same amount leaves the width and step unchanged. The range width, rather than the magnitude of either endpoint alone, determines the resolution.
-
-The resolution readout shows the physical increment per code for the field you last adjusted. Changing its limits updates that increment; the number of available codes stays fixed by the bit width.
 
 A range mismatch can corrupt a command even when every bit arrives correctly. For example, the same 12-bit torque code means a different torque under ±10 N·m and ±18 N·m mappings. Store the exact motor's ranges in its protocol configuration. Keep operating limits separate: an encodable position can still exceed the robot's travel limit.
 

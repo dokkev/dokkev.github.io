@@ -46,7 +46,7 @@ $$
 \mathbf{I}_\text{measured}.
 $$
 
-$\mathcal{R}$ is an optical rendering or image-formation map. $\mathcal{N}$ represents measurement disturbances.
+$\mathcal{R}$ is an optical rendering or image-formation map. $\mathcal{N}$ represents measurement disturbances. This is a schematic pipeline: the sampled normal profiles alone do not specify a full optical scene. The rendering input must include the surface geometry and optical parameters listed below.
 
 For the LIT concept, $\mathcal{R}$ may need:
 
@@ -121,7 +121,7 @@ $$
 
 Its singular values describe local sensitivity to contact location and indentation in the chosen feature space. But even this is not enough without a noise scale.
 
-If feature noise has covariance $\mathbf{\Sigma}_z$, the meaningful geometry is whitened:
+For a positive-definite feature-noise covariance $\mathbf{\Sigma}_z$, sensitivity can be compared after whitening:
 
 $$
 \widetilde{\mathbf{J}}_z
@@ -138,9 +138,9 @@ A mechanically large mode that lies in a high-noise image direction can then rec
   <p class="caption">These distances establish that the deterministic mechanical map is not degenerate at the sampled cases. They do not establish an optical signal-to-noise ratio.</p>
 </div>
 
-The current CODTM analysis already removes several bad designs from consideration.
+The current CODTM analysis can screen mechanical signatures before an optical model is available.
 
-If two contact locations produce identical mechanical signatures, no camera can recover the lost information from those signatures. Mechanical separability is therefore a **necessary condition** for this sensing route.
+If two contact locations produce identical mechanical signatures, a model using only those signatures cannot distinguish them. Mechanical separability is therefore a **necessary condition** for this sensing route. A camera could still observe differences omitted by the sampled normal profiles; those require a fuller surface model.
 
 It is simply not sufficient.
 

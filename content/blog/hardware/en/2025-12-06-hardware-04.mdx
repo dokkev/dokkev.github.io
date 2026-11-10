@@ -25,15 +25,15 @@ import ReflectedInertiaDemo from "../../../../src/components/demos/ReflectedIner
 
 ## Introduction: Same Command, Different Force
 
-Holding 1 N·m of torque and moving with 1 N·m of torque are entirely different things. The rated torque on a datasheet tells you about the first, but when a robot grasps a cup or lands on the floor, it is the second that decides the outcome. If one robot grasps a cup gently and another crushes it under the same position command, the difference between them is not a torque limit but how each joint responds to its environment.
+A torque rating alone does not tell us how a joint moves under load. Two robots can have the same torque limit and still grasp a cup with different forces under the same position command. We also need to know how their joints respond to contact.
 
-The [previous post](/hardware03/) went through the reflected inertia, friction, and torsional stiffness that a reducer adds to a joint, one at a time. This post combines them into mechanical impedance, which describes how those elements feel from the environment's side. The main point is simple. In slow contact the controller sets the impedance, but in fast contact such as an impact, the impedance set by the hardware shows through unchanged.
+The [previous post](/hardware03/) went through the reflected inertia, friction, and torsional stiffness that a reducer adds to a joint, one at a time. This post combines them into mechanical impedance, which describes how those elements feel from the environment's side. The controller can shape low-frequency impedance within its bandwidth. At higher frequencies, hardware inertia, friction, and transmission stiffness become more prominent.
 
 ## Output-Side Mechanical Impedance
 
 Mechanical impedance describes how much external torque it takes to produce a given motion of the joint, as a function of how fast that motion is (its frequency) [1](#ref-1). At the output shaft it is written as the ratio of external torque to joint velocity, $Z(s) = \tau_{ext}(s)/\dot q(s)$.
 
-The reflected inertia and friction from [03](/hardware03/) are terms set by the hardware, and a position controller adds stiffness $K_p$ and damping $B_c$ on top of them. These terms dominate at different speeds. Push slowly and the joint feels like the spring the controller creates; strike it quickly and it feels like the joint's inertia, that is, like a mass. For the series' example 100:1 joint ($K_p = 100\,\mathrm{N\,m/rad}$, efficiency ignored), the boundary between the two regions is about 3.6 Hz. A hand pushing more slowly than this feels the controller, and an impact faster than this feels the hardware. Terms that cannot be written linearly, such as Coulomb friction or backdrive breakaway torque, are left out of this picture.
+The reflected inertia and friction from [03](/hardware03/) are terms set by the hardware, and a position controller adds stiffness $K_p$ and damping $B_c$ on top of them. These terms dominate at different speeds. Push slowly and the joint feels like the spring the controller creates; strike it quickly and it feels like the joint's inertia, that is, like a mass. For the series' example 100:1 joint ($K_p = 100\,\mathrm{N\,m/rad}$, efficiency ignored), the boundary between the two regions is about 3.6 Hz. This is the spring–inertia crossover of the simplified model, not a sharp boundary between control and hardware effects. Terms that cannot be written linearly, such as Coulomb friction or backdrive breakaway torque, are left out of this picture.
 
 <details className="math-details">
 <summary>Math: joint impedance in the s-plane</summary>
@@ -56,7 +56,7 @@ The distance from a pole to the origin is $\omega_n$, and the cosine of its angl
 
 ## Torque vs. Impedance
 
-Let's take the two tasks from the introduction one at a time.
+Compare holding a static load with moving under an applied torque.
 
 When holding, the joint is at rest; the torque simply equals the load and does no work. Whatever produces that 1 N·m, it looks the same from outside. It may be the result of the position controller sagging slightly (about 0.57° at $K_p = 100\,\mathrm{N\,m/rad}$), or static friction or a brake may be carrying it. So a static 1 N·m tells you nothing about how the joint will respond once it starts moving.
 
@@ -73,7 +73,7 @@ The same holds when an external force pushes on the joint. If the environment pu
 
 ## Inside and Outside the Control Bandwidth
 
-Hardware impedance and control impedance each produce torque in response to the same joint velocity, so they add. The controller's torque, however, has to pass through delay, sampling, the current loop, and torque limits. The controller can therefore set the impedance only within the frequency range this path can follow, that is, within the control bandwidth; for faster inputs, only the hardware impedance remains. Adding stiffness and damping through control is easy, but removing the inertia and friction set by the hardware requires measuring torque or external force, and even that works only within this bandwidth. Remove too much and the joint loses passivity and becomes unstable in contact. An impact that is over within a few ms almost always lies outside this range.
+Hardware impedance and control impedance each produce torque in response to the same joint velocity, so they add. The controller's torque, however, has to pass through delay, sampling, the current loop, and torque limits. The controller can therefore set the impedance only within the frequency range this path can follow, that is, within the control bandwidth; for faster inputs, the controller's contribution diminishes and hardware impedance becomes dominant. Adding stiffness and damping through control is easy, but removing the inertia and friction set by the hardware requires measuring torque or external force, and even that works only within this bandwidth. Excessive compensation can compromise passivity and destabilize contact. An impact that is over within a few ms almost always lies outside this range.
 
 <details className="math-details">
 <summary>Math: sum of hardware and control impedance</summary>
@@ -137,7 +137,7 @@ For $f \ll f_s$ the ratio is close to 1 and the spring is invisible; as $f$ appr
 
 The difference becomes clear if you compute a 1-DOF joint pushed by a torque of the same size (a half-sine with a 10 N·m peak) while varying only how long the push lasts. The calculation ignores efficiency and control delay and sets the position controller's damping ratio to 0.7; the shares below are taken at the moment of peak external force. Push the series' example 100:1 joint slowly over 1 second and the controller carries almost all of the external force, with the joint deflecting by $\tau_{ext}/K_p$. Strike the same joint over 5 ms and the controller's share drops to about 5%; the rest is carried by the link inertia (about 45%) and the rotor's reflected inertia (about 50%). Even raising $K_p$ tenfold to 1000 N·m/rad only brings the controller's share to about 15%.
 
-The entire share carried by the rotor's reflected inertia passes through the reducer's gear teeth. This is why the high-ratio joint in the hammer simulation in 03 saw large tooth torque, and this share cannot be reduced with control gains.
+The entire share carried by the rotor's reflected inertia passes through the reducer's gear teeth. This is why the high-ratio joint in the hammer simulation in 03 saw large tooth torque, and raising gains did not remove the dominant inertial contribution in these short-impact calculations.
 
 ### The Effect of Series Stiffness
 
@@ -178,7 +178,7 @@ Away from singular configurations, a joint stiffness $K_q$ appears at the end ef
 
 In simulators such as MuJoCo or Isaac, a position-controlled joint is usually defined by kp and kd. These two values reproduce the stiffness $K_p$ and damping $B_c$ that the controller creates, that is, the slow-contact impedance. Fast-contact impedance is set by the reflected inertia entered as armature and by the friction model, and as 02 and 03 showed, these values are easy to leave out or get wrong. Simulators also usually lack the fact that delay and torque limits in the real controller make the real joint's effective stiffness differ from the nominal kp. So simulation and reality can match well in slow pushing experiments and then diverge sharply at first contact or under impact. Series stiffness from a reducer or an SEA can only be represented by splitting the joint into two degrees of freedom.
 
-The compliant vs. stiff example from [01](/hardware01/) can be revisited from this angle. If the target position for a grasp is 1 cm inside the object's surface, the quasi-static force is end-effector stiffness × 1 cm. A robot with 300 N/m end-effector stiffness grasps the object with about 3 N, and one with 5000 N/m grasps the same object with about 50 N (illustrative values). Many demonstration datasets record actions as position targets, so this force is not stored explicitly in the data but is buried in the impedance of the robot that collected it. Run a policy trained on that data on a robot with different impedance, and the positions are reproduced but the forces are not. The force at first contact is set by inertia, not gains, so this difference remains even if the gains are matched.
+The compliant vs. stiff example from [01](/hardware01/) can be revisited from this angle. If the target position for a grasp is 1 cm inside the object's surface, the quasi-static force is end-effector stiffness × 1 cm. A robot with 300 N/m end-effector stiffness grasps the object with about 3 N, and one with 5000 N/m grasps the same object with about 50 N (illustrative values). Many demonstration datasets record actions as position targets, so this force is not stored explicitly in the data but is buried in the impedance of the robot that collected it. Run a policy trained on that data on a robot with different impedance, and the positions are reproduced but the forces are not. In a fast collision, inertia and contact compliance also affect force, so matching gains alone does not ensure the same contact response.
 
 The impedance of a real joint can be measured directly. Pushing a position-controlled joint slowly with a torque wrench and measuring the torque–displacement slope gives the low-frequency stiffness; applying external force to the output shaft at varying frequencies and recording joint velocity gives the frequency response of $Z(j\omega)$. These are collected, along with measurement methods for other actuator errors, in the [Actuator Part Summary](/hardware06/#actuator-part-summary).
 
@@ -192,14 +192,14 @@ What a low gear ratio solves is the impedance in fast contact and quasi-static t
 
 **SEA** (Series Elastic Actuator) deliberately places a spring between the reducer and the load [3](#ref-3). In a fast impact, as shown above, the link separates from the rotor and the peak load on the reducer drops, and measuring the spring's deflection gives a direct measurement of output torque. In exchange, the softer the spring, the harder it is to deliver large torque quickly, so together with the motor's torque and speed limits, the achievable torque bandwidth is limited [4](#ref-4). It is also at a disadvantage for tasks that hold position rigidly.
 
-**Direct drive** removes the reducer, minimizing reflected inertia and reducer friction. The price is that the motor must produce all the required torque, so for the same torque the motor is the largest and heaviest and generates the most heat.
+**Direct drive** removes the reducer and its friction, and the rotor inertia enters without gear-ratio amplification. The motor must produce the full joint torque. Its required size and heat dissipation depend on the motor constant, duty cycle, and cooling, so direct drive is not automatically the heaviest or hottest option.
 
 | Design | Impedance set by hardware | Part created by control | Cost |
 | --- | --- | --- | --- |
 | High reduction (about 50:1 or more) | Large reflected inertia and friction | High position stiffness | Impact loads concentrate on gear teeth; poor backdrivability and current-based torque estimation |
 | QDD (about 6:1–15:1) | Small reflected inertia and friction | Most of the stiffness and damping | High current and heat for the same torque, a large motor, torque read from current depends heavily on the torque constant ([06](/hardware06/#the-actuator-that-relies-most-on-the-torque-constant)) |
 | SEA | Link inertia and series spring at high frequency | Torque and impedance control using spring deflection | Limited torque bandwidth, low position stiffness, bulk and complexity |
-| Direct drive | Smallest inertia and friction | Nearly all of it | Largest motor mass and heat |
+| Direct drive | Rotor and link inertia, without reducer friction | Stiffness and damping within the control bandwidth | Motor sized for full joint torque; thermal design depends on duty cycle |
 
 No design gives the desired impedance at every frequency. High-reduction joints are stiff in slow contact, QDD and direct drive are light in fast contact, and SEA hands impacts to the spring. In every design, control sits on top of the impedance set by the hardware, and how accurate the control can be on top of that depends on how even the torque produced by the actuator itself is. The next post looks at the errors mixed into that torque that repeat with position and direction.
 

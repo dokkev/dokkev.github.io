@@ -19,9 +19,9 @@ The hardware plugin must manage the time spent on both paths. ROS 2 Control's co
 
 ## Watch a command move through the queues
 
-The laboratory below models one actuator. It separates the periodic control thread from a transport worker and the motor's local command watchdog. The initial case uses a 2 ms control period, 1 ms feedback sampling, and 0.6 ms TX service time. These are teaching inputs, not measurements from an adapter.
+The model below represents one actuator. It separates the periodic control thread from a transport worker and the motor's local command watchdog. The initial case uses a 2 ms control period, 1 ms feedback sampling, and 0.6 ms TX service time. These are teaching inputs, not measurements from an adapter.
 
-Press **Play** to animate the packet paths, or scrub the clock to inspect an instant. Start with **RX backlog**, then change `read()` to bounded draining. Try **TX backlog** and switch its pending-command policy from FIFO to replacement. **TX burst** releases a batch into a finite motor receive buffer; compare it with 1 ms TX pacing. **RX burst** batches feedback before host delivery. For **Feedback loss** or **Host stall**, advance beyond 20 ms and watch which timeout reacts.
+The scenarios isolate different timing failures. **RX backlog** compares single-frame reads with bounded draining; **TX backlog** compares FIFO with pending-setpoint replacement. **TX burst** and **RX burst** show how batching affects buffer occupancy and data age. **Feedback loss** and **Host stall** separate the failures covered by host and motor timeouts.
 
 <CanSchedulerDemo client:visible />
 

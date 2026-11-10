@@ -120,7 +120,7 @@ With one external contact pair, the active contact region formed on a free outer
 
 The baseline removed a difficult topology while keeping the outer geometry, material formulation, and observation question intact.
 
-That is good experimental design in simulation. When the complete system fails, simplify the **constraint structure** without changing every other variable. A passing reduced model tells us which parts are not responsible.
+When the complete system fails, simplifying the **constraint structure** while retaining the other model choices helps isolate the failure. A passing reduced model narrows the diagnosis; it does not validate the omitted constraints.
 
 The next article uses this baseline at multiple contact locations. The goal is no longer only “does it solve?” It is “does contact location leave a distinct mechanical signature on the sidewalls?”
 

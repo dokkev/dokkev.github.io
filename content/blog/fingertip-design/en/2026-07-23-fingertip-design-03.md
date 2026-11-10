@@ -105,7 +105,7 @@ The full-field indentation atlas in `lit_ws` stores displacement over the pad ra
   <p class="caption">The useful quantity is not only displacement at the indenter. It is how the entire field changes with contact location.</p>
 </div>
 
-A deformation field supports several observations:
+The deformation field can reveal:
 
 - local compression near the contact,
 - normal bulging on the left and right observation sidewalls,
@@ -147,8 +147,6 @@ In the current no-void baseline at $\delta_n=1.5$ mm, the indentation-normalized
 
 The current results establish a deformation-transfer pipeline for the no-void geometry. They do not yet decompose strain energy into independent “local indentation” and “bending” terms, and they do not establish that a particular stem or void improves sensing.
 
-That distinction is deliberate.
-
 The structural hypothesis is:
 
 > Internal morphology can route contact work toward a surface that is easier to observe.
@@ -157,7 +155,7 @@ The completed evidence is narrower:
 
 > For the no-void parametric fingertip, different contact locations produce different full-field and sidewall deformation signatures, and those signatures can be extracted reproducibly.
 
-Before comparing more aggressive internal structures, the numerical model itself must be trusted. Nearly incompressible silicone is exactly where a visually plausible FEM result can become numerically stiff for the wrong reason. That is the next article.
+Before comparing more aggressive internal structures, the numerical model itself must be trusted. A nearly incompressible silicone model can produce a visually plausible deformation field while overestimating stiffness through volumetric locking. That is the next article.
 
 ---
 

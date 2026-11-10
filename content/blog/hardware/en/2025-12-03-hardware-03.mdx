@@ -73,7 +73,7 @@ $$
 
 When $N$ is small, the growing numerator dominates and acceleration increases. Once $N^2 J_m$ exceeds $J_L$, the denominator grows faster and acceleration falls. Differentiating and setting the result to zero gives the ratio that maximizes acceleration, $N^\ast = \sqrt{J_L/J_m}$: the point where reflected inertia equals link inertia. With the values from the Part 2 example, $J_m = 1\times10^{-5}\,\mathrm{kg\,m^2}$ and $J_L \approx 0.09\,\mathrm{kg\,m^2}$, this gives $N^\ast \approx 95$.
 
-This is a simple model that ignores speed limits, friction, and external forces. The conclusion is still clear: raising the gear ratio keeps increasing static torque, but beyond some point it reduces the acceleration available for quick changes of direction.
+This calculation assumes fixed motor torque and ignores speed limits, friction, and external forces. Under those assumptions, raising the gear ratio increases static torque, but beyond the inertia-matching ratio it reduces acceleration.
 
 ### The Inertia Matrix of a Multi-Joint Robot
 
@@ -105,13 +105,13 @@ Reducer friction reaches the joint by two paths. One is the reducer's own loss a
 
 ### Forward and Backward Efficiency
 
-In backdriving, where power flows from the output shaft toward the motor, $\tau_{joint} \approx \eta_f N \tau_m$ cannot simply be inverted. The backward efficiency $\eta_b$ can differ from the forward efficiency $\eta_f$, and there is a separate backdrive starting torque needed to get the output shaft moving. Many high-ratio mechanisms measure lower $\eta_b$ than $\eta_f$, but this is not a universal law; it follows from tooth profile, preload, lubrication, and load. A Bilateral Drive Gear prototype of about 1:102 reported a forward efficiency of 89.0%, a backward efficiency of 85.3%, and a backdrive starting torque of 0.020 N·m [1](#ref-1). {/* TODO(ref): verify the prototype gear ratio (1/102.1) against the original paper */}
+In backdriving, where power flows from the output shaft toward the motor, $\tau_{joint} \approx \eta_f N \tau_m$ cannot simply be inverted. The backward efficiency $\eta_b$ can differ from the forward efficiency $\eta_f$, and there is a separate backdrive starting torque needed to get the output shaft moving. Many high-ratio mechanisms measure lower $\eta_b$ than $\eta_f$, but this is not a universal law; it follows from tooth profile, preload, lubrication, and load. The Bilateral Drive Gear prototype evaluated in [1](#ref-1) reported a forward efficiency of 89.0%, a backward efficiency of 85.3%, and a backdrive starting torque of 0.020 N·m.
 
 In the extreme case, torque at the output shaft alone cannot overcome internal friction and backdriving never starts. This is self-locking. Some worm gears are an example, but not all worm gears self-lock; it depends on the lead angle, the friction coefficient, and the lubrication condition.
 
 ### Reflected Inertia Depends on Power Flow Direction
 
-Once reducer friction is included as an efficiency, the inertia the joint feels depends on the direction of power flow [2](#ref-2). The reflected inertia in the forward direction (FWD), where the motor drives the link, and in the backward direction (BWD), where an external force backdrives the joint, are:
+Once reducer friction is included as an efficiency, the inertia the joint feels depends on the direction of power flow [2](#ref-2). In this efficiency-based model, the effective inertia coefficients for forward driving (FWD), where the motor drives the link, and backward driving (BWD), where an external force backdrives the joint, are:
 
 $$
 I_{\mathrm{FWD}} = \frac{J_L}{\eta_f} + N^2 J_m,

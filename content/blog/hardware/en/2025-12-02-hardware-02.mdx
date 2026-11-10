@@ -25,9 +25,9 @@ import FocDemo from "../../../../src/components/demos/FocDemo";
 
 ## Introduction: The Motor Inside the Simulator
 
-A locomotion policy that jumped high in simulation falls short of that height on the real robot. Keep the experiment going for about ten minutes, and the landings get heavier and heavier even though the policy has not changed. In both cases, the cause can be found in the motors rather than in the policy.
+Consider a locomotion policy that jumps lower on the real robot than in simulation, or whose landings change as the robot warms up. Motor voltage and thermal limits are possible causes to check alongside the policy and the rest of the system.
 
-In a simulator, a robot joint is usually treated as an ideal torque source. The commanded torque is assumed to reach the joint exactly, with no delay, no error, and no dependence on speed or temperature, with at most a single maximum torque limit attached. Real motors do not behave this way.
+A common simplified simulation model treats a robot joint as an ideal torque source. The commanded torque is assumed to reach the joint exactly, with no delay, no error, and no dependence on speed or temperature, with at most a single maximum torque limit attached. Real motors do not behave this way.
 
 In a multi-joint robot, an actuator means, narrowly, the combination of a motor and a reducer, and broadly, a joint drive module that also integrates the encoder, motor driver, temperature sensor, and brake. A command from the policy becomes force only after passing through this module. The discrepancies that arise along the way differ slightly in nature. Some are **unmodeled dynamics** that the simulator does not model at all. Others are **modeling errors**, present in the model but with the wrong values, which have to be corrected through **system identification**. There is also data noise mixed into sensor readings and estimates; torque estimated from current in particular is one of the most common sources of noise in robot data. All three create the Sim-to-Real Gap, where a policy trained in simulation behaves differently on the real robot.
 
@@ -155,7 +155,7 @@ $$
 J_{\mathrm{reflected}} = N^2 J_{\mathrm{rotor}}
 $$
 
-For example, attach a 100:1 reducer to a small inner-runner motor with a rotor inertia of 1×10⁻⁵ kg·m², and the reflected inertia seen at the joint becomes 0.1 kg·m². That is about the same as the inertia of a 1 kg link 0.3 m from the joint (about 0.09 kg·m²). In a high-ratio joint, the rotor's contribution to inertia can exceed that of the link itself. The effect of the reduction ratio is covered in detail in the [next post](/hardware03/).
+As an illustrative calculation, attach a 100:1 reducer to a small inner-runner motor with a rotor inertia of 1×10⁻⁵ kg·m², and the reflected inertia seen at the joint becomes 0.1 kg·m². That is about the same as the inertia of a 1 kg point mass 0.3 m from the joint (about 0.09 kg·m²). In a high-ratio joint, the rotor's contribution to inertia can exceed that of the link itself. The effect of the reduction ratio is covered in detail in the [next post](/hardware03/).
 
 The problem is that robot models such as URDF often contain only link masses and inertias and leave out the rotor inertia. MuJoCo provides a per-joint parameter called armature for this [8](#ref-8), and most other simulators offer a similar setting. If this value is missing, the simulated joint moves much more lightly than the real one, and acceleration, collision response, and compliance to external forces all change. In QDD joints with outer-runner motors and low reduction ratios, $N^2 J_{\mathrm{rotor}}$ can be designed to be small. The error from omitting rotor inertia then shrinks as well, but the actual value still has to be computed from both the rotor inertia and the reduction ratio.
 
@@ -190,7 +190,7 @@ So for force-critical tasks, rather than trusting the nominal $K_t$ as is, you n
 
 ## Heat: A Model That Changes Over Time
 
-Heat changes the model parameters during an experiment. When the windings and magnets go from 25 °C to 75 °C, copper resistance rises by about 19.5% and $K_t$ drops by about 5%, so the same current command, computed with the nominal $K_t$, falls about 5% short in torque. This change happens gradually and is invisible in short experiments, but it makes the robot at the start of an experiment and the robot ten minutes later behave like two different robots. Once the driver starts **derating**, limiting current according to winding temperature, the torque limit also drops without warning, and this is the same reason the peak torque on a datasheet is allowed only for short periods. Thermal models and compensation methods are covered in detail in the [post on torque estimation and heat](/hardware06/).
+Heat changes model parameters during an experiment. In the illustrative thermal model in [06](/hardware06/), warming the windings and magnets from 25 °C to 75 °C raises copper resistance by about 19.5% and lowers $K_t$ by about 5%. The same current then produces about 5% less torque. These percentages follow the temperature coefficients used in that example; they are not ratings for every motor. If the driver also starts **derating**, its available current and torque limits fall. Thermal models and compensation methods are covered in detail in the [post on torque estimation and heat](/hardware06/).
 
 ## Reading a Datasheet as Simulation Parameters
 
@@ -227,7 +227,7 @@ The differences between a simulated joint and a real BLDC motor are summarized b
 | Change over time | Always the same | $K_t$ and $R$ change with temperature, and derating kicks in | Torque loss and data bias in long experiments | [Heat](/hardware06/) |
 | Joint damping | A single constant | Back-EMF damping depends on driver state | Damping mismatch in backdriving and demonstration data | This post |
 
-A good motor for a robot is often described as one that delivers force predictably, quickly, and consistently. In terms of this table, a good motor is one with a short distance from the ideal torque source, that is, one close to what the simulator assumes. And whatever distance remains, you need to know where it comes from and be able to handle it in the model or the data.
+Use the task's speed, load, and operating duration to decide which discrepancies in the table need measurement or a model. A motor does not have to match an ideal torque source under every condition; the model must represent the departures that matter for the task.
 
 A motor alone, however, rarely produces enough torque for a joint. In the next post we look at the reducer, which sits between the motor and the joint and can lengthen or shorten this distance through reflected inertia, friction, and backlash.
 

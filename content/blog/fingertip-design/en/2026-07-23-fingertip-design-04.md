@@ -67,7 +67,7 @@ The mixed T3 formulation adds volumetric strain as an independent nodal unknown.
 
 <div class="editorial-wide">
   <img src="/assets/img/fingertip-design/medium-mixed-t3-mesh.webp" alt="Medium triangular mixed-element mesh of the LIT fingertip">
-  <p class="caption">The adopted fingertip mesh uses three-node mixed volumetric-strain elements. The element choice is part of the physical model, not a plotting preference.</p>
+  <p class="caption">The adopted fingertip mesh uses three-node mixed volumetric-strain elements. The element formulation determines how the model approximates deformation and near-incompressibility.</p>
 </div>
 
 ## Why identical mesh forces were not enough
@@ -106,7 +106,7 @@ The fine displacement-only case reached 8% compression and returned `True` from 
 
 This is the difference between **algorithmic return status** and **physical acceptance**.
 
-A production load step needs more than a boolean:
+For this monotonic compression benchmark, load-step acceptance checks include:
 
 ```text
 DISPLACEMENT              finite
@@ -150,7 +150,7 @@ For the 2D baseline, the current contract is:
 
 It does not establish the final three-dimensional fingertip behavior. It establishes a numerical floor below which geometry conclusions should not be trusted.
 
-The next difficulty is contact. A contact algorithm can converge while using an under-resolved pressure field, a wrong master/slave direction, or an unverified contact resultant. Conversely, a formally failed acceptance gate can preserve a perfectly usable displacement field. We need a richer definition of “correct.”
+The next difficulty is contact. A contact algorithm can converge while using an under-resolved pressure field, a wrong master/slave direction, or an unverified contact resultant. A case can also fail one acceptance gate while retaining displacement outputs that pass their own checks. We need a richer definition of “correct.”
 
 ---
 

@@ -17,7 +17,7 @@ When a robotic fingertip is described as “soft silicone,” most of the mechan
 
 Which surface is bonded? How thick is the compliant layer? Is there a rigid structure behind it? Where can the material bulge? Does the contact load travel into a plate, a stem, a cavity wall, or a floating skin? Which deformation is visible to a sensor, and which disappears inside the bulk?
 
-Two fingertips can be cast from the same silicone and still produce different contact patches, different force–displacement curves, different slip behavior, and different sensor signals. The material defines a constitutive response. The **morphology defines the boundary-value problem**.
+Two fingertips can be cast from the same silicone and still produce different contact patches, different force–displacement curves, different slip behavior, and different sensor signals. The material defines a constitutive response. The **geometry and interfaces define the domain and constraints** in which that response develops.
 
 That distinction is the starting point of this series.
 
@@ -74,7 +74,7 @@ $$
 
 Here $\xi$ is the contact location, $\delta_n$ is indentation, $\mathbf{t}$ represents tangential loading, $\mathbf{u}(\mathbf{X})$ is the displacement field, $\ell_c$ is contact length in the 2D model, and $\xi_c$ is the achieved contact centroid.
 
-Even this is incomplete for real silicone because the response can depend on loading rate and history. But it exposes the key point: stiffness is one projection of a much larger transfer map.
+The map includes loading rate and history, but their effects still need a constitutive model and calibration for the silicone used. Stiffness is one projection of this larger transfer map.
 
 For sensing, the map matters more than the scalar stiffness. A camera does not directly observe $k$. It observes an image produced by deformation, illumination, occlusion, texture, and noise. If two contact locations create nearly identical visible deformation, a perfect material model does not make the sensor informative.
 

@@ -15,7 +15,7 @@ tags: [Robotics, Hardware Development, Fingertip Design, Optimization]
 
 “Maximize deformation” is a bad fingertip objective.
 
-A very thin sidewall can produce large motion and fail mechanically. A large void can amplify bulging and introduce unstable self-contact. A soft pad can increase contact area and erase spatial differences. A stiff pad can preserve location and produce too little optical signal. An extreme geometry can win in a deterministic model and become unusable after a 0.2 mm manufacturing error.
+A very thin sidewall can produce large motion and fail mechanically. A large void can amplify bulging and introduce unstable self-contact. A soft pad can increase contact area and erase spatial differences. A stiff pad can preserve location and produce too little optical signal. A design that performs well at its nominal dimensions may fail under manufacturing variation.
 
 The optimization target has to represent what the complete robot needs.
 
@@ -69,7 +69,7 @@ d_{ij}^2
 (\boldsymbol{\mu}_i-\boldsymbol{\mu}_j),
 $$
 
-where $\boldsymbol{\mu}_i$ is the mean feature for contact state $i$ and $\mathbf{\Sigma}_{ij}$ captures within-state variation.
+where $\boldsymbol{\mu}_i$ is the mean feature for contact state $i$ and $\mathbf{\Sigma}_{ij}$ captures within-state variation. This expression assumes an invertible covariance; a singular estimate needs a specified regularization or reduced feature space.
 
 A conservative objective can maximize the worst adjacent-location margin:
 
@@ -103,7 +103,7 @@ $$
 
 The weight $w$ should reflect actual task use. If the hand needs early contact localization, low indentation receives more weight. If the sensor must survive forceful grasping, high-load validity remains a constraint even when it is not the primary sensing region.
 
-The current CODTM data already shows why this matters: fixed-indentation signature distances grow substantially with indentation. Optimizing only at 1.5 mm would overstate low-load performance.
+The current CODTM data already show why this matters: fixed-indentation signature distances grow substantially with indentation. Optimizing only at 1.5 mm would overstate low-load performance.
 
 ## Constraint 1: force and contact behavior
 
@@ -123,7 +123,7 @@ and limits on contact length, pressure concentration, or tangential stability.
 
 Too little normal reaction can make a grasp fragile. Too much can saturate the actuator or damage an object. A broad contact can improve torsional stability while reducing spatial resolution.
 
-These are genuine tradeoffs, not penalties that should be hidden inside one arbitrary weighted sum.
+The choice of weights or hard limits should make these tradeoffs explicit.
 
 ## Constraint 2: deformation validity
 
@@ -239,9 +239,7 @@ It should look more like:
 
 > Across the declared contact and manufacturing range, this fingertip produces observation-space contact signatures with larger noise-normalized separation while satisfying force, strain, contact, and mesh-validity constraints.
 
-That sentence requires mechanics, optics, statistics, and hardware experiments. The current `lit_ws` work supplies the mechanics framework and a validated no-void reference. It also records exactly where the internal-contact model is blocked.
-
-That is enough to begin the design program without pretending it is finished.
+That claim requires mechanics, optics, statistics, and hardware experiments. The current `lit_ws` work supplies the mechanics framework and a no-void reference checked against the numerical criteria described in this series. Optical validation, internal-contact treatment, and physical prototype tests remain open.
 
 ---
 

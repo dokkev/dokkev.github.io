@@ -17,7 +17,7 @@ Contact is not a boundary condition that stays fixed while Newton's method solve
 
 A small change in displacement can activate a node. That changes the algebraic system. The new system can push the node out of contact, changing it again. A Newton residual may decrease inside each temporary system while the contact state itself cycles.
 
-This is why “the solver converged” is neither a necessary nor a sufficient physical verdict.
+A convergence flag alone does not establish which fields are usable. The contact state and the outputs used for a design decision need their own checks.
 
 ## The first fine-mesh failure was not material divergence
 
@@ -131,7 +131,7 @@ For each contact load step, the current fingertip workflow checks:
 | finite gap and pressure          | corrupted contact state                     |
 | stable active set                | cycling between changing constraint systems |
 | force closure                    | inconsistent contact resultant              |
-| smooth, monotonic force curve    | step-level discontinuity or branch jumping  |
+| smooth, monotonic force curve under this benchmark loading | step-level discontinuity or branch jumping |
 | medium/fine comparison           | discretization sensitivity                  |
 | pressure roughness               | under-resolved local contact field          |
 | volumetric checkerboard metric   | mesh-scale mixed-field oscillation          |

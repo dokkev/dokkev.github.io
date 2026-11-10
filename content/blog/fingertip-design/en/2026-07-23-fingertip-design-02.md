@@ -29,7 +29,7 @@ The `lit_ws` fingertip begins with five physical dimensions and two clearance pa
 
 The compliant pad is the lower half of an ellipse. A rigid plate spans the flat upper boundary, and a centered rigid stem extends downward into the pad. The upper pad–plate segments outside the stem cutout are always bonded.
 
-That last sentence is more important than it looks. The model does not let a void silently redefine where the pad is attached. The bond is a separate semantic interface. Void geometry changes the clearance around the stem, not the existence of the upper attachment.
+Changing the void does not redefine where the pad is attached. The bond is a separate semantic interface. Void geometry changes the clearance around the stem, not the existence of the upper attachment.
 
 <div class="editorial-wide">
   <img src="/assets/img/fingertip-design/geometry-four-cases.webp" alt="Four limiting cases of the LIT fingertip void parameterization">

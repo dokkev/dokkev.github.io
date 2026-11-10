@@ -1,6 +1,6 @@
 ---
 title: "Fingertip Design 08: Then I Added a Hole"
-description: An internal void changes a single-domain deformation problem into zero-clearance self-contact with multiplier and crosspoint constraints.
+description: Enabling internal stem–pad contact exposes a zero-clearance multiplier failure at a bonded–contact crosspoint.
 layout: distill
 editorial: true
 published: true
@@ -15,13 +15,13 @@ tags: [Robotics, Hardware Development, Fingertip Design, FEM]
 
 The no-void fingertip reached 1.5 mm indentation on medium and fine meshes. Its force curve was smooth, its displacement field remained finite, and its sidewall signatures were reproducible.
 
-Then the internal stem–pad contact was enabled.
+Then the internal stem–pad contact was enabled in the zero-clearance geometry.
 
 The first nonlinear step failed.
 
 The geometry was symmetric. Only the right-side internal pair was sufficient to reproduce the failure. Reversing the right boundary order made the physical normal wrong. Joining the three internal pairs into one continuous U-shaped contact did not recover convergence.
 
-The problem was not “a hole makes the fingertip softer.” The hole changed the mathematical structure of the model.
+This failure occurred before testing a positive internal clearance. Enabling the coincident stem–pad interfaces changed the constraint system even though no material had been removed.
 
 ## From one continuum to multiple constraint states
 
@@ -77,7 +77,7 @@ The important result was:
 - left-only: converged,
 - right-only: reproduced the first-step failure.
 
-That immediately ruled out the mixed solid as the general cause. The same solid, mesh, material, and external contact worked when the right internal pair was absent.
+The same solid, mesh, material, and external contact worked when the right internal pair was absent. That isolated the failure to a configuration involving that pair.
 
 It also showed that a visually symmetric model could enter an asymmetric runtime state.
 

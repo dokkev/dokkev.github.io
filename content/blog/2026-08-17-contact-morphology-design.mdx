@@ -12,7 +12,7 @@ import CmdStructuralContactDemo from "../../src/components/demos/CmdStructuralCo
 
 When we talk about physical interaction in robotics, we usually talk about force. A robot pushes with 10 N. A gripper applies 20 N. A controller tracks a desired wrench.
 
-These descriptions are useful. Robotics would be almost impossible without them. But force is not where the physical interaction begins.
+These descriptions are useful. To see what they leave out, let's follow how contact develops.
 
 Imagine a robot finger pressing against an object. The outer surface touches first. As the finger keeps moving, the soft material deforms and a contact patch forms. With more preload, the patch grows and its effective stiffness changes. Load spreads over the surface, travels through the soft material into the rigid structure, becomes joint torque, passes through the transmission, and reaches the actuator. The actuator responds, the finger moves, and the contact changes again.
 
@@ -37,36 +37,36 @@ $$
 
 This is the perspective behind what I call **Contact Morphology Design**, or **CMD**.
 
-## Force is the result, not the interaction
+## Force alone does not describe contact
 
 When two bodies touch, geometry, material deformation, friction, structural support, and motion all shape what happens. What we call a contact force is one useful summary of that richer process.
 
 Robot control works with abstractions such as $q$, $\dot q$, $\tau$, $F$, and $W$. That is what makes control tractable. But every abstraction hides information.
 
-A normal force of 10 N does not say whether the contact patch is large or small. It does not locate pressure concentrations, reveal internal collapse, or describe patch migration and proximity to slip. Two fingertips can produce the same measured force through very different physical interactions.
+A normal force of 10 N does not say whether the contact patch is large or small. It does not locate pressure concentrations, reveal internal collapse, or describe patch migration and proximity to slip. Two fingertips can produce the same measured force with different pressure distributions and deformations.
 
-If those differences matter for the task, the robot has to recover them somehow: tactile sensing, contact-location estimates, deformation models, slip estimation, or richer state estimators. Learning-based policies face the same issue. They may never represent contact as a wrench, but the complexity still appears in sensing, data, temporal context, model capacity, or training.
+If those differences matter for the task, the robot needs information beyond the measured force. Tactile sensing, contact-location estimates, deformation models, or slip estimation can provide that information. Learning-based policies face the same issue. They may never represent contact as a wrench, but they still need observations or temporal context that distinguish contact states requiring different actions.
 
 That suggests another option: alongside richer abstractions, can we also design the physical interaction itself?
 
-## Contact as a design variable
+## What CMD designs, changes, and evaluates
 
 There is no universally good contact. One task wants a large compliant patch; another wants a small, localized one. A fingertip may need to be compliant in one direction and stiff in another. Some interactions should resist motion; others should release with almost no resistance. Maximizing friction, compliance, contact area, or grip force alone cannot settle those choices.
 
-CMD makes the physical process of contact deliberate. It treats the following as design variables:
+CMD starts with physical design variables:
 
 - Contact geometry and material distribution.
-- Local compliance and rigid support.
-- How the contact patch evolves under load.
-- Structural load paths, including transmission back toward the actuator.
+- Local stiffness and rigid support configuration.
 
-**Contact Morphology Design is a methodology for designing how forces are transmitted and deformations evolve through physical contact.**
+These choices shape contact responses: how the patch evolves, how pressure is distributed, how material deforms, and how load travels through the structure. Those responses also depend on the object, loading history, and motion. Patch evolution is a response to design and operating conditions, rather than an independently chosen design variable.
 
-There is an important second half to that definition: the morphology belongs to a robot whose sensing, hardware, and controller shape the interaction.
+At the system level, we evaluate what these responses mean for joint loading, sensor observability, and closed-loop behavior. The distinction tells us what we choose, what changes physically, and what we assess for the task.
+
+**Contact Morphology Design is an approach to choosing contact geometry, material distribution, local stiffness, and structural support to shape contact responses within a robot system.**
 
 ## Contact morphology in the closed-loop robot
 
-A soft pad never exists in isolation. Changing its stiffness changes deformation, the contact patch, and the load path through the finger. Those changes also affect joint torque, the mechanical impedance seen at the actuator, sensor response, and the dynamics the controller sees. The morphology changes the robot system.
+A soft pad never exists in isolation. Changing its stiffness can change deformation, the contact patch, and the load path through the finger. Those changes can affect joint torque, the mechanical impedance seen at the actuator, sensor response, and the dynamics the controller sees.
 
 Contact morphology therefore has to be studied as part of the closed-loop robot. The same compliant interface can behave differently on a highly geared, stiff actuator and a backdrivable one. A morphology evaluated under position control may behave differently under torque or impedance control. A feature that looks insignificant in a static test can matter once the system moves and the controller closes the loop.
 
@@ -99,7 +99,7 @@ At 2.4 mm normal indentation and at the end of the lateral motion, the recorded 
 
 Negative lateral reaction opposes the prescribed translation. The lateral case holds indentation equal, giving different normal preload forces across structures.
 
-These results show what individual summaries leave out. Similar total contact areas accompany very different forces. Neither an area nor an endpoint force alone says how each pad will respond to the next motion. Internal load paths shape that response, which makes them a CMD design variable.
+These simulation results show what individual summaries leave out. Similar total contact areas accompany different forces. Neither an area nor an endpoint force alone says how each pad will respond to the next motion. Here, the internal geometry and support configuration are design variables. The resulting load paths help explain the contact response.
 
 Which structure is useful depends on the task. Limiting force under an uncertain approach favors a lower force rise over the approach range. Carrying load within limited travel asks whether the required force is reached before travel runs out. Either choice needs the full force–displacement response, not just endpoints.
 
@@ -125,13 +125,13 @@ The demo's contact-region area sums the projected fully active triangles. The ta
 
 </details>
 
-## Making the downstream problem simpler
+## Can morphology simplify estimation and control?
 
-A robot still needs sensing, models, controllers, policies, and actuators. Morphology shapes the physical interaction those components must handle.
+Contact morphology shapes the physical interaction that sensing and control must handle. Its effects depend on the actuators, transmission, and controller with which it operates. Control changes motion and loading, which in turn change the contact response. CMD therefore treats morphology and control as a co-design problem.
 
-If the interaction is highly sensitive, strongly history-dependent, or hard to observe, the controller or policy inherits that complexity. If morphology makes the interaction more predictable, structured, or observable, the downstream problem can become simpler.
+The burden on estimation and control depends on which contact states matter for the task. If similar sensor readings correspond to states requiring different actions, estimation needs additional measurements or history. If the response depends on prior loading, a model or policy may need to track that history. Contact complexity alone does not determine control cost.
 
-**The research hypothesis is that morphology can reduce the complexity of the representation required for control by shaping the physics that representation must describe.** The challenge is to connect how contact forms to an abstraction through which a controller or policy can predict and control its transitions.
+**The research hypothesis is that shaping contact responses can make task-relevant behavior more consistent or easier to observe, reducing what estimation and control must represent.** Whether this simplifies policy learning or improves manipulation performance remains to be tested.
 
 For learned manipulation policies, that hypothesis is testable. Hold the task, observation access, policy architecture, and training protocol fixed, change the morphology, and measure:
 
@@ -139,6 +139,12 @@ For learned manipulation policies, that hypothesis is testable. Hold the task, o
 2. **Equal-budget performance:** how each design performs at the same training budget.
 3. **Generalization:** how each handles object poses and disturbances outside the training distribution.
 
-The decisive experiment is a task requiring repeated support changes: make, shift, release, and re-grasp. The question is whether morphology makes those transitions more reliable while preserving the contact repertoire the task needs, and whether that reliability reduces the required training.
+One test would use a task requiring repeated support changes: make, shift, release, and re-grasp. The question is whether morphology makes those transitions more reliable while preserving the contact repertoire the task needs, and whether that reliability reduces the required training.
 
-Alongside how a robot should control contact, CMD asks: **how should the robot be physically designed so that forces, deformations, sensing, and control produce the interaction we want?**
+Alongside the control question,
+
+> How should a robot control contact?
+
+CMD asks a design question:
+
+> How should the robot be physically designed so that forces, deformations, sensing, and control produce the interaction we want?

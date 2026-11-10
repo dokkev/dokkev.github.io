@@ -15,7 +15,7 @@ tags: [Robotics, Hardware Development, Fingertip Design, FEM, Sensing]
 
 If contact at the left, center, and right of a fingertip produces different sidewall deformation, then the mechanics contain information about contact location.
 
-That statement sounds obvious. It is not yet a sensing result.
+It does not yet establish whether a sensor can recover that location.
 
 The differences could be smaller than mesh error. They could come only from different force levels rather than different shapes. They could disappear after camera projection. They could be overwhelmed by illumination drift or silicone hysteresis.
 
@@ -96,7 +96,7 @@ At fixed indentation, the off-diagonal signature distances increased from approx
 
 At fixed force, all five locations were interpolated over their common force range. At the highest common force, off-diagonal distances spanned approximately 0.1350–0.7523 mm.
 
-The differences therefore do not vanish when force is controlled. That is evidence of location-dependent profile shape, not only amplitude.
+The differences persist at matched force. The amplitude-normalized comparison below separately tests whether the profiles differ in shape.
 
 ## A distance matrix is descriptive, not a classifier
 
@@ -140,9 +140,7 @@ At 1.5 mm:
   <p class="caption">The medium and fine profiles are visually and numerically close at the three spot-check locations.</p>
 </div>
 
-Those numbers are favorable. The scientific status remains **provisional** because a CODTM-specific profile threshold was not declared before the simulations were run.
-
-This may sound overly cautious. It prevents a subtle form of hindsight: choosing the tolerance after seeing the difference.
+These comparisons remain **provisional** because a CODTM-specific profile threshold was not declared before the simulations were run. Choosing that tolerance afterward would not provide an independent acceptance criterion.
 
 ## The pressure-derived descriptors were only partially verified
 
