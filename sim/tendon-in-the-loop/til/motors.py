@@ -57,7 +57,8 @@ class QDDMotor:
     def reset(self, T_hold: float = 0.0) -> None:
         """Start at rest holding the cable tension ``T_hold`` (the current needed to balance it at the drum)."""
         self.s = QDDMotorState()
-        self.s.i = self.s.u = self.s.i_ff = self.p.r_drum * T_hold / self.p.K_t
+        self.s.i_ff = self.p.r_drum * T_hold / self.p.K_t
+        self.s.i = self.s.u = float(np.clip(self.s.i_ff, -self.p.i_max, self.p.i_max))
         self.s.T_load = T_hold
 
     @property
@@ -136,6 +137,8 @@ class EmulationMotor:
         self.dt = dt
         self.s = EmulationMotorState()
         n = int(round(self.p.delay / dt))
+        if dt <= 0 or self.p.delay < 0 or abs(n * dt - self.p.delay) > 1e-12:
+            raise ValueError("emulator delay must be a nonnegative integer multiple of dt")
         self._buf: deque[float] = deque([0.0] * n, maxlen=n) if n > 0 else deque(maxlen=0)
 
     def reset(self) -> None:
@@ -147,8 +150,9 @@ class EmulationMotor:
         p, s = self.p, self.s
         s.x_cmd_raw = x_cmd
         if self._buf.maxlen:
+            delayed = self._buf.popleft()
             self._buf.append(x_cmd)
-            x_cmd = self._buf[0]
+            x_cmd = delayed
         v_cmd = (x_cmd - s.x_cmd) / self.dt if p.velocity_feedforward else 0.0
         s.x_cmd = x_cmd
         if p.mode == "ideal":

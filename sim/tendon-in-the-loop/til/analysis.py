@@ -112,7 +112,9 @@ def fig_tension_vs_elongation(ep: dict, out: str) -> str:
     ax[0].set_title("Tension vs apparent elongation")
     ax[0].legend(fontsize=8)
     k = ep["ground_truth/effective_stiffness"]
-    s = ep["ground_truth/cable_segment_strains"] * MM
+    # v1 used the name "strains" for extensions measured in metres.
+    key = "ground_truth/cable_segment_extensions" if "ground_truth/cable_segment_extensions" in ep else "ground_truth/cable_segment_strains"
+    s = ep[key] * MM
     ax[1].plot(s[:, 0], ep["ground_truth/input_tension_true"], lw=0.7, color="tab:red", label="segment 1")
     ax[1].plot(s[:, 1], ep["ground_truth/output_tension_true"], lw=0.7, color="tab:blue", label="segment 2")
     ax[1].set_xlabel("true segment stretch [mm] (ground truth)")

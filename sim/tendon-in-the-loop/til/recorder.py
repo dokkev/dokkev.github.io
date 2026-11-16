@@ -92,7 +92,7 @@ class DatasetFile:
     def __init__(self, path: str, mode: str = "w"):
         self.f = h5py.File(path, mode)
         if mode == "w":
-            self.f.attrs["schema"] = "tendon-in-the-loop/sil/v1"
+            self.f.attrs["schema"] = "tendon-in-the-loop/sil/v2"
             self.f.attrs["created"] = time.strftime("%Y-%m-%dT%H:%M:%S")
             self.f.attrs["versions"] = json.dumps(_versions())
             self.f.attrs["motor_only_channels"] = json.dumps(MOTOR_ONLY_CHANNELS)

@@ -123,6 +123,9 @@ def plot_report(rows, filename):
         a.grid(alpha=.2)
         a.spines[["top", "right"]].set_visible(False)
     fig.savefig(filename, metadata={"Date": None})
+    path = Path(filename)
+    if path.suffix.lower() == ".svg":
+        path.write_text("\n".join(line.rstrip() for line in path.read_text(encoding="utf8").splitlines()) + "\n", encoding="utf8")
     plt.close(fig)
 
 
@@ -131,12 +134,14 @@ def main():
     ap.add_argument("--baselines", required=True)
     ap.add_argument("--robustness", required=True)
     ap.add_argument("--drift", required=True)
+    ap.add_argument("--routing", help="optional explicit routing/contact experiment dataset")
     ap.add_argument("--out", required=True)
     ap.add_argument("--plot", required=True)
     a = ap.parse_args()
     versions, baselines = baseline_metrics(a.baselines)
     robustness = robustness_metrics(a.robustness)
     sources = sorted([*ROOT.glob("til/*.py"), *ROOT.glob("scripts/*.py"), *ROOT.glob("tests/*.py")])
+    sources += sorted(ROOT.glob("experiments/*.json"))
     report = dict(
         scope="Numerical pre-hardware verification; not a hardware acceptance or learned-model benchmark.",
         generated_at_utc=datetime.now(timezone.utc).isoformat(), versions=versions,
@@ -149,6 +154,12 @@ def main():
                  "No system ID, learned model, neural observer, or physical-finger estimator is trained here.",
                  "Energy accounting is verified in a taut viscous case, not for every degradation law.",
                  "The drift constitutive law and accelerated time scale are algorithm-testing assumptions."])
+    if a.routing:
+        with h5py.File(a.routing, "r") as f:
+            report["routing_contact"] = [
+                {"configuration": json.loads(g.attrs["config"]),
+                 "summary": {k: v for k, v in json.loads(g.attrs["summary"]).items() if k != "wall_time_s"}}
+                for g in f["episodes"].values()]
     for filename in (a.out, a.plot):
         Path(filename).parent.mkdir(parents=True, exist_ok=True)
     Path(a.out).write_text(json.dumps(report, indent=2, allow_nan=False) + "\n", encoding="utf8")

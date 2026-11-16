@@ -156,13 +156,45 @@ transmission/ input_tension output_tension input_displacement output_displacemen
 simulation/   joint_positions joint_velocities tendon_length tendon_moment_arms tendon_joint_torque
               applied_tension contact_state contact_force contact_location object_position
               object_velocity tip_position
-ground_truth/ cable_segment_strains friction_state friction_torque effective_stiffness effective_friction
+ground_truth/ cable_segment_extensions friction_state friction_torque effective_stiffness effective_friction
               slack_state settle_state creep_state degradation_state dissipated_energy stored_energy
               input_tension_true output_tension_true pulley_friction_torque
 ```
 
 `motor/` is the only namespace a motor-only observer may read: `recorder.load_motor_only()` returns exactly
 `time` plus the channels listed in the file attribute `motor_only_channels`. Everything else is privileged.
+
+## Reproducible experiment settings
+
+All three modes accept `--period`, `--amplitude` (metres of motor reel-in reference), and
+`--pretension` (newtons). The motor follows this reference through a current-limited PD controller;
+joint motion remains dynamic. This runner does not implement a separate open-loop torque waveform.
+
+For routing and sensor experiments, use the checked-in manifest:
+
+```powershell
+.\.venv\Scripts\python.exe -m til.runner --config experiments/routing-contact.json --out data/routing-contact.h5 --plots figures/routing-contact --quiet
+```
+
+The manifest merges `defaults` with explicit `episodes`, including nested `profile` and
+`sim_overrides` settings. It varies pulley radius, friction, pretension, contact stiffness, initial
+finger posture, excitation and seed. Each episode records its merged configuration in HDF5.
+Routing is fixed within an episode. Radius and bearing/friction parameters describe the implemented
+two-port pulley model; wrap-angle-dependent capstan friction and multi-guide routing are not implemented.
+
+`--plots` writes eight diagnostic figures per completed episode. Episode summaries include recorded
+contact entry/exit counts; these raw transitions include contact chatter and are not completed press cycles.
+Check the contact-force trace against the excitation phases to assess repeated loading and release. Numerical failure
+is stored in the episode and causes a nonzero runner exit code. Finite states are checked every dynamics
+step; this guard is not a hardware safety specification.
+
+Schema **v2** names true segment stretches `ground_truth/cable_segment_extensions` in metres.
+The old v1 name `cable_segment_strains` also contained metres, not dimensionless strain; plotting accepts
+both. Segment rest lengths are not defined, so dimensionless cable strain is not reported.
+Nonlinear pretension is calibrated using the complete nominal elastic law. Sensor and emulator delays
+must be representable on their respective timestep grids, and `log_dt` must be an integer multiple of
+the MuJoCo timestep. Separate seeded noise streams prevent logging from changing the plant trajectory;
+reset restores each stream.
 
 ## Validation
 

@@ -162,14 +162,14 @@ Numerical acceptance limits will be fixed from motor/emulator bandwidth, working
 
 The local MuJoCo prototype includes an independent two-segment cable/pulley plant, QDD and emulation motor models, and a coupled contact scenario. The current verification covers coupling and mechanical consistency; system identification, learned-model comparison, and neural-observer training remain to be evaluated.
 
-The verification was executed with MuJoCo **4.0.1**, Python **3.13.5**, and NumPy **2.5.5**. All **22 mechanical/coupling tests** passed. Five three-cycle cable presets, 26 sensitivity cases, and a 50-cycle drift-law run were also executed.
+The verification was executed with MuJoCo **4.0.1**, Python **3.13.5**, and NumPy **2.5.5**. All **38 mechanical, coupling, and data-pipeline tests** passed. Five three-cycle cable presets, 26 sensitivity cases, and a 50-cycle drift-law run were also executed.
 
 | Check | Observed numerical result |
 |---|---|
-| Nonlinear baseline, 3 cycles at 0.5 Hz | Emulator RMSE **0.0605 mm**; fundamental phase lag **0.135°** |
-| Added delay: 0 / 2 / 10 / 30 ms | Peak tracking error **0.811 / 1.525 / 10.819 / 15.238 mm** |
+| Nonlinear baseline, 3 cycles at 0.5 Hz | Emulator RMSE **0.0444 mm**; fundamental phase lag **0.127°** |
+| Added delay: 0 / 2 / 10 / 30 ms | Peak tracking error **0.814 / 1.544 / 10.791 / 14.534 mm** |
 | Current limits: 1 and 2 A | **No recorded contact**, despite numerical completion |
-| Drift preset: 50 cycles, 75.3 s | Recorded segment stiffness **10,000 → 8,271 N/m**; creep state **0.0911 mm** |
+| Drift preset: 50 cycles, 75.3 s | Recorded segment stiffness **10,000 → 8,309 N/m**; creep state **0.0874 mm** |
 | Taut viscous plant, 2 s at 3 Hz | Energy-accounting residual **1.19 × 10⁻⁷ J**, or **0.0654%** of port work |
 
 <figure className="til-flow-figure">

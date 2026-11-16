@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import copy
 import itertools
+import json
+from pathlib import Path
 from dataclasses import dataclass, field, asdict, replace
 
 import numpy as np
@@ -31,6 +33,16 @@ class MotorProfile:
     hold_frac: float = 0.3
     release_frac: float = 0.3  # rest = remainder
     settle_time: float = 0.3  # s at rest before the first cycle
+
+    def __post_init__(self):
+        if not all(np.isfinite(v) for v in asdict(self).values()):
+            raise ValueError("profile values must be finite")
+        if self.period <= 0 or self.n_cycles < 1 or int(self.n_cycles) != self.n_cycles:
+            raise ValueError("period must be positive and n_cycles a positive integer")
+        if self.amplitude < 0 or self.settle_time < 0 or min(self.ramp_frac, self.release_frac) <= 0 or self.hold_frac < 0:
+            raise ValueError("invalid amplitude, settling time or phase fractions")
+        if self.ramp_frac + self.hold_frac + self.release_frac > 1 + 1e-12:
+            raise ValueError("profile phase fractions must sum to at most one")
 
     @property
     def duration(self) -> float:
@@ -74,8 +86,11 @@ class EpisodeConfig:
         return asdict(self)
 
     def sim_config(self) -> SimConfig:
-        cable = replace(PRESETS[self.cable_preset], pretension=self.pretension, **self.sim_overrides.get("cable", {}))
-        finger = FingerParams(obj_x=self.obj_x, obj_z=self.obj_z, k_obj=self.k_obj, **self.sim_overrides.get("finger", {}))
+        unknown = set(self.sim_overrides) - {"finger", "cable", "motor", "emulator", "sensors", "timing"}
+        if unknown:
+            raise ValueError(f"unknown simulation namespaces: {sorted(unknown)}")
+        cable = replace(PRESETS[self.cable_preset], **{"pretension": self.pretension, **self.sim_overrides.get("cable", {})})
+        finger = FingerParams(**{"obj_x": self.obj_x, "obj_z": self.obj_z, "k_obj": self.k_obj, **self.sim_overrides.get("finger", {})})
         cfg = SimConfig(finger=finger, cable=cable, seed=self.seed)
         for ns in ("motor", "emulator", "sensors", "timing"):
             if ns in self.sim_overrides:
@@ -112,3 +127,24 @@ def long_horizon(seeds: list[int] = (0,), n_cycles: int = 200, period: float = 1
 
 
 MODES = {"smoke": smoke, "contact_sweep": contact_sweep, "long_horizon": long_horizon}
+
+
+def load_manifest(path: str) -> list[EpisodeConfig]:
+    """Explicit episodes with shared defaults; nested namespaces merge without mutating presets."""
+    doc = json.loads(Path(path).read_text(encoding="utf-8"))
+    if set(doc) - {"defaults", "episodes"} or not doc.get("episodes"):
+        raise ValueError("manifest requires nonempty episodes and optional defaults")
+    episodes = []
+    for row in doc["episodes"]:
+        values = {**doc.get("defaults", {}), **row}
+        for key in ("profile", "sim_overrides"):
+            base = copy.deepcopy(doc.get("defaults", {}).get(key, {}))
+            for name, value in row.get(key, {}).items():
+                base[name] = {**base.get(name, {}), **value} if key == "sim_overrides" else value
+            values[key] = MotorProfile(**base) if key == "profile" else base
+        ep = EpisodeConfig(**values)
+        if "/" in ep.episode_id or not ep.episode_id or any(ep.episode_id == e.episode_id for e in episodes):
+            raise ValueError("episode IDs must be nonempty, unique and contain no slash")
+        ep.sim_config()  # reject unknown parameter names before opening the output file
+        episodes.append(ep)
+    return episodes

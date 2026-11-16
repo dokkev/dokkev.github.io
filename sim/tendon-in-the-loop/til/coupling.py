@@ -58,7 +58,12 @@ class TiLSimulator:
     def __init__(self, cfg: SimConfig | None = None):
         self.cfg = cfg or SimConfig()
         c = self.cfg
+        if c.timing.plant_dt <= 0 or c.timing.log_dt <= 0:
+            raise ValueError("sampling periods must be positive")
+        if min(asdict(c.sensors).values()) < 0 or c.emulator.delay < 0:
+            raise ValueError("sensor noise and delays must be nonnegative")
         self.rng = np.random.default_rng(c.seed)
+        self.record_rng = np.random.default_rng(c.seed + 2)
         self.finger = Finger(c.finger)
         self.plant = CablePlant(c.cable)
         self.motor = QDDMotor(c.motor, rng=np.random.default_rng(c.seed + 1))
@@ -70,6 +75,10 @@ class TiLSimulator:
         n_delay = int(round(c.sensors.tension_delay / self.mj_dt))
         self._tdelay: deque[float] = deque([c.cable.pretension] * n_delay, maxlen=n_delay) if n_delay > 0 else deque(maxlen=0)
         self.log_every = max(1, int(round(c.timing.log_dt / self.mj_dt)))
+        if abs(self.log_every * self.mj_dt - c.timing.log_dt) > 1e-12:
+            raise ValueError("log_dt must be an integer multiple of the MuJoCo timestep")
+        if abs(n_delay * self.mj_dt - c.sensors.tension_delay) > 1e-12:
+            raise ValueError("tension_delay must be an integer multiple of the MuJoCo timestep")
         self.t = 0.0
         self.k = 0
         self.T_applied = c.cable.pretension
@@ -78,6 +87,9 @@ class TiLSimulator:
 
     # ----------------------------------------------------------------------------------------------
     def reset(self, q0: tuple[float, float] = (0.0, 0.0)) -> None:
+        self.rng = np.random.default_rng(self.cfg.seed)
+        self.motor.rng = np.random.default_rng(self.cfg.seed + 1)
+        self.record_rng = np.random.default_rng(self.cfg.seed + 2)
         self.finger.reset(q0, pretension=self.cfg.cable.pretension)
         self.plant.reset()
         self.motor.reset(T_hold=self.cfg.cable.pretension)
@@ -107,8 +119,9 @@ class TiLSimulator:
         self.T_out_meas = self._measure(self.plant.s.T2)
         T = self.T_out_meas
         if self._tdelay.maxlen:
+            delayed = self._tdelay.popleft()
             self._tdelay.append(T)
-            T = self._tdelay[0]
+            T = delayed
         self.T_applied = T
         self.finger.apply_tension(T)
         self.finger.step()
@@ -125,7 +138,7 @@ class TiLSimulator:
         f, pl, em, mo = self.finger, self.plant, self.emulator, self.motor
         gt = pl.ground_truth()
         con = f.contact()
-        x_e_meas = em.s.x + (self.rng.normal(0.0, self.cfg.sensors.emulator_pos_noise) if self.cfg.sensors.emulator_pos_noise > 0 else 0.0)
+        x_e_meas = em.s.x + (self.record_rng.normal(0.0, self.cfg.sensors.emulator_pos_noise) if self.cfg.sensors.emulator_pos_noise > 0 else 0.0)
         obj_pos, obj_vel = f.object_state()
         return {
             "motor": mo.observation(),
@@ -198,7 +211,7 @@ CHANNEL_UNITS: dict[str, str] = {
     "simulation/object_position": "m (pad slide, negative = pressed down)",
     "simulation/object_velocity": "m/s",
     "simulation/tip_position": "m (world x y z)",
-    "ground_truth/cable_segment_strains": "m (absolute stretch of segments 1, 2 incl. pretension)",
+    "ground_truth/cable_segment_extensions": "m (absolute stretch of segments 1, 2 incl. pretension)",
     "ground_truth/friction_state": "N m (Dahl presliding torque)",
     "ground_truth/friction_torque": "N m",
     "ground_truth/effective_stiffness": "N/m",

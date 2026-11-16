@@ -151,6 +151,18 @@ class CablePlant:
 
     def __init__(self, params: CableParams | None = None):
         self.p = params or CableParams()
+        p = self.p
+        if min(p.k0, p.R_p, p.J_p) <= 0 or min(p.k3, p.c, p.pretension, p.b_p) < 0:
+            raise ValueError("stiffness, radius and inertia must be positive; cubic stiffness, damping and pretension nonnegative")
+        # Calibrate against the complete nominal constitutive law, including cubic stiffening.
+        lo, hi = 0.0, p.pretension / p.k0
+        for _ in range(60):
+            mid = (lo + hi) / 2
+            if p.k0 * mid + p.k3 * mid**3 < p.pretension:
+                lo = mid
+            else:
+                hi = mid
+        self._delta0 = (lo + hi) / 2
         self.s = CableState()
         self._prev_x_in = 0.0
         self._prev_x_out = 0.0
@@ -177,8 +189,8 @@ class CablePlant:
 
     @property
     def delta0(self) -> float:
-        """Pretension stretch (uses the nominal stiffness: the pretension was set when the cable was new)."""
-        return self.p.pretension / self.p.k0
+        """Fixed pretension stretch calibrated with the full nominal elastic law before degradation."""
+        return self._delta0
 
     def _elastic(self, delta: float) -> tuple[float, float, float]:
         """Elastic tension, tangent stiffness and stored energy of one segment at stretch ``delta``
@@ -228,9 +240,10 @@ class CablePlant:
         # Pulley update, implicit in the (stiff) spring and viscous terms so that near-rigid cables stay stable:
         #   J (phi_d' - phi_d) / dt = R (T1e - T2e) + R (c1 xd_in - c2 xd_out) - K_phi dt phi_d' - D_phi phi_d' - tau_f
         # with K_phi = R^2 (k1 + k2) and D_phi = R^2 (c1 + c2) + b_p (the viscous bearing term lives here too).
-        tau_f = self._friction(s.phi_d, T1e + T2e, dt) - p.b_p * s.phi_d  # non-viscous part only
+        bearing_b = 0.0 if p.friction_model == "none" else p.b_p
+        tau_f = self._friction(s.phi_d, T1e + T2e, dt) - bearing_b * s.phi_d  # non-viscous part only
         K_phi = R * R * (k1 + k2)
-        D_phi = R * R * (c1 + c2) + p.b_p
+        D_phi = R * R * (c1 + c2) + bearing_b
         num = s.phi_d + dt / p.J_p * (R * (T1e - T2e) + R * (c1 * xd_in - c2 * xd_out) - tau_f)
         s.phi_d = num / (1.0 + dt / p.J_p * (D_phi + dt * K_phi))
         s.phi += s.phi_d * dt
@@ -244,7 +257,7 @@ class CablePlant:
         T2e, _, E2 = self._elastic(d2)
         T1 = max(0.0, T1e + c1 * d1_d) if T1e > 0.0 else 0.0
         T2 = max(0.0, T2e + c2 * d2_d) if T2e > 0.0 else 0.0
-        tau_f = tau_f + p.b_p * s.phi_d
+        tau_f = tau_f + bearing_b * s.phi_d
 
         # hidden irreversible states (output side)
         if p.settle_rate > 0.0 and T2 > p.settle_T_thresh and s.settle < p.settle_cap:
@@ -275,7 +288,7 @@ class CablePlant:
         """Hidden plant states and current effective parameters (privileged information)."""
         s = self.s
         return {
-            "cable_segment_strains": np.array([s.delta1 + self.delta0, s.delta2 + self.delta0]),
+            "cable_segment_extensions": np.array([s.delta1 + self.delta0, s.delta2 + self.delta0]),
             "friction_state": s.z,
             "friction_torque": s.tau_f,
             "effective_stiffness": self.k_eff,

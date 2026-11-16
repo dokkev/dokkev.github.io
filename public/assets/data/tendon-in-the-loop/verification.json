@@ -1,6 +1,6 @@
 {
   "scope": "Numerical pre-hardware verification; not a hardware acceptance or learned-model benchmark.",
-  "generated_at_utc": "2026-11-16T01:00:37.670351+00:00",
+  "generated_at_utc": "2026-11-16T01:12:30.376704+00:00",
   "versions": {
     "python": "3.13.5",
     "platform": "Windows-11-10.0.26200-SP0",
@@ -11,32 +11,36 @@
   "source_hash_encoding": "Source bytes with CRLF normalized to LF for cross-platform Git checkouts.",
   "source_sha256": {
     "scripts/baselines.py": "ac6d0b772e58771a042d58ec21bddb538ed8ad63353fc017c769fb5473be1093",
-    "scripts/project_report.py": "417e611ae905da99a315b89fab2985ab1700c46c4cc63506e432ba6a2e2d6e10",
-    "scripts/robustness.py": "30fdab0e9466df6a7af00bdf748362043fee4e4cf504702a853ebcf279354a3a",
+    "scripts/project_report.py": "dedc0c33d74a09b3d51f8cf0ef456481f5f8eb90d101df61a8be5d7e42aee80f",
+    "scripts/robustness.py": "1da3a5b73b7e5b49bb9106e1278b70dc9b10b933fc2a203d88a4f8598076c93e",
     "tests/conftest.py": "0916d0f7553f07836fb4aab59c82126e4230b65bec545cfa266cf5e370291cee",
     "tests/test_cable.py": "bebb81325af474c933d68eca2ab93ae7bf2d5c1a26bb4356d16167192d841433",
     "tests/test_coupling.py": "231466a91304ddd680e9259a0eac0771d2aa408d48d251b538fc96ca8ce44d64",
+    "tests/test_experiments.py": "acd1e23f90e3a0cf4de8f87ff3b84a5f8a11f72745ff6ca21697d505bac94dac",
     "tests/test_motors.py": "86a6fcae651540c85b9f3e0ae2879b5dabc48e0ebb01b4bd8babbf3e598c5041",
     "til/__init__.py": "85666e0ed5fcfa5142cd5b7fe4a25f9a13966dae990b85248d4c83853c55a876",
-    "til/analysis.py": "9363d1eea95800296fc44593dcfdd63fd391d7242943c07eb86ed223979e05a0",
-    "til/cable.py": "4fc66bb4bec3c6a19648287c832f84709f87a0841c03c456a892f888a4411476",
-    "til/coupling.py": "5a52f5718351bd636f0aeb53c53e4fd9bf7bafdd62a948fe679ef227fde373be",
+    "til/analysis.py": "c9e27177213d8a15b8cc7048ba2f7751c6a891533bb8c73914d9c0b8f31d6386",
+    "til/cable.py": "0f6dafeb6079e376114f8de27d8542880dba9f7f15baa07ea5b82415b14d0e15",
+    "til/coupling.py": "d6c8e8a39bbcb9db0c32af496f5b72ea405bed39ea9fda10777ebe4cdbe3ec88",
     "til/finger.py": "6212081d546e9cab4a96c3a5c1ab3e8eb8f4ef5f9b70347300734ca172bc1a30",
-    "til/motors.py": "d999a73c8e1f2349d39296fa9566b5f2f68e08ace576982b86d2373824e844c7",
-    "til/recorder.py": "f2630563d73d6acb1261ad7e5ba553eca247428563c92daaf22d2bb9313d3773",
-    "til/runner.py": "e7d28f242ef944fde09059418ee0e95b33db5819351015c5d5798f17dffceb26",
-    "til/scenarios.py": "9411e3b0c6a792065e3a4f6099a0cc4d4c12448e1a4f70d7a70a4482b1cd303e"
+    "til/motors.py": "ab0a17b1fc43cef9377d5a0921ef9f7272e191d6f22af18c2412eb37c2616f1d",
+    "til/recorder.py": "7ceb2d62d6915a6fc7b1bafa521f185efbd25d1eb01b4a44505721eb47d53b86",
+    "til/runner.py": "7f2b176d0b3da84d591178deeff167a21483b8c7102dec261b0732e0d0ee18a7",
+    "til/scenarios.py": "8c30ccb45da15bd8c0e14b710d79fe39451737e2a452359b63481e599785ed0e",
+    "experiments/routing-contact.json": "d81cac998dbd1d0c68ccadfc5f09a34518ed8a252d4f6d792d2651ae50fb0902"
   },
   "baselines": [
     {
       "episode_id": "drift",
       "duration_s": 6.3,
       "n_cycles": 3,
-      "peak_tension_N": 35.98122523898475,
-      "contact_fraction": 0.476984126984127,
-      "final_degradation": 0.041200821863457464,
-      "final_creep_m": 7.2943007511834695e-06,
-      "final_settle_m": 4.137467684925391e-06,
+      "peak_tension_N": 37.47010004949132,
+      "contact_fraction": 0.5703174603174603,
+      "contact_entries": 178,
+      "contact_exits": 178,
+      "final_degradation": 0.037339005485390576,
+      "final_creep_m": 6.660019929033204e-06,
+      "final_settle_m": 3.4819041130842667e-06,
       "configuration": {
         "scenario_id": "baseline",
         "episode_id": "drift",
@@ -62,9 +66,9 @@
         },
         "sim_overrides": {}
       },
-      "emulator_rmse_mm": 0.05637159606662394,
-      "emulator_peak_error_mm": 0.5071490944147314,
-      "fundamental_phase_lag_deg": 0.1305363222169307
+      "emulator_rmse_mm": 0.04249046734814008,
+      "emulator_peak_error_mm": 0.6024374669059973,
+      "fundamental_phase_lag_deg": 0.12334508457756482
     },
     {
       "episode_id": "linear",
@@ -72,6 +76,8 @@
       "n_cycles": 3,
       "peak_tension_N": 29.640187643520868,
       "contact_fraction": 0.5701587301587302,
+      "contact_entries": 192,
+      "contact_exits": 192,
       "final_degradation": 0.0,
       "final_creep_m": 0.0,
       "final_settle_m": 0.0,
@@ -108,11 +114,13 @@
       "episode_id": "nonlinear",
       "duration_s": 6.3,
       "n_cycles": 3,
-      "peak_tension_N": 36.76802104131108,
-      "contact_fraction": 0.47904761904761906,
+      "peak_tension_N": 37.46701021969213,
+      "contact_fraction": 0.5688888888888889,
+      "contact_entries": 167,
+      "contact_exits": 167,
       "final_degradation": 0.0,
       "final_creep_m": 0.0,
-      "final_settle_m": 4.1935874827663345e-06,
+      "final_settle_m": 3.509416613728539e-06,
       "configuration": {
         "scenario_id": "baseline",
         "episode_id": "nonlinear",
@@ -138,16 +146,18 @@
         },
         "sim_overrides": {}
       },
-      "emulator_rmse_mm": 0.060494018473233754,
-      "emulator_peak_error_mm": 0.5065744259578533,
-      "fundamental_phase_lag_deg": 0.13528907107705976
+      "emulator_rmse_mm": 0.04443182200641146,
+      "emulator_peak_error_mm": 0.602377787975993,
+      "fundamental_phase_lag_deg": 0.12687920715994427
     },
     {
       "episode_id": "rigid",
       "duration_s": 6.3,
       "n_cycles": 3,
-      "peak_tension_N": 43.365826602379904,
-      "contact_fraction": 0.3861904761904762,
+      "peak_tension_N": 43.36582660238583,
+      "contact_fraction": 0.3825396825396825,
+      "contact_entries": 517,
+      "contact_exits": 517,
       "final_degradation": 0.0,
       "final_creep_m": 0.0,
       "final_settle_m": 0.0,
@@ -176,16 +186,18 @@
         },
         "sim_overrides": {}
       },
-      "emulator_rmse_mm": 0.08533904357158513,
-      "emulator_peak_error_mm": 0.5736546589155609,
-      "fundamental_phase_lag_deg": 0.2095735247141747
+      "emulator_rmse_mm": 0.0849907544243299,
+      "emulator_peak_error_mm": 0.573654658915514,
+      "fundamental_phase_lag_deg": 0.20859646320414726
     },
     {
       "episode_id": "rigid_ideal_emulator",
       "duration_s": 6.3,
       "n_cycles": 3,
-      "peak_tension_N": 382.44300888990676,
-      "contact_fraction": 0.1538095238095238,
+      "peak_tension_N": 407.73554330454175,
+      "contact_fraction": 0.1661904761904762,
+      "contact_entries": 157,
+      "contact_exits": 157,
       "final_degradation": 0.0,
       "final_creep_m": 0.0,
       "final_settle_m": 0.0,
@@ -254,14 +266,15 @@
             "timestep": 0.00025
           },
           "timing": {
-            "plant_dt": 8.333333333333333e-05
+            "plant_dt": 8.333333333333333e-05,
+            "log_dt": 0.001
           }
         }
       },
       "diagnostic_status": "OK",
-      "peak_tension_N": 40.7,
+      "peak_tension_N": 40.4,
       "peak_tracking_error_mm": 0.608,
-      "contact_fraction": 0.5
+      "contact_fraction": 0.56
     },
     {
       "case": "mujoco timestep 0.0005",
@@ -293,14 +306,15 @@
             "timestep": 0.0005
           },
           "timing": {
-            "plant_dt": 0.0001
+            "plant_dt": 0.0001,
+            "log_dt": 0.001
           }
         }
       },
       "diagnostic_status": "OK",
-      "peak_tension_N": 40.3,
-      "peak_tracking_error_mm": 0.811,
-      "contact_fraction": 0.48
+      "peak_tension_N": 40.2,
+      "peak_tracking_error_mm": 0.814,
+      "contact_fraction": 0.56
     },
     {
       "case": "mujoco timestep 0.001",
@@ -332,14 +346,15 @@
             "timestep": 0.001
           },
           "timing": {
-            "plant_dt": 0.0001
+            "plant_dt": 0.0001,
+            "log_dt": 0.001
           }
         }
       },
       "diagnostic_status": "OK",
       "peak_tension_N": 40.3,
-      "peak_tracking_error_mm": 0.799,
-      "contact_fraction": 0.47
+      "peak_tracking_error_mm": 0.706,
+      "contact_fraction": 0.56
     },
     {
       "case": "mujoco timestep 0.002",
@@ -371,14 +386,15 @@
             "timestep": 0.002
           },
           "timing": {
-            "plant_dt": 0.0001
+            "plant_dt": 0.0001,
+            "log_dt": 0.002
           }
         }
       },
       "diagnostic_status": "OK",
-      "peak_tension_N": 38.5,
-      "peak_tracking_error_mm": 1.39,
-      "contact_fraction": 0.39
+      "peak_tension_N": 38.8,
+      "peak_tracking_error_mm": 0.75,
+      "contact_fraction": 0.55
     },
     {
       "case": "emulator Kp 400 (~3 Hz)",
@@ -413,9 +429,9 @@
         }
       },
       "diagnostic_status": "OK",
-      "peak_tension_N": 40.2,
-      "peak_tracking_error_mm": 2.368,
-      "contact_fraction": 0.54
+      "peak_tension_N": 39.6,
+      "peak_tracking_error_mm": 2.262,
+      "contact_fraction": 0.57
     },
     {
       "case": "emulator Kp 4000 (~10 Hz)",
@@ -450,9 +466,9 @@
         }
       },
       "diagnostic_status": "OK",
-      "peak_tension_N": 40.5,
-      "peak_tracking_error_mm": 1.425,
-      "contact_fraction": 0.52
+      "peak_tension_N": 40.2,
+      "peak_tracking_error_mm": 1.174,
+      "contact_fraction": 0.56
     },
     {
       "case": "emulator Kp 40000 (~32 Hz)",
@@ -487,9 +503,9 @@
         }
       },
       "diagnostic_status": "OK",
-      "peak_tension_N": 40.4,
-      "peak_tracking_error_mm": 1.162,
-      "contact_fraction": 0.49
+      "peak_tension_N": 40.5,
+      "peak_tracking_error_mm": 1.177,
+      "contact_fraction": 0.56
     },
     {
       "case": "emulator Kp 400000 (~101 Hz)",
@@ -524,9 +540,9 @@
         }
       },
       "diagnostic_status": "OK",
-      "peak_tension_N": 40.4,
-      "peak_tracking_error_mm": 0.51,
-      "contact_fraction": 0.48
+      "peak_tension_N": 40.3,
+      "peak_tracking_error_mm": 0.512,
+      "contact_fraction": 0.56
     },
     {
       "case": "tension noise 0.0 N",
@@ -560,9 +576,9 @@
         }
       },
       "diagnostic_status": "OK",
-      "peak_tension_N": 40.3,
-      "peak_tracking_error_mm": 0.811,
-      "contact_fraction": 0.48
+      "peak_tension_N": 40.2,
+      "peak_tracking_error_mm": 0.814,
+      "contact_fraction": 0.56
     },
     {
       "case": "tension noise 0.2 N",
@@ -596,9 +612,9 @@
         }
       },
       "diagnostic_status": "OK",
-      "peak_tension_N": 40.6,
-      "peak_tracking_error_mm": 0.83,
-      "contact_fraction": 0.49
+      "peak_tension_N": 40.4,
+      "peak_tracking_error_mm": 0.87,
+      "contact_fraction": 0.56
     },
     {
       "case": "tension noise 1.0 N",
@@ -633,8 +649,8 @@
       },
       "diagnostic_status": "OK",
       "peak_tension_N": 40.5,
-      "peak_tracking_error_mm": 0.843,
-      "contact_fraction": 0.47
+      "peak_tracking_error_mm": 0.723,
+      "contact_fraction": 0.56
     },
     {
       "case": "tension noise 5.0 N",
@@ -668,9 +684,9 @@
         }
       },
       "diagnostic_status": "OK",
-      "peak_tension_N": 40.6,
-      "peak_tracking_error_mm": 0.888,
-      "contact_fraction": 0.41
+      "peak_tension_N": 40.3,
+      "peak_tracking_error_mm": 0.71,
+      "contact_fraction": 0.42
     },
     {
       "case": "latency 0 ms",
@@ -707,9 +723,9 @@
         }
       },
       "diagnostic_status": "OK",
-      "peak_tension_N": 40.3,
-      "peak_tracking_error_mm": 0.811,
-      "contact_fraction": 0.48
+      "peak_tension_N": 40.2,
+      "peak_tracking_error_mm": 0.814,
+      "contact_fraction": 0.56
     },
     {
       "case": "latency 2 ms",
@@ -746,9 +762,9 @@
         }
       },
       "diagnostic_status": "OK",
-      "peak_tension_N": 40.3,
-      "peak_tracking_error_mm": 1.525,
-      "contact_fraction": 0.46
+      "peak_tension_N": 40.4,
+      "peak_tracking_error_mm": 1.544,
+      "contact_fraction": 0.56
     },
     {
       "case": "latency 10 ms",
@@ -785,9 +801,9 @@
         }
       },
       "diagnostic_status": "OK (oscillation suspected: tracking error > 5 mm)",
-      "peak_tension_N": 51.7,
-      "peak_tracking_error_mm": 10.819,
-      "contact_fraction": 0.43
+      "peak_tension_N": 50.8,
+      "peak_tracking_error_mm": 10.791,
+      "contact_fraction": 0.49
     },
     {
       "case": "latency 30 ms",
@@ -824,9 +840,9 @@
         }
       },
       "diagnostic_status": "OK (oscillation suspected: tracking error > 5 mm)",
-      "peak_tension_N": 50.1,
-      "peak_tracking_error_mm": 15.238,
-      "contact_fraction": 0.48
+      "peak_tension_N": 49.8,
+      "peak_tracking_error_mm": 14.534,
+      "contact_fraction": 0.5
     },
     {
       "case": "object stiffness 200 N/m",
@@ -856,9 +872,9 @@
         "sim_overrides": {}
       },
       "diagnostic_status": "OK",
-      "peak_tension_N": 40.0,
-      "peak_tracking_error_mm": 0.876,
-      "contact_fraction": 0.57
+      "peak_tension_N": 39.6,
+      "peak_tracking_error_mm": 0.888,
+      "contact_fraction": 0.56
     },
     {
       "case": "object stiffness 2000 N/m",
@@ -888,9 +904,9 @@
         "sim_overrides": {}
       },
       "diagnostic_status": "OK",
-      "peak_tension_N": 40.3,
-      "peak_tracking_error_mm": 0.811,
-      "contact_fraction": 0.48
+      "peak_tension_N": 40.2,
+      "peak_tracking_error_mm": 0.814,
+      "contact_fraction": 0.56
     },
     {
       "case": "object stiffness 20000 N/m",
@@ -920,9 +936,9 @@
         "sim_overrides": {}
       },
       "diagnostic_status": "OK",
-      "peak_tension_N": 40.5,
-      "peak_tracking_error_mm": 0.829,
-      "contact_fraction": 0.5
+      "peak_tension_N": 40.3,
+      "peak_tracking_error_mm": 0.736,
+      "contact_fraction": 0.56
     },
     {
       "case": "object stiffness 200000 N/m",
@@ -952,9 +968,9 @@
         "sim_overrides": {}
       },
       "diagnostic_status": "OK",
-      "peak_tension_N": 40.4,
-      "peak_tracking_error_mm": 0.915,
-      "contact_fraction": 0.41
+      "peak_tension_N": 40.2,
+      "peak_tracking_error_mm": 0.79,
+      "contact_fraction": 0.56
     },
     {
       "case": "motor current limit 1.0 A",
@@ -988,8 +1004,8 @@
         }
       },
       "diagnostic_status": "OK",
-      "peak_tension_N": 12.9,
-      "peak_tracking_error_mm": 0.257,
+      "peak_tension_N": 9.8,
+      "peak_tracking_error_mm": 0.227,
       "contact_fraction": 0.0
     },
     {
@@ -1024,8 +1040,8 @@
         }
       },
       "diagnostic_status": "OK",
-      "peak_tension_N": 12.9,
-      "peak_tracking_error_mm": 0.02,
+      "peak_tension_N": 10.0,
+      "peak_tracking_error_mm": 0.0,
       "contact_fraction": 0.0
     },
     {
@@ -1060,9 +1076,9 @@
         }
       },
       "diagnostic_status": "OK",
-      "peak_tension_N": 40.3,
-      "peak_tracking_error_mm": 0.811,
-      "contact_fraction": 0.48
+      "peak_tension_N": 40.2,
+      "peak_tracking_error_mm": 0.814,
+      "contact_fraction": 0.56
     },
     {
       "case": "emulator v_max 0.02 m/s",
@@ -1097,8 +1113,8 @@
       },
       "diagnostic_status": "OK (oscillation suspected: tracking error > 5 mm)",
       "peak_tension_N": 40.4,
-      "peak_tracking_error_mm": 16.267,
-      "contact_fraction": 0.35
+      "peak_tracking_error_mm": 15.991,
+      "contact_fraction": 0.37
     },
     {
       "case": "emulator v_max 0.1 m/s",
@@ -1132,9 +1148,9 @@
         }
       },
       "diagnostic_status": "OK",
-      "peak_tension_N": 40.3,
-      "peak_tracking_error_mm": 1.949,
-      "contact_fraction": 0.48
+      "peak_tension_N": 40.2,
+      "peak_tracking_error_mm": 1.59,
+      "contact_fraction": 0.56
     },
     {
       "case": "emulator v_max 0.5 m/s",
@@ -1168,9 +1184,9 @@
         }
       },
       "diagnostic_status": "OK",
-      "peak_tension_N": 40.3,
-      "peak_tracking_error_mm": 0.811,
-      "contact_fraction": 0.48
+      "peak_tension_N": 40.2,
+      "peak_tracking_error_mm": 0.814,
+      "contact_fraction": 0.56
     }
   ],
   "viscous_energy_balance": {
@@ -1187,11 +1203,13 @@
     "episode_id": "long_drift_c50_s0",
     "duration_s": 75.3,
     "n_cycles": 50,
-    "peak_tension_N": 40.69050369947184,
-    "contact_fraction": 0.5560823373173971,
-    "final_degradation": 0.6914845339408326,
-    "final_creep_m": 9.108664712771563e-05,
-    "final_settle_m": 4.781461481164869e-05,
+    "peak_tension_N": 40.508240261521706,
+    "contact_fraction": 0.5764010624169986,
+    "contact_entries": 2031,
+    "contact_exits": 2031,
+    "final_degradation": 0.6763454528539401,
+    "final_creep_m": 8.740941997439768e-05,
+    "final_settle_m": 4.473919514863225e-05,
     "configuration": {
       "scenario_id": "long_horizon",
       "episode_id": "long_drift_c50_s0",
@@ -1218,20 +1236,20 @@
       "sim_overrides": {}
     },
     "effective_stiffness": {
-      "first": 9999.998199082765,
-      "last": 8271.288665147918
+      "first": 10000.0,
+      "last": 8309.13636786515
     },
     "effective_friction": {
-      "first": 0.004000002881467577,
-      "last": 0.006765938135763331
+      "first": 0.004,
+      "last": 0.006705381811415761
     },
     "creep_state": {
-      "first": 7.482011092287257e-10,
-      "last": 9.108664712771563e-05
+      "first": 0.0,
+      "last": 8.740941997439768e-05
     },
     "degradation_state": {
-      "first": 7.203668940643811e-07,
-      "last": 0.6914845339408326
+      "first": 8.354958966074935e-37,
+      "last": 0.6763454528539401
     }
   },
   "caveats": [
@@ -1240,5 +1258,215 @@
     "No system ID, learned model, neural observer, or physical-finger estimator is trained here.",
     "Energy accounting is verified in a taut viscous case, not for every degradation law.",
     "The drift constitutive law and accelerated time scale are algorithm-testing assumptions."
+  ],
+  "routing_contact": [
+    {
+      "configuration": {
+        "scenario_id": "routing_contact",
+        "episode_id": "route15_seed0",
+        "seed": 0,
+        "cable_preset": "nonlinear",
+        "cable_specimen_id": "synthetic-01",
+        "q0": [
+          0.0,
+          0.0
+        ],
+        "obj_x": 0.055,
+        "obj_z": -0.03,
+        "k_obj": 2000.0,
+        "pretension": 8.0,
+        "profile": {
+          "amplitude": 0.016,
+          "period": 2.0,
+          "n_cycles": 3,
+          "ramp_frac": 0.3,
+          "hold_frac": 0.3,
+          "release_frac": 0.3,
+          "settle_time": 0.3
+        },
+        "sim_overrides": {
+          "sensors": {
+            "tension_noise": 0.05,
+            "emulator_pos_noise": 1e-06
+          },
+          "motor": {
+            "encoder_cpr": 16384,
+            "current_noise": 0.005
+          },
+          "cable": {
+            "R_p": 0.015,
+            "tau_c": 0.002
+          }
+        }
+      },
+      "summary": {
+        "episode_id": "route15_seed0",
+        "duration_s": 6.3,
+        "n_cycles": 3,
+        "peak_tension_N": 34.87467710797998,
+        "contact_fraction": 0.5744444444444444,
+        "contact_entries": 195,
+        "contact_exits": 195,
+        "final_degradation": 0.0,
+        "final_creep_m": 0.0,
+        "final_settle_m": 2.6202214595498344e-06
+      }
+    },
+    {
+      "configuration": {
+        "scenario_id": "routing_contact",
+        "episode_id": "route15_seed1",
+        "seed": 1,
+        "cable_preset": "nonlinear",
+        "cable_specimen_id": "synthetic-01",
+        "q0": [
+          0.0,
+          0.0
+        ],
+        "obj_x": 0.055,
+        "obj_z": -0.03,
+        "k_obj": 2000.0,
+        "pretension": 8.0,
+        "profile": {
+          "amplitude": 0.016,
+          "period": 2.0,
+          "n_cycles": 3,
+          "ramp_frac": 0.3,
+          "hold_frac": 0.3,
+          "release_frac": 0.3,
+          "settle_time": 0.3
+        },
+        "sim_overrides": {
+          "sensors": {
+            "tension_noise": 0.05,
+            "emulator_pos_noise": 1e-06
+          },
+          "motor": {
+            "encoder_cpr": 16384,
+            "current_noise": 0.005
+          },
+          "cable": {
+            "R_p": 0.015,
+            "tau_c": 0.002
+          }
+        }
+      },
+      "summary": {
+        "episode_id": "route15_seed1",
+        "duration_s": 6.3,
+        "n_cycles": 3,
+        "peak_tension_N": 34.66858164887357,
+        "contact_fraction": 0.5744444444444444,
+        "contact_entries": 181,
+        "contact_exits": 181,
+        "final_degradation": 0.0,
+        "final_creep_m": 0.0,
+        "final_settle_m": 2.6106928164088124e-06
+      }
+    },
+    {
+      "configuration": {
+        "scenario_id": "routing_contact",
+        "episode_id": "route25_soft",
+        "seed": 0,
+        "cable_preset": "nonlinear",
+        "cable_specimen_id": "synthetic-01",
+        "q0": [
+          0.2,
+          0.3
+        ],
+        "obj_x": 0.055,
+        "obj_z": -0.03,
+        "k_obj": 500.0,
+        "pretension": 12.0,
+        "profile": {
+          "amplitude": 0.014,
+          "period": 1.5,
+          "n_cycles": 3,
+          "ramp_frac": 0.3,
+          "hold_frac": 0.3,
+          "release_frac": 0.3,
+          "settle_time": 0.3
+        },
+        "sim_overrides": {
+          "sensors": {
+            "tension_noise": 0.05,
+            "emulator_pos_noise": 1e-06
+          },
+          "motor": {
+            "encoder_cpr": 16384,
+            "current_noise": 0.005
+          },
+          "cable": {
+            "R_p": 0.025,
+            "tau_c": 0.006
+          }
+        }
+      },
+      "summary": {
+        "episode_id": "route25_soft",
+        "duration_s": 4.8,
+        "n_cycles": 3,
+        "peak_tension_N": 40.05229372414965,
+        "contact_fraction": 0.4297916666666667,
+        "contact_entries": 584,
+        "contact_exits": 584,
+        "final_degradation": 0.0,
+        "final_creep_m": 0.0,
+        "final_settle_m": 8.130485010024527e-06
+      }
+    },
+    {
+      "configuration": {
+        "scenario_id": "routing_contact",
+        "episode_id": "route25_stiff",
+        "seed": 1,
+        "cable_preset": "nonlinear",
+        "cable_specimen_id": "synthetic-01",
+        "q0": [
+          0.0,
+          0.0
+        ],
+        "obj_x": 0.065,
+        "obj_z": -0.03,
+        "k_obj": 8000.0,
+        "pretension": 12.0,
+        "profile": {
+          "amplitude": 0.018,
+          "period": 2.5,
+          "n_cycles": 3,
+          "ramp_frac": 0.3,
+          "hold_frac": 0.3,
+          "release_frac": 0.3,
+          "settle_time": 0.3
+        },
+        "sim_overrides": {
+          "sensors": {
+            "tension_noise": 0.05,
+            "emulator_pos_noise": 1e-06
+          },
+          "motor": {
+            "encoder_cpr": 16384,
+            "current_noise": 0.005
+          },
+          "cable": {
+            "R_p": 0.025,
+            "tau_c": 0.006
+          }
+        }
+      },
+      "summary": {
+        "episode_id": "route25_stiff",
+        "duration_s": 7.8,
+        "n_cycles": 3,
+        "peak_tension_N": 43.11320150649098,
+        "contact_fraction": 0.37038461538461537,
+        "contact_entries": 833,
+        "contact_exits": 833,
+        "final_degradation": 0.0,
+        "final_creep_m": 0.0,
+        "final_settle_m": 1.513589361310418e-05
+      }
+    }
   ]
 }

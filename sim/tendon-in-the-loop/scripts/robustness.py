@@ -49,7 +49,7 @@ def cases() -> list[tuple[str, EpisodeConfig]]:
     out = []
     for ts in (2.5e-4, 5e-4, 1e-3, 2e-3):
         n_sub = int(np.ceil(ts / 1e-4))  # plant substep <= 0.1 ms and an exact divisor of the MuJoCo step
-        out.append((f"mujoco timestep {ts}", EpisodeConfig("rob", "ts", sim_overrides={"finger": {"timestep": ts}, "timing": {"plant_dt": ts / n_sub}}, **base)))
+        out.append((f"mujoco timestep {ts}", EpisodeConfig("rob", "ts", sim_overrides={"finger": {"timestep": ts}, "timing": {"plant_dt": ts / n_sub, "log_dt": max(1e-3, ts)}}, **base)))
     for kp in (4e2, 4e3, 4e4, 4e5):
         out.append((f"emulator Kp {kp:g} (~{np.sqrt(kp) / 2 / np.pi:.0f} Hz)", EpisodeConfig("rob", "bw", sim_overrides={"emulator": {"Kp": kp, "Kd": 2 * np.sqrt(kp)}}, **base)))
     for n in (0.0, 0.2, 1.0, 5.0):
