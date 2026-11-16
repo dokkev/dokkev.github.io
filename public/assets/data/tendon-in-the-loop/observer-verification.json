@@ -1,0 +1,1872 @@
+{
+  "scope": "Single-seed synthetic-data pilot; no hardware or mechanics-parameter recovery claim.",
+  "generated_at_utc": "2026-11-16T01:43:47.765387+00:00",
+  "versions": {
+    "python": "3.13.5",
+    "torch": "2.15.0+cpu",
+    "numpy": "2.5.5",
+    "h5py": "3.16.0",
+    "mujoco": "4.0.1"
+  },
+  "input_channels": [
+    "motor/position",
+    "motor/velocity",
+    "motor/current",
+    "motor/applied_command"
+  ],
+  "targets": [
+    "ground_truth/output_tension_true",
+    "transmission/apparent_elongation"
+  ],
+  "sample_period_s": 0.005000000000000002,
+  "training": {
+    "seed": 0,
+    "epochs": 60,
+    "selected_epoch": 57,
+    "hidden_size": 32,
+    "window_samples": 128,
+    "burn_in_samples": 32,
+    "stride_samples": 64,
+    "batch_size": 32,
+    "learning_rate": 0.003,
+    "training_windows": 192,
+    "selection": "validation normalized MSE, equal weight per run and output"
+  },
+  "normalization": {
+    "x_mean": [
+      0.4421148896217346,
+      0.0002553241210989654,
+      3.5945098400115967,
+      3.594543933868408
+    ],
+    "x_std": [
+      0.32674235105514526,
+      1.2991080284118652,
+      1.7702982425689697,
+      1.7663249969482422
+    ],
+    "y_mean": [
+      17.81533432006836,
+      0.0007320301956497133
+    ],
+    "y_std": [
+      8.593940734863281,
+      0.0006861506262794137
+    ]
+  },
+  "baseline_compliance_fits": {
+    "QDD torque": [
+      7.377677684416994e-05,
+      -0.0005939269904047251
+    ],
+    "QDD dynamics + linear compliance": [
+      7.377595262988462e-05,
+      -0.0005939121523748253
+    ]
+  },
+  "splits": {
+    "test_contact": [
+      "test_contact_00",
+      "test_contact_01",
+      "test_contact_02"
+    ],
+    "test_drift": [
+      "test_drift_00",
+      "test_drift_01",
+      "test_drift_02"
+    ],
+    "test_law": [
+      "test_law_00",
+      "test_law_01",
+      "test_law_02"
+    ],
+    "train": [
+      "train_00",
+      "train_01",
+      "train_02",
+      "train_03",
+      "train_04",
+      "train_05",
+      "train_06",
+      "train_07",
+      "train_08",
+      "train_09",
+      "train_10",
+      "train_11"
+    ],
+    "validation": [
+      "validation_00",
+      "validation_01",
+      "validation_02"
+    ]
+  },
+  "configurations": {
+    "test_contact_00": {
+      "scenario_id": "test_contact",
+      "episode_id": "test_contact_00",
+      "seed": 200,
+      "cable_preset": "nonlinear",
+      "cable_specimen_id": "synthetic-01",
+      "q0": [
+        0.0,
+        0.0
+      ],
+      "obj_x": 0.045,
+      "obj_z": -0.03,
+      "k_obj": 8000,
+      "pretension": 10,
+      "profile": {
+        "amplitude": 0.016,
+        "period": 2,
+        "n_cycles": 3,
+        "ramp_frac": 0.3,
+        "hold_frac": 0.3,
+        "release_frac": 0.3,
+        "settle_time": 0.3
+      },
+      "sim_overrides": {
+        "sensors": {
+          "tension_noise": 0.05,
+          "emulator_pos_noise": 1e-06
+        },
+        "motor": {
+          "encoder_cpr": 16384,
+          "current_noise": 0.005,
+          "velocity_noise": 0.002
+        }
+      }
+    },
+    "test_contact_01": {
+      "scenario_id": "test_contact",
+      "episode_id": "test_contact_01",
+      "seed": 201,
+      "cable_preset": "nonlinear",
+      "cable_specimen_id": "synthetic-01",
+      "q0": [
+        0.0,
+        0.0
+      ],
+      "obj_x": 0.065,
+      "obj_z": -0.03,
+      "k_obj": 8000,
+      "pretension": 12,
+      "profile": {
+        "amplitude": 0.018,
+        "period": 1.5,
+        "n_cycles": 3,
+        "ramp_frac": 0.3,
+        "hold_frac": 0.3,
+        "release_frac": 0.3,
+        "settle_time": 0.3
+      },
+      "sim_overrides": {
+        "sensors": {
+          "tension_noise": 0.05,
+          "emulator_pos_noise": 1e-06
+        },
+        "motor": {
+          "encoder_cpr": 16384,
+          "current_noise": 0.005,
+          "velocity_noise": 0.002
+        }
+      }
+    },
+    "test_contact_02": {
+      "scenario_id": "test_contact",
+      "episode_id": "test_contact_02",
+      "seed": 202,
+      "cable_preset": "nonlinear",
+      "cable_specimen_id": "synthetic-01",
+      "q0": [
+        0.0,
+        0.0
+      ],
+      "obj_x": 0.055,
+      "obj_z": -0.03,
+      "k_obj": 4000,
+      "pretension": 8,
+      "profile": {
+        "amplitude": 0.014,
+        "period": 1.75,
+        "n_cycles": 3,
+        "ramp_frac": 0.3,
+        "hold_frac": 0.3,
+        "release_frac": 0.3,
+        "settle_time": 0.3
+      },
+      "sim_overrides": {
+        "sensors": {
+          "tension_noise": 0.05,
+          "emulator_pos_noise": 1e-06
+        },
+        "motor": {
+          "encoder_cpr": 16384,
+          "current_noise": 0.005,
+          "velocity_noise": 0.002
+        }
+      }
+    },
+    "test_drift_00": {
+      "scenario_id": "test_drift",
+      "episode_id": "test_drift_00",
+      "seed": 400,
+      "cable_preset": "drift",
+      "cable_specimen_id": "synthetic-01",
+      "q0": [
+        0.0,
+        0.0
+      ],
+      "obj_x": 0.05,
+      "obj_z": -0.03,
+      "k_obj": 500,
+      "pretension": 8,
+      "profile": {
+        "amplitude": 0.014,
+        "period": 1.5,
+        "n_cycles": 20,
+        "ramp_frac": 0.3,
+        "hold_frac": 0.3,
+        "release_frac": 0.3,
+        "settle_time": 0.3
+      },
+      "sim_overrides": {
+        "sensors": {
+          "tension_noise": 0.05,
+          "emulator_pos_noise": 1e-06
+        },
+        "motor": {
+          "encoder_cpr": 16384,
+          "current_noise": 0.005,
+          "velocity_noise": 0.002
+        }
+      }
+    },
+    "test_drift_01": {
+      "scenario_id": "test_drift",
+      "episode_id": "test_drift_01",
+      "seed": 401,
+      "cable_preset": "drift",
+      "cable_specimen_id": "synthetic-01",
+      "q0": [
+        0.0,
+        0.0
+      ],
+      "obj_x": 0.06,
+      "obj_z": -0.03,
+      "k_obj": 2000,
+      "pretension": 12,
+      "profile": {
+        "amplitude": 0.018,
+        "period": 2,
+        "n_cycles": 20,
+        "ramp_frac": 0.3,
+        "hold_frac": 0.3,
+        "release_frac": 0.3,
+        "settle_time": 0.3
+      },
+      "sim_overrides": {
+        "sensors": {
+          "tension_noise": 0.05,
+          "emulator_pos_noise": 1e-06
+        },
+        "motor": {
+          "encoder_cpr": 16384,
+          "current_noise": 0.005,
+          "velocity_noise": 0.002
+        }
+      }
+    },
+    "test_drift_02": {
+      "scenario_id": "test_drift",
+      "episode_id": "test_drift_02",
+      "seed": 402,
+      "cable_preset": "drift",
+      "cable_specimen_id": "synthetic-01",
+      "q0": [
+        0.0,
+        0.0
+      ],
+      "obj_x": 0.055,
+      "obj_z": -0.03,
+      "k_obj": 500,
+      "pretension": 10,
+      "profile": {
+        "amplitude": 0.016,
+        "period": 2,
+        "n_cycles": 20,
+        "ramp_frac": 0.3,
+        "hold_frac": 0.3,
+        "release_frac": 0.3,
+        "settle_time": 0.3
+      },
+      "sim_overrides": {
+        "sensors": {
+          "tension_noise": 0.05,
+          "emulator_pos_noise": 1e-06
+        },
+        "motor": {
+          "encoder_cpr": 16384,
+          "current_noise": 0.005,
+          "velocity_noise": 0.002
+        }
+      }
+    },
+    "test_law_00": {
+      "scenario_id": "test_law",
+      "episode_id": "test_law_00",
+      "seed": 300,
+      "cable_preset": "nonlinear",
+      "cable_specimen_id": "synthetic-01",
+      "q0": [
+        0.0,
+        0.0
+      ],
+      "obj_x": 0.05,
+      "obj_z": -0.03,
+      "k_obj": 500,
+      "pretension": 8,
+      "profile": {
+        "amplitude": 0.014,
+        "period": 1.5,
+        "n_cycles": 3,
+        "ramp_frac": 0.3,
+        "hold_frac": 0.3,
+        "release_frac": 0.3,
+        "settle_time": 0.3
+      },
+      "sim_overrides": {
+        "sensors": {
+          "tension_noise": 0.05,
+          "emulator_pos_noise": 1e-06
+        },
+        "motor": {
+          "encoder_cpr": 16384,
+          "current_noise": 0.005,
+          "velocity_noise": 0.002
+        },
+        "cable": {
+          "friction_model": "coulomb",
+          "tau_c": 0.008,
+          "k3": 1000000000.0
+        }
+      }
+    },
+    "test_law_01": {
+      "scenario_id": "test_law",
+      "episode_id": "test_law_01",
+      "seed": 301,
+      "cable_preset": "nonlinear",
+      "cable_specimen_id": "synthetic-01",
+      "q0": [
+        0.0,
+        0.0
+      ],
+      "obj_x": 0.06,
+      "obj_z": -0.03,
+      "k_obj": 2000,
+      "pretension": 12,
+      "profile": {
+        "amplitude": 0.018,
+        "period": 2,
+        "n_cycles": 3,
+        "ramp_frac": 0.3,
+        "hold_frac": 0.3,
+        "release_frac": 0.3,
+        "settle_time": 0.3
+      },
+      "sim_overrides": {
+        "sensors": {
+          "tension_noise": 0.05,
+          "emulator_pos_noise": 1e-06
+        },
+        "motor": {
+          "encoder_cpr": 16384,
+          "current_noise": 0.005,
+          "velocity_noise": 0.002
+        },
+        "cable": {
+          "friction_model": "coulomb",
+          "tau_c": 0.008,
+          "k3": 1000000000.0
+        }
+      }
+    },
+    "test_law_02": {
+      "scenario_id": "test_law",
+      "episode_id": "test_law_02",
+      "seed": 302,
+      "cable_preset": "nonlinear",
+      "cable_specimen_id": "synthetic-01",
+      "q0": [
+        0.0,
+        0.0
+      ],
+      "obj_x": 0.055,
+      "obj_z": -0.03,
+      "k_obj": 500,
+      "pretension": 10,
+      "profile": {
+        "amplitude": 0.016,
+        "period": 2,
+        "n_cycles": 3,
+        "ramp_frac": 0.3,
+        "hold_frac": 0.3,
+        "release_frac": 0.3,
+        "settle_time": 0.3
+      },
+      "sim_overrides": {
+        "sensors": {
+          "tension_noise": 0.05,
+          "emulator_pos_noise": 1e-06
+        },
+        "motor": {
+          "encoder_cpr": 16384,
+          "current_noise": 0.005,
+          "velocity_noise": 0.002
+        },
+        "cable": {
+          "friction_model": "coulomb",
+          "tau_c": 0.008,
+          "k3": 1000000000.0
+        }
+      }
+    },
+    "train_00": {
+      "scenario_id": "train",
+      "episode_id": "train_00",
+      "seed": 0,
+      "cable_preset": "nonlinear",
+      "cable_specimen_id": "synthetic-01",
+      "q0": [
+        0.0,
+        0.0
+      ],
+      "obj_x": 0.05,
+      "obj_z": -0.03,
+      "k_obj": 500,
+      "pretension": 8,
+      "profile": {
+        "amplitude": 0.014,
+        "period": 1.5,
+        "n_cycles": 3,
+        "ramp_frac": 0.3,
+        "hold_frac": 0.3,
+        "release_frac": 0.3,
+        "settle_time": 0.3
+      },
+      "sim_overrides": {
+        "sensors": {
+          "tension_noise": 0.05,
+          "emulator_pos_noise": 1e-06
+        },
+        "motor": {
+          "encoder_cpr": 16384,
+          "current_noise": 0.005,
+          "velocity_noise": 0.002
+        }
+      }
+    },
+    "train_01": {
+      "scenario_id": "train",
+      "episode_id": "train_01",
+      "seed": 1,
+      "cable_preset": "nonlinear",
+      "cable_specimen_id": "synthetic-01",
+      "q0": [
+        0.0,
+        0.0
+      ],
+      "obj_x": 0.05,
+      "obj_z": -0.03,
+      "k_obj": 500,
+      "pretension": 12,
+      "profile": {
+        "amplitude": 0.018,
+        "period": 2.0,
+        "n_cycles": 3,
+        "ramp_frac": 0.3,
+        "hold_frac": 0.3,
+        "release_frac": 0.3,
+        "settle_time": 0.3
+      },
+      "sim_overrides": {
+        "sensors": {
+          "tension_noise": 0.05,
+          "emulator_pos_noise": 1e-06
+        },
+        "motor": {
+          "encoder_cpr": 16384,
+          "current_noise": 0.005,
+          "velocity_noise": 0.002
+        }
+      }
+    },
+    "train_02": {
+      "scenario_id": "train",
+      "episode_id": "train_02",
+      "seed": 2,
+      "cable_preset": "nonlinear",
+      "cable_specimen_id": "synthetic-01",
+      "q0": [
+        0.0,
+        0.0
+      ],
+      "obj_x": 0.05,
+      "obj_z": -0.03,
+      "k_obj": 500,
+      "pretension": 10,
+      "profile": {
+        "amplitude": 0.016,
+        "period": 2.0,
+        "n_cycles": 3,
+        "ramp_frac": 0.3,
+        "hold_frac": 0.3,
+        "release_frac": 0.3,
+        "settle_time": 0.3
+      },
+      "sim_overrides": {
+        "sensors": {
+          "tension_noise": 0.05,
+          "emulator_pos_noise": 1e-06
+        },
+        "motor": {
+          "encoder_cpr": 16384,
+          "current_noise": 0.005,
+          "velocity_noise": 0.002
+        }
+      }
+    },
+    "train_03": {
+      "scenario_id": "train",
+      "episode_id": "train_03",
+      "seed": 3,
+      "cable_preset": "nonlinear",
+      "cable_specimen_id": "synthetic-01",
+      "q0": [
+        0.0,
+        0.0
+      ],
+      "obj_x": 0.05,
+      "obj_z": -0.03,
+      "k_obj": 500,
+      "pretension": 8,
+      "profile": {
+        "amplitude": 0.018,
+        "period": 1.5,
+        "n_cycles": 3,
+        "ramp_frac": 0.3,
+        "hold_frac": 0.3,
+        "release_frac": 0.3,
+        "settle_time": 0.3
+      },
+      "sim_overrides": {
+        "sensors": {
+          "tension_noise": 0.05,
+          "emulator_pos_noise": 1e-06
+        },
+        "motor": {
+          "encoder_cpr": 16384,
+          "current_noise": 0.005,
+          "velocity_noise": 0.002
+        }
+      }
+    },
+    "train_04": {
+      "scenario_id": "train",
+      "episode_id": "train_04",
+      "seed": 4,
+      "cable_preset": "nonlinear",
+      "cable_specimen_id": "synthetic-01",
+      "q0": [
+        0.0,
+        0.0
+      ],
+      "obj_x": 0.06,
+      "obj_z": -0.03,
+      "k_obj": 2000,
+      "pretension": 8,
+      "profile": {
+        "amplitude": 0.014,
+        "period": 1.5,
+        "n_cycles": 3,
+        "ramp_frac": 0.3,
+        "hold_frac": 0.3,
+        "release_frac": 0.3,
+        "settle_time": 0.3
+      },
+      "sim_overrides": {
+        "sensors": {
+          "tension_noise": 0.05,
+          "emulator_pos_noise": 1e-06
+        },
+        "motor": {
+          "encoder_cpr": 16384,
+          "current_noise": 0.005,
+          "velocity_noise": 0.002
+        }
+      }
+    },
+    "train_05": {
+      "scenario_id": "train",
+      "episode_id": "train_05",
+      "seed": 5,
+      "cable_preset": "nonlinear",
+      "cable_specimen_id": "synthetic-01",
+      "q0": [
+        0.0,
+        0.0
+      ],
+      "obj_x": 0.06,
+      "obj_z": -0.03,
+      "k_obj": 2000,
+      "pretension": 12,
+      "profile": {
+        "amplitude": 0.018,
+        "period": 2.0,
+        "n_cycles": 3,
+        "ramp_frac": 0.3,
+        "hold_frac": 0.3,
+        "release_frac": 0.3,
+        "settle_time": 0.3
+      },
+      "sim_overrides": {
+        "sensors": {
+          "tension_noise": 0.05,
+          "emulator_pos_noise": 1e-06
+        },
+        "motor": {
+          "encoder_cpr": 16384,
+          "current_noise": 0.005,
+          "velocity_noise": 0.002
+        }
+      }
+    },
+    "train_06": {
+      "scenario_id": "train",
+      "episode_id": "train_06",
+      "seed": 6,
+      "cable_preset": "nonlinear",
+      "cable_specimen_id": "synthetic-01",
+      "q0": [
+        0.0,
+        0.0
+      ],
+      "obj_x": 0.06,
+      "obj_z": -0.03,
+      "k_obj": 2000,
+      "pretension": 10,
+      "profile": {
+        "amplitude": 0.016,
+        "period": 2.0,
+        "n_cycles": 3,
+        "ramp_frac": 0.3,
+        "hold_frac": 0.3,
+        "release_frac": 0.3,
+        "settle_time": 0.3
+      },
+      "sim_overrides": {
+        "sensors": {
+          "tension_noise": 0.05,
+          "emulator_pos_noise": 1e-06
+        },
+        "motor": {
+          "encoder_cpr": 16384,
+          "current_noise": 0.005,
+          "velocity_noise": 0.002
+        }
+      }
+    },
+    "train_07": {
+      "scenario_id": "train",
+      "episode_id": "train_07",
+      "seed": 7,
+      "cable_preset": "nonlinear",
+      "cable_specimen_id": "synthetic-01",
+      "q0": [
+        0.0,
+        0.0
+      ],
+      "obj_x": 0.06,
+      "obj_z": -0.03,
+      "k_obj": 2000,
+      "pretension": 8,
+      "profile": {
+        "amplitude": 0.018,
+        "period": 1.5,
+        "n_cycles": 3,
+        "ramp_frac": 0.3,
+        "hold_frac": 0.3,
+        "release_frac": 0.3,
+        "settle_time": 0.3
+      },
+      "sim_overrides": {
+        "sensors": {
+          "tension_noise": 0.05,
+          "emulator_pos_noise": 1e-06
+        },
+        "motor": {
+          "encoder_cpr": 16384,
+          "current_noise": 0.005,
+          "velocity_noise": 0.002
+        }
+      }
+    },
+    "train_08": {
+      "scenario_id": "train",
+      "episode_id": "train_08",
+      "seed": 8,
+      "cable_preset": "nonlinear",
+      "cable_specimen_id": "synthetic-01",
+      "q0": [
+        0.0,
+        0.0
+      ],
+      "obj_x": 0.055,
+      "obj_z": -0.03,
+      "k_obj": 500,
+      "pretension": 8,
+      "profile": {
+        "amplitude": 0.014,
+        "period": 1.5,
+        "n_cycles": 3,
+        "ramp_frac": 0.3,
+        "hold_frac": 0.3,
+        "release_frac": 0.3,
+        "settle_time": 0.3
+      },
+      "sim_overrides": {
+        "sensors": {
+          "tension_noise": 0.05,
+          "emulator_pos_noise": 1e-06
+        },
+        "motor": {
+          "encoder_cpr": 16384,
+          "current_noise": 0.005,
+          "velocity_noise": 0.002
+        }
+      }
+    },
+    "train_09": {
+      "scenario_id": "train",
+      "episode_id": "train_09",
+      "seed": 9,
+      "cable_preset": "nonlinear",
+      "cable_specimen_id": "synthetic-01",
+      "q0": [
+        0.0,
+        0.0
+      ],
+      "obj_x": 0.055,
+      "obj_z": -0.03,
+      "k_obj": 500,
+      "pretension": 12,
+      "profile": {
+        "amplitude": 0.018,
+        "period": 2.0,
+        "n_cycles": 3,
+        "ramp_frac": 0.3,
+        "hold_frac": 0.3,
+        "release_frac": 0.3,
+        "settle_time": 0.3
+      },
+      "sim_overrides": {
+        "sensors": {
+          "tension_noise": 0.05,
+          "emulator_pos_noise": 1e-06
+        },
+        "motor": {
+          "encoder_cpr": 16384,
+          "current_noise": 0.005,
+          "velocity_noise": 0.002
+        }
+      }
+    },
+    "train_10": {
+      "scenario_id": "train",
+      "episode_id": "train_10",
+      "seed": 10,
+      "cable_preset": "nonlinear",
+      "cable_specimen_id": "synthetic-01",
+      "q0": [
+        0.0,
+        0.0
+      ],
+      "obj_x": 0.055,
+      "obj_z": -0.03,
+      "k_obj": 500,
+      "pretension": 10,
+      "profile": {
+        "amplitude": 0.016,
+        "period": 2.0,
+        "n_cycles": 3,
+        "ramp_frac": 0.3,
+        "hold_frac": 0.3,
+        "release_frac": 0.3,
+        "settle_time": 0.3
+      },
+      "sim_overrides": {
+        "sensors": {
+          "tension_noise": 0.05,
+          "emulator_pos_noise": 1e-06
+        },
+        "motor": {
+          "encoder_cpr": 16384,
+          "current_noise": 0.005,
+          "velocity_noise": 0.002
+        }
+      }
+    },
+    "train_11": {
+      "scenario_id": "train",
+      "episode_id": "train_11",
+      "seed": 11,
+      "cable_preset": "nonlinear",
+      "cable_specimen_id": "synthetic-01",
+      "q0": [
+        0.0,
+        0.0
+      ],
+      "obj_x": 0.055,
+      "obj_z": -0.03,
+      "k_obj": 500,
+      "pretension": 8,
+      "profile": {
+        "amplitude": 0.018,
+        "period": 1.5,
+        "n_cycles": 3,
+        "ramp_frac": 0.3,
+        "hold_frac": 0.3,
+        "release_frac": 0.3,
+        "settle_time": 0.3
+      },
+      "sim_overrides": {
+        "sensors": {
+          "tension_noise": 0.05,
+          "emulator_pos_noise": 1e-06
+        },
+        "motor": {
+          "encoder_cpr": 16384,
+          "current_noise": 0.005,
+          "velocity_noise": 0.002
+        }
+      }
+    },
+    "validation_00": {
+      "scenario_id": "validation",
+      "episode_id": "validation_00",
+      "seed": 100,
+      "cable_preset": "nonlinear",
+      "cable_specimen_id": "synthetic-01",
+      "q0": [
+        0.0,
+        0.0
+      ],
+      "obj_x": 0.052,
+      "obj_z": -0.03,
+      "k_obj": 1000,
+      "pretension": 9,
+      "profile": {
+        "amplitude": 0.015,
+        "period": 1.75,
+        "n_cycles": 3,
+        "ramp_frac": 0.3,
+        "hold_frac": 0.3,
+        "release_frac": 0.3,
+        "settle_time": 0.3
+      },
+      "sim_overrides": {
+        "sensors": {
+          "tension_noise": 0.05,
+          "emulator_pos_noise": 1e-06
+        },
+        "motor": {
+          "encoder_cpr": 16384,
+          "current_noise": 0.005,
+          "velocity_noise": 0.002
+        }
+      }
+    },
+    "validation_01": {
+      "scenario_id": "validation",
+      "episode_id": "validation_01",
+      "seed": 101,
+      "cable_preset": "nonlinear",
+      "cable_specimen_id": "synthetic-01",
+      "q0": [
+        0.0,
+        0.0
+      ],
+      "obj_x": 0.058,
+      "obj_z": -0.03,
+      "k_obj": 1000,
+      "pretension": 11,
+      "profile": {
+        "amplitude": 0.017,
+        "period": 1.75,
+        "n_cycles": 3,
+        "ramp_frac": 0.3,
+        "hold_frac": 0.3,
+        "release_frac": 0.3,
+        "settle_time": 0.3
+      },
+      "sim_overrides": {
+        "sensors": {
+          "tension_noise": 0.05,
+          "emulator_pos_noise": 1e-06
+        },
+        "motor": {
+          "encoder_cpr": 16384,
+          "current_noise": 0.005,
+          "velocity_noise": 0.002
+        }
+      }
+    },
+    "validation_02": {
+      "scenario_id": "validation",
+      "episode_id": "validation_02",
+      "seed": 102,
+      "cable_preset": "nonlinear",
+      "cable_specimen_id": "synthetic-01",
+      "q0": [
+        0.0,
+        0.0
+      ],
+      "obj_x": 0.055,
+      "obj_z": -0.03,
+      "k_obj": 1500,
+      "pretension": 10,
+      "profile": {
+        "amplitude": 0.016,
+        "period": 1.5,
+        "n_cycles": 3,
+        "ramp_frac": 0.3,
+        "hold_frac": 0.3,
+        "release_frac": 0.3,
+        "settle_time": 0.3
+      },
+      "sim_overrides": {
+        "sensors": {
+          "tension_noise": 0.05,
+          "emulator_pos_noise": 1e-06
+        },
+        "motor": {
+          "encoder_cpr": 16384,
+          "current_noise": 0.005,
+          "velocity_noise": 0.002
+        }
+      }
+    }
+  },
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 0.8881434698899587,
+      "validation_loss": 0.3756389617919922
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.3995256870985031,
+      "validation_loss": 0.09990046173334122
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.135181392232577,
+      "validation_loss": 0.13747502863407135
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.1049954208234946,
+      "validation_loss": 0.05293988063931465
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.06854890783627827,
+      "validation_loss": 0.03003839962184429
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.06287543041010697,
+      "validation_loss": 0.023645497858524323
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.04638486045102278,
+      "validation_loss": 0.03152666985988617
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.04433602032562097,
+      "validation_loss": 0.02440224401652813
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.03878341491023699,
+      "validation_loss": 0.017101256176829338
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.036895377561450005,
+      "validation_loss": 0.01672934927046299
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.035590028700729213,
+      "validation_loss": 0.017795821651816368
+    },
+    {
+      "epoch": 12,
+      "train_loss": 0.03458028193563223,
+      "validation_loss": 0.015601559542119503
+    },
+    {
+      "epoch": 13,
+      "train_loss": 0.034004791639745235,
+      "validation_loss": 0.015873810276389122
+    },
+    {
+      "epoch": 14,
+      "train_loss": 0.033190421449641384,
+      "validation_loss": 0.01649140752851963
+    },
+    {
+      "epoch": 15,
+      "train_loss": 0.032606493992110096,
+      "validation_loss": 0.015568648464977741
+    },
+    {
+      "epoch": 16,
+      "train_loss": 0.03224892634898424,
+      "validation_loss": 0.015397262759506702
+    },
+    {
+      "epoch": 17,
+      "train_loss": 0.031621070578694344,
+      "validation_loss": 0.014601227827370167
+    },
+    {
+      "epoch": 18,
+      "train_loss": 0.03116765773544709,
+      "validation_loss": 0.014497116208076477
+    },
+    {
+      "epoch": 19,
+      "train_loss": 0.03110583561162154,
+      "validation_loss": 0.01579258404672146
+    },
+    {
+      "epoch": 20,
+      "train_loss": 0.03094356631239255,
+      "validation_loss": 0.01287747174501419
+    },
+    {
+      "epoch": 21,
+      "train_loss": 0.02976868860423565,
+      "validation_loss": 0.014657056890428066
+    },
+    {
+      "epoch": 22,
+      "train_loss": 0.029007524251937866,
+      "validation_loss": 0.014594447799026966
+    },
+    {
+      "epoch": 23,
+      "train_loss": 0.028633987841506798,
+      "validation_loss": 0.013625540770590305
+    },
+    {
+      "epoch": 24,
+      "train_loss": 0.027774618317683537,
+      "validation_loss": 0.014375207014381886
+    },
+    {
+      "epoch": 25,
+      "train_loss": 0.027130307940145332,
+      "validation_loss": 0.014062848873436451
+    },
+    {
+      "epoch": 26,
+      "train_loss": 0.02651409866909186,
+      "validation_loss": 0.014696657657623291
+    },
+    {
+      "epoch": 27,
+      "train_loss": 0.025641254459818203,
+      "validation_loss": 0.013001717627048492
+    },
+    {
+      "epoch": 28,
+      "train_loss": 0.02475441029916207,
+      "validation_loss": 0.01271687913686037
+    },
+    {
+      "epoch": 29,
+      "train_loss": 0.02357556391507387,
+      "validation_loss": 0.015104137361049652
+    },
+    {
+      "epoch": 30,
+      "train_loss": 0.02270245800415675,
+      "validation_loss": 0.01327457558363676
+    },
+    {
+      "epoch": 31,
+      "train_loss": 0.02155556281407674,
+      "validation_loss": 0.011549173854291439
+    },
+    {
+      "epoch": 32,
+      "train_loss": 0.021164035114149254,
+      "validation_loss": 0.013835172168910503
+    },
+    {
+      "epoch": 33,
+      "train_loss": 0.02035218570381403,
+      "validation_loss": 0.01058137882500887
+    },
+    {
+      "epoch": 34,
+      "train_loss": 0.019189440955718357,
+      "validation_loss": 0.010297843255102634
+    },
+    {
+      "epoch": 35,
+      "train_loss": 0.018595201273759205,
+      "validation_loss": 0.010932140052318573
+    },
+    {
+      "epoch": 36,
+      "train_loss": 0.01805464814727505,
+      "validation_loss": 0.009230566211044788
+    },
+    {
+      "epoch": 37,
+      "train_loss": 0.017647673996786278,
+      "validation_loss": 0.010227430611848831
+    },
+    {
+      "epoch": 38,
+      "train_loss": 0.017413243030508358,
+      "validation_loss": 0.009174689650535583
+    },
+    {
+      "epoch": 39,
+      "train_loss": 0.016999387182295322,
+      "validation_loss": 0.007194980978965759
+    },
+    {
+      "epoch": 40,
+      "train_loss": 0.01673619293918212,
+      "validation_loss": 0.009614748880267143
+    },
+    {
+      "epoch": 41,
+      "train_loss": 0.016504535761972267,
+      "validation_loss": 0.00713068014010787
+    },
+    {
+      "epoch": 42,
+      "train_loss": 0.016170044119159382,
+      "validation_loss": 0.006727156694978476
+    },
+    {
+      "epoch": 43,
+      "train_loss": 0.016074274356166523,
+      "validation_loss": 0.006420398596674204
+    },
+    {
+      "epoch": 44,
+      "train_loss": 0.01586785198499759,
+      "validation_loss": 0.008153744973242283
+    },
+    {
+      "epoch": 45,
+      "train_loss": 0.01549914525821805,
+      "validation_loss": 0.006083613261580467
+    },
+    {
+      "epoch": 46,
+      "train_loss": 0.015157561283558607,
+      "validation_loss": 0.006978966295719147
+    },
+    {
+      "epoch": 47,
+      "train_loss": 0.015149936079978943,
+      "validation_loss": 0.0063490732572972775
+    },
+    {
+      "epoch": 48,
+      "train_loss": 0.014917986001819372,
+      "validation_loss": 0.006429515779018402
+    },
+    {
+      "epoch": 49,
+      "train_loss": 0.014713292631010214,
+      "validation_loss": 0.00536819314584136
+    },
+    {
+      "epoch": 50,
+      "train_loss": 0.014734278588245312,
+      "validation_loss": 0.004328726325184107
+    },
+    {
+      "epoch": 51,
+      "train_loss": 0.014376637215415636,
+      "validation_loss": 0.004749778192490339
+    },
+    {
+      "epoch": 52,
+      "train_loss": 0.014010480915506681,
+      "validation_loss": 0.0066500394605100155
+    },
+    {
+      "epoch": 53,
+      "train_loss": 0.01397027758260568,
+      "validation_loss": 0.003949432168155909
+    },
+    {
+      "epoch": 54,
+      "train_loss": 0.014145316400875648,
+      "validation_loss": 0.0035054991021752357
+    },
+    {
+      "epoch": 55,
+      "train_loss": 0.013963525649160147,
+      "validation_loss": 0.008728940039873123
+    },
+    {
+      "epoch": 56,
+      "train_loss": 0.01417543257897099,
+      "validation_loss": 0.0039047941099852324
+    },
+    {
+      "epoch": 57,
+      "train_loss": 0.013648204505443573,
+      "validation_loss": 0.0034397824201732874
+    },
+    {
+      "epoch": 58,
+      "train_loss": 0.01338733018686374,
+      "validation_loss": 0.007276794407516718
+    },
+    {
+      "epoch": 59,
+      "train_loss": 0.013474396585176388,
+      "validation_loss": 0.003455579513683915
+    },
+    {
+      "epoch": 60,
+      "train_loss": 0.013202776511510214,
+      "validation_loss": 0.00417022081092
+    }
+  ],
+  "metrics_macro_by_run": {
+    "test_contact": {
+      "QDD torque": {
+        "tension_mae_N": 0.7923296994330561,
+        "tension_rmse_N": 0.8874132096808903,
+        "deformation_mae_mm": 0.18925757511592387,
+        "deformation_rmse_mm": 0.21183119601175174
+      },
+      "QDD dynamics + linear compliance": {
+        "tension_mae_N": 0.7895085107373815,
+        "tension_rmse_N": 0.8832701867086947,
+        "deformation_mae_mm": 0.18917394364250437,
+        "deformation_rmse_mm": 0.21169631144884063
+      },
+      "GRU": {
+        "tension_mae_N": 0.42283034992033913,
+        "tension_rmse_N": 0.600823493277892,
+        "deformation_mae_mm": 0.0397968879401934,
+        "deformation_rmse_mm": 0.052588070217848254
+      }
+    },
+    "test_drift": {
+      "QDD torque": {
+        "tension_mae_N": 0.838255082784074,
+        "tension_rmse_N": 0.9053847798827096,
+        "deformation_mae_mm": 0.1542329849355193,
+        "deformation_rmse_mm": 0.17915660477915366
+      },
+      "QDD dynamics + linear compliance": {
+        "tension_mae_N": 0.8349572541595736,
+        "tension_rmse_N": 0.9006296418046801,
+        "deformation_mae_mm": 0.15408967803988285,
+        "deformation_rmse_mm": 0.17893568706719773
+      },
+      "GRU": {
+        "tension_mae_N": 0.43946364400685717,
+        "tension_rmse_N": 0.5956619490726973,
+        "deformation_mae_mm": 0.08880457038690724,
+        "deformation_rmse_mm": 0.10522578069805795
+      }
+    },
+    "test_law": {
+      "QDD torque": {
+        "tension_mae_N": 0.7050171894923088,
+        "tension_rmse_N": 0.8635586918570639,
+        "deformation_mae_mm": 0.3477341524181301,
+        "deformation_rmse_mm": 0.4195039182821478
+      },
+      "QDD dynamics + linear compliance": {
+        "tension_mae_N": 0.702403014628335,
+        "tension_rmse_N": 0.8609629325903522,
+        "deformation_mae_mm": 0.3475353960544201,
+        "deformation_rmse_mm": 0.4193090145518476
+      },
+      "GRU": {
+        "tension_mae_N": 0.4673020091794786,
+        "tension_rmse_N": 0.6030419929315167,
+        "deformation_mae_mm": 0.26061187571379696,
+        "deformation_rmse_mm": 0.34607471932534
+      }
+    },
+    "train": {
+      "QDD torque": {
+        "tension_mae_N": 0.7590792660517667,
+        "tension_rmse_N": 0.8526902249349603,
+        "deformation_mae_mm": 0.1750272394352341,
+        "deformation_rmse_mm": 0.20283611092295806
+      },
+      "QDD dynamics + linear compliance": {
+        "tension_mae_N": 0.7549506070568456,
+        "tension_rmse_N": 0.84517280452539,
+        "deformation_mae_mm": 0.17486746154583777,
+        "deformation_rmse_mm": 0.2025514855467029
+      },
+      "GRU": {
+        "tension_mae_N": 0.4065034289799985,
+        "tension_rmse_N": 0.5710089346006437,
+        "deformation_mae_mm": 0.037262999788240894,
+        "deformation_rmse_mm": 0.05165337984390606
+      }
+    },
+    "validation": {
+      "QDD torque": {
+        "tension_mae_N": 0.7572309174784668,
+        "tension_rmse_N": 0.8337689504305894,
+        "deformation_mae_mm": 0.1052886403634396,
+        "deformation_rmse_mm": 0.12173645318381265
+      },
+      "QDD dynamics + linear compliance": {
+        "tension_mae_N": 0.7534148985405161,
+        "tension_rmse_N": 0.8276310022266222,
+        "deformation_mae_mm": 0.10494543059532423,
+        "deformation_rmse_mm": 0.12131706178810492
+      },
+      "GRU": {
+        "tension_mae_N": 0.33559775693459554,
+        "tension_rmse_N": 0.46102225543453756,
+        "deformation_mae_mm": 0.030676458393979048,
+        "deformation_rmse_mm": 0.04237167943338391
+      }
+    }
+  },
+  "metrics_per_run": {
+    "test_contact_00": {
+      "QDD torque": {
+        "tension_mae_N": 0.8980616077544197,
+        "tension_rmse_N": 1.0045042287980368,
+        "deformation_mae_mm": 0.10309512765652182,
+        "deformation_rmse_mm": 0.11550722041352211
+      },
+      "QDD dynamics + linear compliance": {
+        "tension_mae_N": 0.8975731877565836,
+        "tension_rmse_N": 1.0044914808821994,
+        "deformation_mae_mm": 0.10292917261344339,
+        "deformation_rmse_mm": 0.11536439518330267
+      },
+      "GRU": {
+        "tension_mae_N": 0.46258178438459124,
+        "tension_rmse_N": 0.6405606649056907,
+        "deformation_mae_mm": 0.029284249114880367,
+        "deformation_rmse_mm": 0.0401230683317292
+      }
+    },
+    "test_contact_01": {
+      "QDD torque": {
+        "tension_mae_N": 0.7837242652972539,
+        "tension_rmse_N": 0.9032163233172336,
+        "deformation_mae_mm": 0.2848594091725924,
+        "deformation_rmse_mm": 0.2966700820714385
+      },
+      "QDD dynamics + linear compliance": {
+        "tension_mae_N": 0.7762061482081185,
+        "tension_rmse_N": 0.8913747952876983,
+        "deformation_mae_mm": 0.2848543631889265,
+        "deformation_rmse_mm": 0.2965811661895291
+      },
+      "GRU": {
+        "tension_mae_N": 0.5567777593930562,
+        "tension_rmse_N": 0.7605819069063205,
+        "deformation_mae_mm": 0.0468933657387538,
+        "deformation_rmse_mm": 0.06160645465227247
+      }
+    },
+    "test_contact_02": {
+      "QDD torque": {
+        "tension_mae_N": 0.6952032252474948,
+        "tension_rmse_N": 0.7545190769274004,
+        "deformation_mae_mm": 0.1798181885186574,
+        "deformation_rmse_mm": 0.22331628555029462
+      },
+      "QDD dynamics + linear compliance": {
+        "tension_mae_N": 0.6947461962474424,
+        "tension_rmse_N": 0.7539442839561865,
+        "deformation_mae_mm": 0.17973829512514314,
+        "deformation_rmse_mm": 0.22314337297369014
+      },
+      "GRU": {
+        "tension_mae_N": 0.24913150598336983,
+        "tension_rmse_N": 0.40132790802166485,
+        "deformation_mae_mm": 0.04321304896694602,
+        "deformation_rmse_mm": 0.05603468766954309
+      }
+    },
+    "test_drift_00": {
+      "QDD torque": {
+        "tension_mae_N": 0.8096489324821498,
+        "tension_rmse_N": 0.8795772094319465,
+        "deformation_mae_mm": 0.22968988218241876,
+        "deformation_rmse_mm": 0.2657576474725328
+      },
+      "QDD dynamics + linear compliance": {
+        "tension_mae_N": 0.8092382204403206,
+        "tension_rmse_N": 0.8798323678590201,
+        "deformation_mae_mm": 0.2296778128576751,
+        "deformation_rmse_mm": 0.26557728734851216
+      },
+      "GRU": {
+        "tension_mae_N": 0.43822179454388005,
+        "tension_rmse_N": 0.6397175772508357,
+        "deformation_mae_mm": 0.05383240232632569,
+        "deformation_rmse_mm": 0.06824524457696435
+      }
+    },
+    "test_drift_01": {
+      "QDD torque": {
+        "tension_mae_N": 0.8747865430770382,
+        "tension_rmse_N": 0.9671512071642768,
+        "deformation_mae_mm": 0.13948965121653376,
+        "deformation_rmse_mm": 0.16669738498767428
+      },
+      "QDD dynamics + linear compliance": {
+        "tension_mae_N": 0.8657945778780096,
+        "tension_rmse_N": 0.9535685249791074,
+        "deformation_mae_mm": 0.139351028026968,
+        "deformation_rmse_mm": 0.16649363680867668
+      },
+      "GRU": {
+        "tension_mae_N": 0.5569657416852473,
+        "tension_rmse_N": 0.7527997716881472,
+        "deformation_mae_mm": 0.14096478712287827,
+        "deformation_rmse_mm": 0.1610643246967022
+      }
+    },
+    "test_drift_02": {
+      "QDD torque": {
+        "tension_mae_N": 0.8303297727930339,
+        "tension_rmse_N": 0.8694259230519052,
+        "deformation_mae_mm": 0.09351942140760539,
+        "deformation_rmse_mm": 0.10501478187725395
+      },
+      "QDD dynamics + linear compliance": {
+        "tension_mae_N": 0.8298389641603907,
+        "tension_rmse_N": 0.8684880325759127,
+        "deformation_mae_mm": 0.09324019323500549,
+        "deformation_rmse_mm": 0.10473613704440436
+      },
+      "GRU": {
+        "tension_mae_N": 0.32320339579144425,
+        "tension_rmse_N": 0.3944684982791092,
+        "deformation_mae_mm": 0.07161652171151774,
+        "deformation_rmse_mm": 0.08636777282050728
+      }
+    },
+    "test_law_00": {
+      "QDD torque": {
+        "tension_mae_N": 0.8527364745736122,
+        "tension_rmse_N": 0.9924769140872037,
+        "deformation_mae_mm": 0.4548719008064121,
+        "deformation_rmse_mm": 0.5987150492941961
+      },
+      "QDD dynamics + linear compliance": {
+        "tension_mae_N": 0.8529753670519526,
+        "tension_rmse_N": 0.9930445818907456,
+        "deformation_mae_mm": 0.45471543464206726,
+        "deformation_rmse_mm": 0.5985083899835766
+      },
+      "GRU": {
+        "tension_mae_N": 0.5797288149595261,
+        "tension_rmse_N": 0.7983355601257686,
+        "deformation_mae_mm": 0.2611213160446842,
+        "deformation_rmse_mm": 0.34814227008034676
+      }
+    },
+    "test_law_01": {
+      "QDD torque": {
+        "tension_mae_N": 0.6423709680163671,
+        "tension_rmse_N": 0.7902944028758409,
+        "deformation_mae_mm": 0.3015288816569077,
+        "deformation_rmse_mm": 0.324090682695605
+      },
+      "QDD dynamics + linear compliance": {
+        "tension_mae_N": 0.6345344705474459,
+        "tension_rmse_N": 0.7824627110270425,
+        "deformation_mae_mm": 0.3013354927178885,
+        "deformation_rmse_mm": 0.32384990254718504
+      },
+      "GRU": {
+        "tension_mae_N": 0.3618504274459112,
+        "tension_rmse_N": 0.4653924332954392,
+        "deformation_mae_mm": 0.3093505810697357,
+        "deformation_rmse_mm": 0.40074498643929085
+      }
+    },
+    "test_law_02": {
+      "QDD torque": {
+        "tension_mae_N": 0.6199441258869474,
+        "tension_rmse_N": 0.8079047586081471,
+        "deformation_mae_mm": 0.2868016747910703,
+        "deformation_rmse_mm": 0.33570602285664214
+      },
+      "QDD dynamics + linear compliance": {
+        "tension_mae_N": 0.6196992062856066,
+        "tension_rmse_N": 0.8073815048532683,
+        "deformation_mae_mm": 0.28655526080330435,
+        "deformation_rmse_mm": 0.33556875112478113
+      },
+      "GRU": {
+        "tension_mae_N": 0.4603267851329985,
+        "tension_rmse_N": 0.5453979853733423,
+        "deformation_mae_mm": 0.211363730026971,
+        "deformation_rmse_mm": 0.2893369014563824
+      }
+    },
+    "train_00": {
+      "QDD torque": {
+        "tension_mae_N": 0.74953134059906,
+        "tension_rmse_N": 0.838303875684402,
+        "deformation_mae_mm": 0.17100034670676223,
+        "deformation_rmse_mm": 0.21488249451947294
+      },
+      "QDD dynamics + linear compliance": {
+        "tension_mae_N": 0.7490826079436178,
+        "tension_rmse_N": 0.8385742990460727,
+        "deformation_mae_mm": 0.17088048806180164,
+        "deformation_rmse_mm": 0.21467588621862643
+      },
+      "GRU": {
+        "tension_mae_N": 0.4353923226396243,
+        "tension_rmse_N": 0.654632715001667,
+        "deformation_mae_mm": 0.03419001142586827,
+        "deformation_rmse_mm": 0.04634119700863073
+      }
+    },
+    "train_01": {
+      "QDD torque": {
+        "tension_mae_N": 0.8938273248218355,
+        "tension_rmse_N": 1.0443795623033083,
+        "deformation_mae_mm": 0.24903515946962648,
+        "deformation_rmse_mm": 0.25942274428004286
+      },
+      "QDD dynamics + linear compliance": {
+        "tension_mae_N": 0.8835901997386953,
+        "tension_rmse_N": 1.0238358375965042,
+        "deformation_mae_mm": 0.24903172212835045,
+        "deformation_rmse_mm": 0.2589906811032307
+      },
+      "GRU": {
+        "tension_mae_N": 0.5522229732029021,
+        "tension_rmse_N": 0.7366518674636741,
+        "deformation_mae_mm": 0.033850549515418174,
+        "deformation_rmse_mm": 0.04876106192332382
+      }
+    },
+    "train_02": {
+      "QDD torque": {
+        "tension_mae_N": 0.8043323759048704,
+        "tension_rmse_N": 0.8827516229088668,
+        "deformation_mae_mm": 0.08959678450501377,
+        "deformation_rmse_mm": 0.10213759716937404
+      },
+      "QDD dynamics + linear compliance": {
+        "tension_mae_N": 0.803816342906748,
+        "tension_rmse_N": 0.8789675959385447,
+        "deformation_mae_mm": 0.0892626543616125,
+        "deformation_rmse_mm": 0.10167994548975932
+      },
+      "GRU": {
+        "tension_mae_N": 0.3151082273513552,
+        "tension_rmse_N": 0.4218266751054336,
+        "deformation_mae_mm": 0.03767509844831491,
+        "deformation_rmse_mm": 0.05482134951378357
+      }
+    },
+    "train_03": {
+      "QDD torque": {
+        "tension_mae_N": 0.7062152802944184,
+        "tension_rmse_N": 0.8459551716110278,
+        "deformation_mae_mm": 0.18042585229061103,
+        "deformation_rmse_mm": 0.23322888994338373
+      },
+      "QDD dynamics + linear compliance": {
+        "tension_mae_N": 0.7099406181548292,
+        "tension_rmse_N": 0.8475745679677726,
+        "deformation_mae_mm": 0.1800745907271187,
+        "deformation_rmse_mm": 0.23297411239324944
+      },
+      "GRU": {
+        "tension_mae_N": 0.4856626773873965,
+        "tension_rmse_N": 0.7205919202767309,
+        "deformation_mae_mm": 0.046679684377437525,
+        "deformation_rmse_mm": 0.06366650936958718
+      }
+    },
+    "train_04": {
+      "QDD torque": {
+        "tension_mae_N": 0.6764662956198056,
+        "tension_rmse_N": 0.7312486670724009,
+        "deformation_mae_mm": 0.1819249157662147,
+        "deformation_rmse_mm": 0.2265405170901917
+      },
+      "QDD dynamics + linear compliance": {
+        "tension_mae_N": 0.6760160061850847,
+        "tension_rmse_N": 0.7309473479557377,
+        "deformation_mae_mm": 0.18179233226350153,
+        "deformation_rmse_mm": 0.22632891340451883
+      },
+      "GRU": {
+        "tension_mae_N": 0.24323871235052744,
+        "tension_rmse_N": 0.3927348321949569,
+        "deformation_mae_mm": 0.037764243097626604,
+        "deformation_rmse_mm": 0.05023122247880583
+      }
+    },
+    "train_05": {
+      "QDD torque": {
+        "tension_mae_N": 0.8422384595114087,
+        "tension_rmse_N": 0.954581327946768,
+        "deformation_mae_mm": 0.26944064455973504,
+        "deformation_rmse_mm": 0.27830271431332854
+      },
+      "QDD dynamics + linear compliance": {
+        "tension_mae_N": 0.8293773828161285,
+        "tension_rmse_N": 0.9326993263244632,
+        "deformation_mae_mm": 0.2694363319423733,
+        "deformation_rmse_mm": 0.27819285317001546
+      },
+      "GRU": {
+        "tension_mae_N": 0.5460499672662644,
+        "tension_rmse_N": 0.7679965064977361,
+        "deformation_mae_mm": 0.03617346302733148,
+        "deformation_rmse_mm": 0.049232874766710094
+      }
+    },
+    "train_06": {
+      "QDD torque": {
+        "tension_mae_N": 0.7670387866005065,
+        "tension_rmse_N": 0.8150491014815773,
+        "deformation_mae_mm": 0.0816316062160435,
+        "deformation_rmse_mm": 0.0912299702467113
+      },
+      "QDD dynamics + linear compliance": {
+        "tension_mae_N": 0.7665235561571687,
+        "tension_rmse_N": 0.814688231820505,
+        "deformation_mae_mm": 0.08142331536719692,
+        "deformation_rmse_mm": 0.09099175865659787
+      },
+      "GRU": {
+        "tension_mae_N": 0.31348895421103823,
+        "tension_rmse_N": 0.4040223126083928,
+        "deformation_mae_mm": 0.04307075262330626,
+        "deformation_rmse_mm": 0.06335125616530671
+      }
+    },
+    "train_07": {
+      "QDD torque": {
+        "tension_mae_N": 0.7009476850430171,
+        "tension_rmse_N": 0.8113277029432567,
+        "deformation_mae_mm": 0.18863243068730404,
+        "deformation_rmse_mm": 0.23091074240768064
+      },
+      "QDD dynamics + linear compliance": {
+        "tension_mae_N": 0.69319399091389,
+        "tension_rmse_N": 0.7981295614587024,
+        "deformation_mae_mm": 0.18848129064035543,
+        "deformation_rmse_mm": 0.23055405663190975
+      },
+      "GRU": {
+        "tension_mae_N": 0.48504285464684166,
+        "tension_rmse_N": 0.6647415760804886,
+        "deformation_mae_mm": 0.03260677764285921,
+        "deformation_rmse_mm": 0.044433438098043954
+      }
+    },
+    "train_08": {
+      "QDD torque": {
+        "tension_mae_N": 0.6863086303075154,
+        "tension_rmse_N": 0.7500049204522543,
+        "deformation_mae_mm": 0.17596774694442394,
+        "deformation_rmse_mm": 0.21991410353003576
+      },
+      "QDD dynamics + linear compliance": {
+        "tension_mae_N": 0.6858565255701445,
+        "tension_rmse_N": 0.7489923289188166,
+        "deformation_mae_mm": 0.17584033061995613,
+        "deformation_rmse_mm": 0.21967837301980533
+      },
+      "GRU": {
+        "tension_mae_N": 0.2636636013785998,
+        "tension_rmse_N": 0.4073557724684405,
+        "deformation_mae_mm": 0.02795287023218407,
+        "deformation_rmse_mm": 0.03815599008212611
+      }
+    },
+    "train_09": {
+      "QDD torque": {
+        "tension_mae_N": 0.830473398026966,
+        "tension_rmse_N": 0.935602028963038,
+        "deformation_mae_mm": 0.23430183513454042,
+        "deformation_rmse_mm": 0.2404513163432464
+      },
+      "QDD dynamics + linear compliance": {
+        "tension_mae_N": 0.8201660390269606,
+        "tension_rmse_N": 0.9198688457527271,
+        "deformation_mae_mm": 0.23429905699772977,
+        "deformation_rmse_mm": 0.2402440135724411
+      },
+      "GRU": {
+        "tension_mae_N": 0.4904262694101485,
+        "tension_rmse_N": 0.6562878993272083,
+        "deformation_mae_mm": 0.03682284522646626,
+        "deformation_rmse_mm": 0.05131514490507146
+      }
+    },
+    "train_10": {
+      "QDD torque": {
+        "tension_mae_N": 0.775636457261585,
+        "tension_rmse_N": 0.8304678249391847,
+        "deformation_mae_mm": 0.08147433493124684,
+        "deformation_rmse_mm": 0.09146558018520892
+      },
+      "QDD dynamics + linear compliance": {
+        "tension_mae_N": 0.7751349391769634,
+        "tension_rmse_N": 0.8295769526465033,
+        "deformation_mae_mm": 0.08115510078332924,
+        "deformation_rmse_mm": 0.09116316854324101
+      },
+      "GRU": {
+        "tension_mae_N": 0.3060599236261277,
+        "tension_rmse_N": 0.4011578461257993,
+        "deformation_mae_mm": 0.04015298843749781,
+        "deformation_rmse_mm": 0.0552664501940138
+      }
+    },
+    "train_11": {
+      "QDD torque": {
+        "tension_mae_N": 0.6759351586302121,
+        "tension_rmse_N": 0.7926108929134396,
+        "deformation_mae_mm": 0.19689521601128726,
+        "deformation_rmse_mm": 0.24554666104681958
+      },
+      "QDD dynamics + linear compliance": {
+        "tension_mae_N": 0.6667090760919142,
+        "tension_rmse_N": 0.7782187588783293,
+        "deformation_mae_mm": 0.1967323246567275,
+        "deformation_rmse_mm": 0.24514406435703973
+      },
+      "GRU": {
+        "tension_mae_N": 0.4416846642891566,
+        "tension_rmse_N": 0.6241072920571972,
+        "deformation_mae_mm": 0.04021671340458018,
+        "deformation_rmse_mm": 0.0542640636214695
+      }
+    },
+    "validation_00": {
+      "QDD torque": {
+        "tension_mae_N": 0.7504116084124591,
+        "tension_rmse_N": 0.8214096666823344,
+        "deformation_mae_mm": 0.11437653931909711,
+        "deformation_rmse_mm": 0.13067534203214418
+      },
+      "QDD dynamics + linear compliance": {
+        "tension_mae_N": 0.7498905718410604,
+        "tension_rmse_N": 0.8203475581723507,
+        "deformation_mae_mm": 0.11411592385968441,
+        "deformation_rmse_mm": 0.1303671280665815
+      },
+      "GRU": {
+        "tension_mae_N": 0.27564541241070173,
+        "tension_rmse_N": 0.40218264831176337,
+        "deformation_mae_mm": 0.022529449869209513,
+        "deformation_rmse_mm": 0.03389983928687093
+      }
+    },
+    "validation_01": {
+      "QDD torque": {
+        "tension_mae_N": 0.7443137804667155,
+        "tension_rmse_N": 0.8256048688930134,
+        "deformation_mae_mm": 0.115422115161457,
+        "deformation_rmse_mm": 0.13700146031660873
+      },
+      "QDD dynamics + linear compliance": {
+        "tension_mae_N": 0.7339674815441997,
+        "tension_rmse_N": 0.8105554896111808,
+        "deformation_mae_mm": 0.11522708158532564,
+        "deformation_rmse_mm": 0.13663534030054525
+      },
+      "GRU": {
+        "tension_mae_N": 0.43102387179125534,
+        "tension_rmse_N": 0.5855914826846819,
+        "deformation_mae_mm": 0.03551175007012241,
+        "deformation_rmse_mm": 0.048829630669321
+      }
+    },
+    "validation_02": {
+      "QDD torque": {
+        "tension_mae_N": 0.7769673635562261,
+        "tension_rmse_N": 0.8542923157164204,
+        "deformation_mae_mm": 0.08606726660976467,
+        "deformation_rmse_mm": 0.09753255720268506
+      },
+      "QDD dynamics + linear compliance": {
+        "tension_mae_N": 0.7763866422362885,
+        "tension_rmse_N": 0.8519899588963351,
+        "deformation_mae_mm": 0.08549328634096261,
+        "deformation_rmse_mm": 0.09694871699718804
+      },
+      "GRU": {
+        "tension_mae_N": 0.30012398660182954,
+        "tension_rmse_N": 0.3952926353071676,
+        "deformation_mae_mm": 0.03398817524260522,
+        "deformation_rmse_mm": 0.044385568343959785
+      }
+    }
+  },
+  "dataset_sha256": "aa0e4a5ff9e107b03d2925dda9286fe9bcf7d4cb3ccaa7187b505fe0a7cd610f",
+  "source_sha256": {
+    "scripts/observer_dataset.py": "2fdd7715236aeb9b3bc07128e51db7e2e3d4e64d11ba8bd585e311c6407fa430",
+    "scripts/train_observer.py": "4f99dfe7967c69b965a76d3af84496ec071e04f33f52e9e357208aa168d6fc78",
+    "tests/test_observer.py": "a466a23ed729533bf64c0775f80b02f6564540f08abcdcd082f9977dfaa676c3",
+    "til/__init__.py": "85666e0ed5fcfa5142cd5b7fe4a25f9a13966dae990b85248d4c83853c55a876",
+    "til/analysis.py": "c9e27177213d8a15b8cc7048ba2f7751c6a891533bb8c73914d9c0b8f31d6386",
+    "til/cable.py": "0f6dafeb6079e376114f8de27d8542880dba9f7f15baa07ea5b82415b14d0e15",
+    "til/coupling.py": "d6c8e8a39bbcb9db0c32af496f5b72ea405bed39ea9fda10777ebe4cdbe3ec88",
+    "til/finger.py": "6212081d546e9cab4a96c3a5c1ab3e8eb8f4ef5f9b70347300734ca172bc1a30",
+    "til/motors.py": "ab0a17b1fc43cef9377d5a0921ef9f7272e191d6f22af18c2412eb37c2616f1d",
+    "til/observer.py": "734fdd0e99d55234000d48b83b51abc70da657957d2ea0cf74e61f9a85f12e26",
+    "til/recorder.py": "7ceb2d62d6915a6fc7b1bafa521f185efbd25d1eb01b4a44505721eb47d53b86",
+    "til/runner.py": "7f2b176d0b3da84d591178deeff167a21483b8c7102dec261b0732e0d0ee18a7",
+    "til/scenarios.py": "8c30ccb45da15bd8c0e14b710d79fe39451737e2a452359b63481e599785ed0e"
+  },
+  "caveats": [
+    "Training and test windows never share a run; normalization and compliance fits use training runs only.",
+    "Checkpoint selection reads validation runs only. Test runs are evaluated after model selection.",
+    "Inference resets recurrent memory at each run and uses only present/past motor observations.",
+    "Test-contact conditions are withheld. Law-shift and accelerated-drift tests are separate stress sets.",
+    "Deformation reference includes encoder/emulator sensor-model effects; it is not pure cable strain.",
+    "Actuator constants are assumed calibrated for both baselines; cable mechanics are not oracle inputs.",
+    "One training seed and three runs per test set do not establish broad generalization.",
+    "Explicit evolving-mechanics estimation, uncertainty calibration and hardware transfer remain untested."
+  ]
+}

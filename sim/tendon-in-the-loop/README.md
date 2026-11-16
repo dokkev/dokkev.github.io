@@ -212,3 +212,7 @@ reset restores each stream.
   limit and velocity limit sweeps; each case reported as OK or FAILED with its peak tension and tracking error.
 
 Results of the runs that were performed are summarised in `RESULTS.md`.
+
+The first motor-only GRU study is documented in [OBSERVER.md](OBSERVER.md), including independent
+training/validation/test runs, QDD/compliance baselines, changed-law and drift stress tests, and
+reproduction commands. Install `requirements-observer.txt` for this optional training workflow.

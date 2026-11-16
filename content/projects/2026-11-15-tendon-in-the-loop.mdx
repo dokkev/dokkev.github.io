@@ -12,23 +12,19 @@ related_publications: false
 import TendonDynamometerDemo from "../../src/components/demos/TendonDynamometerDemo";
 import TendonInTheLoop2DoFDemo from "../../src/components/demos/TendonInTheLoop2DoFDemo";
 
-**Project Status — Proposed Hardware-in-the-Loop Testbed**
+## Motivation
 
-The proposed architecture is evaluated through simulation-based prototyping using a numerical tendon transmission. The physical dynamometer has not been built; numerical verification and hardware validation are reported separately.
+Tendon-driven robots transmit actuator forces through cables, or tendons, whose response depends on deformation, friction, routing, and loading history. Motor motion and torque alone may therefore leave distal tension and displacement uncertain. As the cable mechanics change with repeated use, an estimator must also distinguish those changes from robot motion.
 
-## 01. Motivation
+Can motor-side observations reveal both hidden transmission states and changes in cable mechanics over long-term robot operation?
 
-Tendon-driven robots transmit actuator forces through cables whose response depends on deformation, friction, routing, and loading history. Motor motion and torque therefore need not reveal the distal transmission state. Repeated operation adds another question: can an estimator distinguish robot motion from changes in effective cable mechanics?
+Tendon-in-the-Loop (TiL) proposes a two-motor hardware-in-the-loop (HIL) dynamometer coupled to a MuJoCo finger to investigate this question. The planned workflow uses transmission measurements to identify a physics-based baseline, compare it with learned models, and develop an observer that estimates transmission state and mechanics from motor-side signals. General cable mechanics and MuJoCo tendon representations are covered in the Cable blog series.
 
-**Can motor-side observations reveal both hidden transmission states and changes in cable mechanics over long-term robot operation?**
+## Proposed HIL Testbed
 
-Tendon-in-the-Loop (TiL) proposes a two-motor HIL dynamometer coupled to a MuJoCo finger. Its purpose is to generate robot-relevant transmission measurements, identify a physics baseline, compare it with learned alternatives, and use that comparison to develop a motor-only state-and-mechanics observer. General cable mechanics and MuJoCo tendon representations are developed in the Cable blog series.
+In the proposed testbed, the input quasi-direct-drive (QDD) motor drives the cable, guides or pulleys, and terminations under test. The emulation motor reproduces the distal displacement imposed by a virtual two-degree-of-freedom (2-DoF) finger. Together, the two motors form one physical tendon port. Each additional independent tendon port requires its own actuator pair and instrumentation.
 
-## 02. Proposed HIL Testbed
-
-The input QDD motor drives the physical transmission under test: cable, guides or pulleys, and terminations. The emulation motor reproduces the distal displacement imposed by a virtual 2-DoF finger. **These two motors form one physical tendon port, not two independently driven finger joints.** Additional independent tendon ports require corresponding actuator pairs and instrumentation.
-
-Input and output tensions are measured separately, alongside motor encoders, emulation motion, and pulley motion. This makes transmission losses observable at the two boundaries rather than assuming that motor torque equals distal tendon force.
+Separate input and output tension measurements, together with motor encoders and measurements of emulation and pulley motion, would characterize force and motion at both transmission boundaries. These measurements allow transmission losses to be evaluated without equating motor torque with distal tendon force.
 
 Measured output tension drives the virtual finger through its tendon length Jacobian:
 
@@ -50,29 +46,29 @@ Both actuator coordinates and signs must be calibrated to this tendon port. The 
 
 ### Finger Configuration and Physical Routing
 
-The initial dynamometer has fixed physical routing. A changing MuJoCo finger configuration changes virtual tendon length and moment arms, **not the physical cable path**. Routing configuration is a separate experimental condition. A reconfigurable fixture could test selected routes; continuous synchronization with finger motion requires additional mechanical motion.
+The initial dynamometer design uses fixed physical routing. Changes in the MuJoCo finger configuration change virtual tendon length and moment arms while the physical cable path stays fixed. Routing is therefore a separate experimental condition. A reconfigurable fixture could test selected routes; continuously matching the physical route to finger motion would require additional mechanical motion.
 
 <TendonInTheLoop2DoFDemo client:visible lang="en" />
 
 This two-tendon illustration extends the single-port concept: each tested tendon has its own input and emulation actuator pair. Both interactive examples are teaching models, not HIL measurements.
 
-## 03. Long-Horizon Contact Experiments
+## Planned Long-Horizon Contact Experiments
 
-The virtual finger repeatedly approaches, presses, holds, releases, and repositions against objects. Contact can raise tendon tension while constraining joint motion, exposing transmission behavior that free motion alone may not reveal.
+The planned protocol repeats approaches, presses, holds, releases, and repositioning against objects. Contact can raise tendon tension while constraining joint motion, exposing transmission behavior that free motion alone may not reveal.
 
-**The purpose of long-duration operation is to test mechanical drift and history-dependent mechanics**, not simply to collect more cycles. The protocol varies contact location and stiffness, initial finger configuration, motor excitation, pretension, dwell time, cable condition, and routing trials. Repeated reference episodes would help distinguish changes with accumulated use from differences caused by the current contact task.
+Long-duration operation would test mechanical drift and dependence on loading history. The protocol would vary contact location and stiffness, initial finger configuration, motor excitation, pretension, dwell time, cable condition, and physical routing. Repeated reference episodes would help distinguish changes with accumulated use from differences caused by the current contact task.
 
 ### State Groups and Data
 
-| State group | Notation | Available information |
+| Data source | Notation | Available information |
 |---|---|---|
-| **MuJoCo Finger State** | $S_{\mathrm{MJ}}$ | Joint position/velocity, tendon geometry, object and contact state |
-| **Testbed Finger State** | $S_{\mathrm{TB}}$ | Motor states, separate input/output tensions, pulley and boundary motion, apparent deformation |
-| **Deployed Finger State** | $\mathbf o_t^M$ | QDD motor position, velocity, current or torque estimate, and command only |
+| **MuJoCo finger** | $S_{\mathrm{MJ}}$ | Joint position/velocity, tendon geometry, object and contact state |
+| **Physical testbed** | $S_{\mathrm{TB}}$ | Motor states, separate input/output tensions, pulley and boundary motion, apparent deformation |
+| **Deployment observations** | $\mathbf o_t^M$ | QDD motor position, velocity, current or torque estimate, and command only |
 
-Deployed Finger State denotes the available observation, not a fully measured joint configuration. Current-to-torque calibration and actuator losses must be accounted for when interpreting motor current.
+The deployment observations do not include measured finger joint configurations. Interpreting motor current also requires current-to-torque calibration and accounting for actuator losses.
 
-Synchronized records retain timestamps, units, calibration, routing, and operating history. Apparent deformation $\delta_{\mathrm{app}}$ comes from calibrated boundary motion; it may include termination slip and structural compliance and is **not automatically pure cable strain**.
+Synchronized records would retain timestamps, units, calibration, routing, and operating history. Apparent deformation $\delta_{\mathrm{app}}$ is computed from calibrated boundary motion. It may include termination slip and structural compliance, so it cannot be interpreted as cable strain alone.
 
 Numerical verification additionally records known plant parameters and internal states in a separate reference namespace. The protocol declares which may supervise training and which remain sealed for evaluation. Physical experiments do not automatically expose these internal quantities. Training, validation, and test runs are disjoint, with operating periods, contact/cable conditions, and routing trials withheld rather than randomly splitting adjacent cycles.
 
@@ -83,9 +79,9 @@ Numerical verification additionally records known plant parameters and internal 
   <figcaption>One proposed HIL architecture. A numerical transmission substitutes for the tendon during pre-hardware verification; the data split and evaluation paths remain the same.</figcaption>
 </figure>
 
-## 04. Transmission Modeling Approaches
+## Transmission Modeling Approaches
 
-**System identification → model comparison → neural observation** forms the method: establish a physics baseline from transmission measurements, test what additional learning improves, then evaluate whether that structure helps recover hidden state from motor observations.
+Model comparison would test whether learning improves on an identified physics-based transmission model. The subsequent observer study would evaluate whether the identified structure helps recover hidden state from motor observations.
 
 | Approach | Formulation | Comparison purpose |
 |---|---|---|
@@ -93,19 +89,19 @@ Numerical verification additionally records known plant parameters and internal 
 | **Hybrid** | $\hat T_{\mathrm{out}}=T_{\mathrm{physics}}+\Delta T_{\mathrm{NN}}$ | Whether a causal learned residual improves accuracy or data efficiency |
 | **Fully learned** | $\hat T_{\mathrm{out},t}=f_\theta(\mathbf b_{0:t})$ | Whether boundary-history learning generalizes without an explicit mechanics decomposition |
 
-The models would share training and validation runs, with inputs and tuning budgets reported. The target output tension is withheld as a contemporaneous input. Any past output measurement used by a forward predictor must also be available in its intended use.
+The models would share training and validation runs, with inputs and tuning budgets reported. Here, $\mathbf b_{0:t}$ denotes the history of boundary inputs available to the forward predictor. The output tension at time $t$ would be withheld as an input when predicting that same tension. Any past output measurement used by a forward predictor must also be available in its intended use.
 
 Comparison includes held-out force MAE, loading/unloading response, data efficiency, drift sensitivity, and closed-loop contact response. An open-loop fit to prescribed boundary motion does not establish useful behavior in a coupled robot simulation. Forward prediction and motor-only observation also have different information: an observer cannot assume access to distal boundary motion merely because a transmission predictor uses it.
 
-## 05. Neural State & Mechanics Observer
+## Neural State and Mechanics Observer
 
-The observer jointly investigates **hidden transmission state and evolving effective mechanics** from
+The proposed observer would estimate hidden transmission state and evolving effective mechanics from motor-side observations:
 
 $$
 \mathbf o_t^M=[q_{m,t},\dot q_{m,t},i_{m,t},u_{m,t}].
 $$
 
-Candidate state and parameter targets are
+Here, $q_m$, $\dot q_m$, $i_m$, and $u_m$ are motor position, velocity, current, and command. Candidate state and parameter targets are
 
 $$
 \mathbf x_t^{\mathrm{trans}}
@@ -115,7 +111,7 @@ $$
 =[k_{\mathrm{eff},t},\mu_{\mathrm{eff},t},\ell_{\mathrm{slack},t},\ldots].
 $$
 
-The causal formulation is
+The state targets include distal tension, apparent deformation, output displacement, and internal memory states $\mathbf z_t$. The parameter targets include effective stiffness, friction, and slack length. A causal observer would update its estimates and recurrent memory $\mathbf h_t$ as
 
 $$
 \boxed{
@@ -124,9 +120,9 @@ $$
 }
 $$
 
-A **model-informed observer** uses the identified transmission structure and estimates the subset of states and effective parameters supported by the measurements. An **end-to-end observer** may instead encode changing mechanics in recurrent memory $\mathbf h_t$ without explicit parameter outputs. Hysteresis memory is an evolving state, not automatically a static parameter; latent coordinates are not interpreted as measured stiffness or friction without an identification reference.
+A model-informed observer would use the identified transmission structure to estimate the subset of states and effective parameters supported by the measurements. An end-to-end observer could instead encode changing mechanics in recurrent memory $\mathbf h_t$ without explicit parameter outputs. Hysteresis memory evolves as a state; latent coordinates require an identification reference before they can be interpreted as measured stiffness or friction.
 
-Testbed measurements supervise training; deployment uses motor-side channels only. Distal tension, apparent deformation, and output displacement are directly evaluable targets. Parameter recovery can use known numerical references during verification; physical mechanics estimates need independent calibration or identification evidence.
+Testbed measurements would supervise training, while deployment would use motor-side channels only. Distal tension, apparent deformation, and output displacement can be evaluated against testbed measurements. Parameter recovery can use known numerical references during verification; physical mechanics estimates need independent calibration or identification evidence.
 
 <figure className="til-flow-figure">
   <div className="til-flow-scroll" role="region" aria-label="State and mechanics observer diagram" tabIndex="0">
@@ -139,11 +135,11 @@ Testbed measurements supervise training; deployment uses motor-side channels onl
 
 One tendon displacement does not generally determine both $q_1$ and $q_2$, and different combinations of stiffness, slack, and friction can produce similar motor histories. The observer must report uncertainty and failure conditions rather than assume unique state recovery. Joint estimation requires specified mechanical coupling, a sufficiently constrained dynamic observer, or additional contact information.
 
-Fingertip-force inference further requires a usable configuration estimate, contact location/directions, and accounting for passive, gravitational, and inertial torques. A single tension does not determine an arbitrary contact wrench. Independent joint sensing and a calibrated fingertip force sensor would score physical-finger experiments without becoming inputs to the deployed observer.
+Fingertip-force inference further requires a usable configuration estimate, contact location and directions, and accounting for passive, gravitational, and inertial torques. A single tension does not determine an arbitrary contact wrench. Independent joint sensing and a calibrated fingertip force sensor would evaluate predictions in physical-finger experiments without becoming inputs to the deployed observer.
 
-## 06. Validation Strategy
+## Validation Strategy
 
-Before physical implementation, the proposed HIL architecture is evaluated using an independent numerical transmission plant. This enables controlled verification of force–motion coupling, parameter identification, and state estimation under known mechanical conditions. It does not establish physical hardware performance.
+Verification starts with **Synthetic Data Verification**: an independent numerical transmission plant supplies contact-rich runs for coupling checks and an initial motor-only observer study. Known internal states provide references before physical implementation. Parameter identification and broader model comparison remain to be evaluated; physical HIL validation is a later stage.
 
 ### Evidence and Acceptance Criteria
 
@@ -156,13 +152,13 @@ Before physical implementation, the proposed HIL architecture is evaluated using
 | **Motor-only observer** | Distal tension error in N, deformation/displacement error in mm, uncertainty coverage | Use only motor-side inputs; identify regimes exceeding the estimation tolerance or unsupported by observability |
 | **Fingertip force** | Force-vector MAE/RMSE against an independent sensor, paired difference from the calibrated QDD baseline | Compare under the same contact conditions and force target; report ambiguity or degradation as well as improvement |
 
-Numerical acceptance limits will be fixed from motor/emulator bandwidth, working tension range, sensor resolution, and the control task **before** evaluation. Simulation solver guards and unit-test tolerances are not hardware acceptance specifications. Calibration and validation select settings; final held-out test data does not.
+Numerical acceptance limits will be set before evaluation using motor and emulator bandwidth, working tension range, sensor resolution, and the control task. Simulation solver guards and unit-test tolerances are not hardware acceptance specifications. Settings will be selected using calibration and validation data, with final test data held out.
 
-### Initial Numerical Verification
+### Synthetic Data Verification
 
-The local MuJoCo prototype includes an independent two-segment cable/pulley plant, QDD and emulation motor models, and a coupled contact scenario. The current verification covers coupling and mechanical consistency; system identification, learned-model comparison, and neural-observer training remain to be evaluated.
+The local MuJoCo prototype includes an independent two-segment cable/pulley plant, QDD and emulation motor models, and a coupled contact scenario.
 
-The verification was executed with MuJoCo **4.0.1**, Python **3.13.5**, and NumPy **2.5.5**. All **38 mechanical, coupling, and data-pipeline tests** passed. Five three-cycle cable presets, 26 sensitivity cases, and a 50-cycle drift-law run were also executed.
+The verification was executed with MuJoCo **4.0.1**, Python **3.13.5**, and NumPy **2.5.5**. The current suite passes **40 mechanical, coupling, data-pipeline, and observer-causality tests**. Five three-cycle cable presets, 26 sensitivity cases, and a 50-cycle drift-law run were also executed.
 
 | Check | Observed numerical result |
 |---|---|
@@ -179,10 +175,33 @@ The verification was executed with MuJoCo **4.0.1**, Python **3.13.5**, and NumP
   <figcaption>Numerical verification of the proposed coupling architecture. Completion alone is insufficient: delay can degrade tracking and current saturation can prevent contact.</figcaption>
 </figure>
 
-The delay cases at 10 and 30 ms and the 0.02 m/s emulator limit triggered the script's oscillation diagnostic. Its 5 mm warning is not a design acceptance limit. The near-rigid, ideal-emulator preset also reached **382 N** peak tension, so finite simulation states do not certify safe hardware behavior. The drift values above are prescribed-model states, not identified material properties; the phase result is at one cycle fundamental, not a bandwidth measurement. Energy accounting was checked only in the stated viscous case.
+The delay cases at 10 and 30 ms and the 0.02 m/s emulator limit triggered the script's oscillation diagnostic. Its 5 mm warning is not a design acceptance limit. The near-rigid, ideal-emulator preset also reached **408 N** peak tension, so finite simulation states do not certify safe hardware behavior. The drift values above are prescribed-model states, not identified material properties; the phase result is at one cycle fundamental, not a bandwidth measurement. Energy accounting was checked only in the stated viscous case.
 
 [Configurations, source hashes, and full numerical metrics](/assets/data/tendon-in-the-loop/verification.json) · [Reproduction instructions](https://github.com/dokkev/dokkev.github.io/blob/main/sim/tendon-in-the-loop/RESULTS.md).
 
 The reference plant records its internal states separately from sensor-model outputs. It supplies transmission forces once, while MuJoCo supplies finger dynamics and contact. These are algorithm-testing constitutive models, not measured cable material laws. Model-structure variation and physical experiments are still required to establish generalization beyond the numerical plant.
 
-The intended outcome remains a reproducible way to test the central question: **Can motor-side observations reveal both hidden transmission states and changes in cable mechanics over long-term robot operation?**
+#### Initial Motor-Only Observer
+
+A **32-unit GRU** estimates distal tension and apparent deformation from motor position, velocity, current, and command at **200 Hz**. Its causal memory uses present and past motor observations. Distal measurements and plant states supply targets only; they never enter the observer input. This first study evaluates transmission states, not explicit stiffness or friction estimates.
+
+The dataset contains **24 independent runs**: 12 training, 3 validation, and 9 test runs. Training uses 128-sample windows contained within individual runs; normalization and linear-compliance calibration use training runs only. Validation selects the checkpoint from 60 epochs. Each test starts with reset recurrent memory and is evaluated as a continuous run, including initialization. One training seed was used.
+
+The comparisons are a calibrated QDD torque estimate and a QDD estimate corrected for actuator inertia and viscous losses, paired with a fitted linear-compliance relation for deformation. The compliance fit is an effective baseline, not an identified cable material property. The table reports **baseline → GRU** MAE, averaged equally over three runs per test set; the baseline shown is the dynamics-corrected estimate.
+
+| Held-out test | Distal tension MAE [N] | Apparent deformation MAE [mm] |
+|---|---|---|
+| Unseen object stiffness / placement | **0.790 → 0.423** | **0.189 → 0.040** |
+| Changed friction law and cubic stiffness | **0.702 → 0.467** | **0.348 → 0.261** |
+| Accelerated drift, 20 cycles per run | **0.835 → 0.439** | **0.154 → 0.089** |
+
+<figure className="til-flow-figure">
+  <div className="til-flow-scroll" role="region" aria-label="Synthetic-data motor-only observer verification" tabIndex="0">
+    <img src="/assets/img/tendon-in-the-loop/observer-verification.svg" alt="Reference, QDD baselines and GRU estimates of distal tension and apparent deformation for one run from each held-out contact, changed-law and accelerated-drift test set." loading="lazy" />
+  </div>
+  <figcaption>One run from each test set. The GRU improves the aggregate errors in this pilot; deformation error increases when the constitutive law changes.</figcaption>
+</figure>
+
+The changed-law test replaces Dahl friction with smoothed Coulomb friction and reduces cubic stiffness; the drift test introduces creep and degradation absent from training. These stress tests expose sensitivity beyond the training plant settings. Three runs per test set and one training seed do not establish broad generalization, physical transfer, or unique recovery of evolving mechanics. Uncertainty calibration and independent hardware measurements remain necessary.
+
+[Observer settings, learning history, and per-run errors](/assets/data/tendon-in-the-loop/observer-verification.json) · [Training and reproduction instructions](https://github.com/dokkev/dokkev.github.io/blob/main/sim/tendon-in-the-loop/OBSERVER.md).

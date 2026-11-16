@@ -2,7 +2,8 @@
 
 Executed with Python 3.13.5, MuJoCo 4.0.1, NumPy 2.5.5 and h5py 3.16.0.
 These are numerical prototype results, not physical HIL measurements, material-property measurements,
-system-identification accuracy, or neural-observer performance. No learned model or observer was trained.
+system-identification accuracy, or neural-observer performance. These coupling runs did not train a
+learned model or observer. A subsequent synthetic-data observer pilot is documented in [OBSERVER.md](OBSERVER.md).
 
 ## Reproduce
 
