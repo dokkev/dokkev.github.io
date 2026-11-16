@@ -1,5 +1,0 @@
-mujoco>=3.2
-numpy>=1.26
-h5py>=3.10
-matplotlib>=3.8
-pytest>=8
