@@ -1,0 +1,9 @@
+[project]
+name = "tendon-in-the-loop"
+version = "0.1.0"
+description = "Software-in-the-loop prototype of the Tendon-in-the-Loop hardware-in-the-loop tendon dynamometer"
+requires-python = ">=3.10"
+dependencies = ["mujoco>=3.2", "numpy>=1.26", "h5py>=3.10", "matplotlib>=3.8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

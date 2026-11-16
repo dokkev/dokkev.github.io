@@ -6,7 +6,7 @@ export function getStaticPaths() {
   return [...posts, ...projects].map((doc) => ({ params: { path: doc.url.replace(/^\//, "").replace(/\/$/, "") }, props: { doc } }));
 }
 const { doc } = Astro.props;
-const mdxPosts = import.meta.glob<MDXInstance<Record<string, unknown>>>("../../content/blog/**/*.mdx", { eager: true });
+const mdxPosts = import.meta.glob<MDXInstance<Record<string, unknown>>>("../../content/{blog,projects}/**/*.mdx", { eager: true });
 const Content = doc.mdx ? mdxPosts[`../../content/${doc.mdx}`]?.default : undefined;
 if (doc.mdx && !Content) throw new Error(`Missing MDX article: ${doc.mdx}`);
 const html = doc.comingSoon || Content ? "" : await markdown(doc.body);

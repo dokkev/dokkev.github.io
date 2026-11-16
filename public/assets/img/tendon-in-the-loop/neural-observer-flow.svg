@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="600" viewBox="0 0 960 600" role="img" aria-labelledby="title desc">
+  <title id="title">Neural observer with three state groups</title>
+  <desc id="desc">MuJoCo Finger State and Testbed Finger State provide privileged training references. Only motor observations from the Testbed Finger State enter the neural observer. A supervised loss updates the observer, whose recurrent state carries loading history. Trained weights transfer to deployment, where Deployed Finger State supplies motor-side observations only. Outputs are distal transmission state and identifiable mechanics, or latent mechanics. Joint and force inference requires configuration and contact assumptions.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#475569"/></marker>
+    <style>
+      text{font-family:Arial,Helvetica,sans-serif;fill:#1e293b}
+      .head{font-size:17px;font-weight:600}.sub{font-size:14px;fill:#475569}.label{font-size:12px;fill:#64748b}
+      .box{fill:#fff;stroke:#94a3b8;stroke-width:1.2;rx:3}.state{fill:#f8fafc}
+      .edge{fill:none;stroke:#475569;stroke-width:1.4;marker-end:url(#arrow)}.dash{stroke-dasharray:5 4}
+    </style>
+  </defs>
+  <rect width="960" height="600" fill="#fff"/>
+  <rect class="box state" x="30" y="25" width="270" height="90"/>
+  <text class="head" x="165" y="58" text-anchor="middle">MuJoCo Finger State</text>
+  <text class="sub" x="165" y="88" text-anchor="middle">S_MJ</text>
+  <rect class="box state" x="345" y="25" width="270" height="90"/>
+  <text class="head" x="480" y="58" text-anchor="middle">Testbed Finger State</text>
+  <text class="sub" x="480" y="88" text-anchor="middle">S_TB</text>
+  <rect class="box state" x="660" y="25" width="270" height="90"/>
+  <text class="head" x="795" y="58" text-anchor="middle">Deployed Finger State</text>
+  <text class="sub" x="795" y="88" text-anchor="middle">Motor observation o_M</text>
+
+  <rect x="20" y="150" width="605" height="275" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text class="label" x="30" y="174">TRAINING</text>
+  <rect x="650" y="150" width="290" height="275" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text class="label" x="660" y="174">DEPLOYMENT</text>
+  <path d="M165 115 V165 H322 V70 H345" fill="none" stroke="#475569" stroke-width="1.4"/>
+  <path class="edge" d="M165 165 V195"/>
+  <path class="edge" d="M380 115 V195"/>
+  <text class="label" x="391" y="143">o_M</text>
+  <path class="edge" d="M795 115 V195"/>
+
+  <rect class="box" x="30" y="195" width="270" height="76"/>
+  <text class="head" x="165" y="225" text-anchor="middle">Training References</text>
+  <text class="sub" x="165" y="251" text-anchor="middle">Privileged state / parameter targets</text>
+  <rect class="box" x="345" y="195" width="270" height="90"/>
+  <text class="head" x="480" y="226" text-anchor="middle">Neural Observer</text>
+  <text class="sub" x="480" y="254" text-anchor="middle">F_η(o_M, h_t)</text>
+  <path class="edge" d="M615 215 H635 V180 H585 V195"/>
+  <text class="label" x="610" y="172">h_t</text>
+  <rect class="box" x="660" y="195" width="270" height="90"/>
+  <text class="head" x="795" y="226" text-anchor="middle">Trained Observer</text>
+  <text class="sub" x="795" y="254" text-anchor="middle">F_η(o_M, h_t)</text>
+  <path class="edge dash" d="M615 250 H660"/>
+  <text class="label" x="637" y="240" text-anchor="middle">η</text>
+
+  <path class="edge" d="M165 271 V335"/>
+  <path class="edge" d="M480 285 V335"/>
+  <path class="edge" d="M795 285 V335"/>
+  <rect class="box" x="30" y="335" width="270" height="66"/>
+  <text class="head" x="165" y="362" text-anchor="middle">Training Loss</text>
+  <text class="sub" x="165" y="386" text-anchor="middle">L_state + L_mechanics + L_physics</text>
+  <rect class="box" x="345" y="335" width="270" height="66"/>
+  <text class="head" x="480" y="362" text-anchor="middle">State + Mechanics</text>
+  <text class="sub" x="480" y="386" text-anchor="middle">x̂_trans · θ̂_trans</text>
+  <rect class="box" x="660" y="335" width="270" height="66"/>
+  <text class="head" x="795" y="362" text-anchor="middle">State + Mechanics</text>
+  <text class="sub" x="795" y="386" text-anchor="middle">x̂_trans · θ̂_trans + uncertainty</text>
+  <path class="edge" d="M345 368 H300"/>
+  <path class="edge dash" d="M300 350 H322 V240 H345"/>
+  <rect class="box state" x="30" y="465" width="270" height="70"/>
+  <text class="head" x="165" y="494" text-anchor="middle">Physical Reference</text>
+  <text class="sub" x="165" y="521" text-anchor="middle">Independent joint / force sensing</text>
+  <rect class="box state" x="345" y="465" width="585" height="70"/>
+  <text class="head" x="637" y="494" text-anchor="middle">Independent Evaluation</text>
+  <text class="sub" x="637" y="521" text-anchor="middle">Reference sensors are not deployed observer inputs</text>
+  <path class="edge" d="M300 500 H345"/>
+  <path class="edge" d="M795 401 V465"/>
+  <text class="label" x="480" y="575" text-anchor="middle">θ̂ where identifiable; otherwise latent h. Robot-level force inference requires q̂ and contact assumptions.</text>
+</svg>

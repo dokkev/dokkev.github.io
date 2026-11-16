@@ -1,0 +1,31 @@
+---
+title: "Cable — Interactive demos"
+description: "Cable 시리즈에 들어갈 인터랙티브 예시를 모아 두는 작업용 페이지입니다."
+hidden: true
+date: 2026-11-15 00:00:00
+permalink: /cable-demos/
+lang: ko
+tags: [Cable]
+---
+
+import CableTransmissionDemo from "../../../src/components/demos/CableTransmissionDemo";
+import CapstanTensionDemo from "../../../src/components/demos/CapstanTensionDemo";
+import TendonJacobianDemo from "../../../src/components/demos/TendonJacobianDemo";
+
+Cable 시리즈 글에 넣을 인터랙티브 예시를 모아 두는 작업용 페이지입니다. 각 예시는 정리가 끝나면 해당 글로 옮깁니다.
+
+## 1. Tendon-Driven System Example
+
+<CableTransmissionDemo client:visible lang="ko" />
+
+## 2. Capstan 드라이브: 감속비, 중심거리, 케이블 장력
+
+<CapstanTensionDemo client:visible lang="ko" />
+
+<span id="creep-demo"></span>
+
+## 3. Creep: 2 DoF 반복 힘 제어
+
+탄성 신장과 creep이 모터 엔코더 기반 자세 추정에 미치는 영향을 비교합니다. 손가락이 탄성 그립을 반복해서 누를 때, 추정 자세의 오차가 Jacobian을 거쳐 실제 끝점 힘의 크기와 방향을 어떻게 바꾸는지 볼 수 있습니다.
+
+<TendonJacobianDemo client:visible lang="ko" />
