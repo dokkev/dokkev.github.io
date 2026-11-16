@@ -61,6 +61,9 @@ class CableParams:
     k3: float = 0.0  # N/m^3, cubic stiffening (0 = linear)
     c: float = 2.0  # N s/m, viscous damping of each segment
     pretension: float = 10.0  # N
+    stiffness_noise_std: float = 0.0  # bounded log-stiffness variation, exploratory
+    stiffness_correlation_time: float = 3.0  # s, colored driving process
+    stiffness_smoothing_time: float = 0.3  # s, smooth the driving process before varying stiffness
 
     # pulley
     R_p: float = 0.02  # m
@@ -128,6 +131,9 @@ PRESETS: dict[str, CableParams] = {
 
 @dataclass
 class CableState:
+    stiffness_drive: float = 0.0
+    stiffness_log_factor: float = 0.0
+    W_stiffness: float = 0.0  # J, work associated with changing stiffness at fixed geometry
     phi: float = 0.0  # rad
     phi_d: float = 0.0  # rad/s
     z: float = 0.0  # N m, Dahl friction torque state
@@ -149,11 +155,14 @@ class CableState:
 class CablePlant:
     """Two-port synthetic tendon transmission. Call :meth:`step` once per plant substep."""
 
-    def __init__(self, params: CableParams | None = None):
+    def __init__(self, params: CableParams | None = None, seed: int = 0):
         self.p = params or CableParams()
+        self.seed = seed
         p = self.p
         if min(p.k0, p.R_p, p.J_p) <= 0 or min(p.k3, p.c, p.pretension, p.b_p) < 0:
             raise ValueError("stiffness, radius and inertia must be positive; cubic stiffness, damping and pretension nonnegative")
+        if p.stiffness_noise_std < 0 or min(p.stiffness_correlation_time, p.stiffness_smoothing_time) <= 0 or not 0 <= p.alpha_k < 1:
+            raise ValueError("invalid stiffness variation or degradation parameters")
         # Calibrate against the complete nominal constitutive law, including cubic stiffening.
         lo, hi = 0.0, p.pretension / p.k0
         for _ in range(60):
@@ -171,6 +180,7 @@ class CablePlant:
 
     # ----------------------------------------------------------------------------------------------
     def reset(self) -> None:
+        self.rng = np.random.default_rng(self.seed)
         self.s = CableState()
         p = self.p
         self.s.T1 = self.s.T2 = p.pretension
@@ -181,7 +191,7 @@ class CablePlant:
     # ----------------------------------------------------------------------------------------------
     @property
     def k_eff(self) -> float:
-        return self.p.k0 * (1.0 - self.p.alpha_k * self.s.d)
+        return self.p.k0 * (1.0 - self.p.alpha_k * self.s.d) * np.exp(self.s.stiffness_log_factor)
 
     @property
     def tau_c_eff(self) -> float:
@@ -228,6 +238,15 @@ class CablePlant:
         s = self.s
         R = p.R_p
         T1_prev, T2_prev = s.T1, s.T2
+        old_k = self.k_eff
+        if p.stiffness_noise_std > 0:
+            rho = np.exp(-dt / p.stiffness_correlation_time)
+            limit = 3 * p.stiffness_noise_std
+            s.stiffness_drive = float(np.clip(rho * s.stiffness_drive + p.stiffness_noise_std * np.sqrt(1-rho*rho) * self.rng.normal(), -limit, limit))
+            s.stiffness_log_factor += (1-np.exp(-dt / p.stiffness_smoothing_time)) * (s.stiffness_drive-s.stiffness_log_factor)
+            e1 = max(0., x_in-R*s.phi+self.delta0)
+            e2 = max(0., x_out+R*s.phi-s.creep-s.settle+self.delta0)
+            s.W_stiffness += .5 * (self.k_eff-old_k) * (e1*e1+e2*e2)
 
         # elastic state at the start of the step
         d1 = x_in - R * s.phi
@@ -274,7 +293,9 @@ class CablePlant:
         s.W_out += 0.5 * (T2 + T2_prev) * (x_out - self._prev_x_out)
         self._prev_x_in, self._prev_x_out = x_in, x_out
         if p.drift_enabled:
+            before_k = self.k_eff
             s.d = min(1.0, s.d + p.drift_rate * max(0.0, P_diss) * dt)
+            s.W_stiffness += .5 * (self.k_eff-before_k) * (max(0.,d1+self.delta0)**2+max(0.,d2+self.delta0)**2)
 
         s.T1, s.T2, s.delta1, s.delta2, s.tau_f, s.P_diss = T1, T2, d1, d2, tau_f, P_diss
         self._E_el = E1 + E2
@@ -288,6 +309,8 @@ class CablePlant:
         """Hidden plant states and current effective parameters (privileged information)."""
         s = self.s
         return {
+            "stiffness_log_factor": s.stiffness_log_factor,
+            "stiffness_parameter_work": s.W_stiffness,
             "cable_segment_extensions": np.array([s.delta1 + self.delta0, s.delta2 + self.delta0]),
             "friction_state": s.z,
             "friction_torque": s.tau_f,

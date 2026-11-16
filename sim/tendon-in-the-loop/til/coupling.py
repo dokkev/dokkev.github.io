@@ -38,6 +38,10 @@ class SensorParams:
     tension_noise: float = 0.0  # N, std of both load cells
     tension_delay: float = 0.0  # s, delay of the distal tension fed to the simulation (sensing + communication)
     emulator_pos_noise: float = 0.0  # m, std on the emulator position measurement
+    input_tension_bias: float = 0.0  # N
+    output_tension_bias: float = 0.0  # N
+    emulator_pos_bias: float = 0.0  # m
+    tension_jitter: float = 0.0  # s, bounded integer-step variation around tension_delay
 
 
 @dataclass
@@ -60,12 +64,13 @@ class TiLSimulator:
         c = self.cfg
         if c.timing.plant_dt <= 0 or c.timing.log_dt <= 0:
             raise ValueError("sampling periods must be positive")
-        if min(asdict(c.sensors).values()) < 0 or c.emulator.delay < 0:
+        if min(c.sensors.tension_noise, c.sensors.tension_delay, c.sensors.emulator_pos_noise, c.sensors.tension_jitter, c.emulator.delay) < 0:
             raise ValueError("sensor noise and delays must be nonnegative")
         self.rng = np.random.default_rng(c.seed)
         self.record_rng = np.random.default_rng(c.seed + 2)
+        self.delay_rng = np.random.default_rng(c.seed + 4)
         self.finger = Finger(c.finger)
-        self.plant = CablePlant(c.cable)
+        self.plant = CablePlant(c.cable, seed=c.seed + 3)
         self.motor = QDDMotor(c.motor, rng=np.random.default_rng(c.seed + 1))
         self.emulator = EmulationMotor(c.emulator, dt=c.timing.plant_dt)
         self.mj_dt = self.finger.dt
@@ -73,12 +78,17 @@ class TiLSimulator:
         if abs(self.n_sub * c.timing.plant_dt - self.mj_dt) > 1e-12:
             raise ValueError(f"plant_dt {c.timing.plant_dt} must divide the MuJoCo timestep {self.mj_dt}")
         n_delay = int(round(c.sensors.tension_delay / self.mj_dt))
-        self._tdelay: deque[float] = deque([c.cable.pretension] * n_delay, maxlen=n_delay) if n_delay > 0 else deque(maxlen=0)
+        n_jitter = int(round(c.sensors.tension_jitter / self.mj_dt))
+        self._delay_steps, self._jitter_steps = n_delay, n_jitter
+        max_delay = n_delay + n_jitter
+        self._tdelay: deque[float] = deque([c.cable.pretension] * max_delay, maxlen=max_delay)
         self.log_every = max(1, int(round(c.timing.log_dt / self.mj_dt)))
         if abs(self.log_every * self.mj_dt - c.timing.log_dt) > 1e-12:
             raise ValueError("log_dt must be an integer multiple of the MuJoCo timestep")
         if abs(n_delay * self.mj_dt - c.sensors.tension_delay) > 1e-12:
             raise ValueError("tension_delay must be an integer multiple of the MuJoCo timestep")
+        if abs(n_jitter * self.mj_dt - c.sensors.tension_jitter) > 1e-12 or n_jitter > n_delay:
+            raise ValueError("tension jitter must fit the timestep grid and not exceed the base delay")
         self.t = 0.0
         self.k = 0
         self.T_applied = c.cable.pretension
@@ -90,6 +100,7 @@ class TiLSimulator:
         self.rng = np.random.default_rng(self.cfg.seed)
         self.motor.rng = np.random.default_rng(self.cfg.seed + 1)
         self.record_rng = np.random.default_rng(self.cfg.seed + 2)
+        self.delay_rng = np.random.default_rng(self.cfg.seed + 4)
         self.finger.reset(q0, pretension=self.cfg.cable.pretension)
         self.plant.reset()
         self.motor.reset(T_hold=self.cfg.cable.pretension)
@@ -101,9 +112,9 @@ class TiLSimulator:
         self.k = 0
         self.T_applied = self.T_in_meas = self.T_out_meas = T0
 
-    def _measure(self, T: float) -> float:
+    def _measure(self, T: float, bias: float = 0.0) -> float:
         n = self.cfg.sensors.tension_noise
-        return float(T + (self.rng.normal(0.0, n) if n > 0 else 0.0))
+        return float(T + bias + (self.rng.normal(0.0, n) if n > 0 else 0.0))
 
     # ----------------------------------------------------------------------------------------------
     def step(self, theta_ref: float, omega_ref: float = 0.0) -> None:
@@ -115,11 +126,14 @@ class TiLSimulator:
             self.motor.step(dt, u, self.plant.s.T1)
             self.emulator.step(x_cmd)
             self.plant.step(dt, self.motor.x_in, self.motor.xd_in, self.emulator.s.x, self.emulator.s.v)
-        self.T_in_meas = self._measure(self.plant.s.T1)
-        self.T_out_meas = self._measure(self.plant.s.T2)
+        self.T_in_meas = self._measure(self.plant.s.T1, self.cfg.sensors.input_tension_bias)
+        self.T_out_meas = self._measure(self.plant.s.T2, self.cfg.sensors.output_tension_bias)
         T = self.T_out_meas
         if self._tdelay.maxlen:
-            delayed = self._tdelay.popleft()
+            n = self._delay_steps
+            if self._jitter_steps:
+                n += int(self.delay_rng.integers(-self._jitter_steps, self._jitter_steps+1))
+            delayed = self._tdelay[-n] if n else T
             self._tdelay.append(T)
             T = delayed
         self.T_applied = T
@@ -138,10 +152,12 @@ class TiLSimulator:
         f, pl, em, mo = self.finger, self.plant, self.emulator, self.motor
         gt = pl.ground_truth()
         con = f.contact()
-        x_e_meas = em.s.x + (self.record_rng.normal(0.0, self.cfg.sensors.emulator_pos_noise) if self.cfg.sensors.emulator_pos_noise > 0 else 0.0)
+        motor_obs = mo.observation(self.cfg.timing.log_dt)
+        x_in_meas = mo.p.r_drum * motor_obs["position"]
+        x_e_meas = em.s.x + self.cfg.sensors.emulator_pos_bias + (self.record_rng.normal(0.0, self.cfg.sensors.emulator_pos_noise) if self.cfg.sensors.emulator_pos_noise > 0 else 0.0)
         obj_pos, obj_vel = f.object_state()
         return {
-            "motor": mo.observation(),
+            "motor": motor_obs,
             "emulator": {
                 "commanded_position": em.s.x_cmd_raw,
                 "actual_position": float(x_e_meas),
@@ -151,9 +167,9 @@ class TiLSimulator:
             "transmission": {
                 "input_tension": self.T_in_meas,
                 "output_tension": self.T_out_meas,
-                "input_displacement": mo.x_in,
+                "input_displacement": x_in_meas,
                 "output_displacement": float(x_e_meas),
-                "apparent_elongation": mo.x_in + float(x_e_meas),
+                "apparent_elongation": x_in_meas + float(x_e_meas),
                 "pulley_position": pl.s.phi,
                 "pulley_velocity": pl.s.phi_d,
             },
@@ -172,6 +188,9 @@ class TiLSimulator:
                 "tip_position": f.tip_position(),
             },
             "ground_truth": {
+                "effective_motor_torque_constant": mo.effective_K_t,
+                "motor_temperature": mo.s.temperature,
+                "apparent_elongation_true": mo.x_in + em.s.x,
                 **gt,
                 "input_tension_true": pl.s.T1,
                 "output_tension_true": pl.s.T2,
@@ -181,6 +200,11 @@ class TiLSimulator:
 
 
 CHANNEL_UNITS: dict[str, str] = {
+    "ground_truth/effective_motor_torque_constant": "N m/A",
+    "ground_truth/motor_temperature": "deg C (single-lump proxy)",
+    "ground_truth/apparent_elongation_true": "m",
+    "ground_truth/stiffness_log_factor": "1",
+    "ground_truth/stiffness_parameter_work": "J (signed)",
     "time": "s",
     "cycle_count": "cycles",
     "motor/position": "rad",

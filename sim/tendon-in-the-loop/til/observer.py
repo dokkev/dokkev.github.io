@@ -76,12 +76,11 @@ def predict(model, run, scaler):
 
 def motor_tension(run, dynamic=False):
     """Calibrated actuator model only; no distal measurements or cable truth enter inference."""
-    from .scenarios import EpisodeConfig, MotorProfile
-    cfg = dict(run["config"])
-    cfg["profile"] = MotorProfile(**cfg["profile"])
-    p = EpisodeConfig(**cfg).sim_config().motor
+    from .motors import QDDMotorParams
+    # A deployable baseline knows its calibration, not the randomized plant configuration.
+    p = QDDMotorParams()
     _, velocity, current, _ = run["x"].T
-    torque = p.K_t * current
+    torque = p.K_t_nominal * current
     if dynamic:
         acceleration = np.r_[0., np.diff(velocity) / np.diff(run["time"])]
         torque = torque - p.J_m * acceleration - p.b_m * velocity - p.tau_c_m * np.tanh(velocity / p.v_eps)

@@ -18,6 +18,12 @@ import numpy as np
 class QDDMotorParams:
     J_m: float = 2e-5  # kg m^2, rotor + drum inertia
     K_t: float = 0.1  # N m / A
+    K_t_nominal: float = 0.1  # controller / estimator calibration; not the plant's true K_t
+    winding_resistance: float = 0.0  # ohm; zero disables heating
+    thermal_capacity: float = 20.0  # J/K, exploratory single-lump thermal proxy
+    thermal_resistance: float = 8.0  # K/W
+    ambient_temperature: float = 25.0  # deg C
+    K_t_temperature_coeff: float = 0.0  # 1/K, effective magnet-temperature proxy
     r_drum: float = 0.02  # m
     b_m: float = 2e-5  # N m s/rad, viscous
     tau_c_m: float = 0.0  # N m, Coulomb
@@ -31,6 +37,11 @@ class QDDMotorParams:
     encoder_cpr: int = 0  # counts per revolution of the encoder (0 = continuous)
     velocity_noise: float = 0.0  # rad/s, std
     current_noise: float = 0.0  # A, std
+    current_gain: float = 1.0
+    current_bias: float = 0.0  # A
+    current_colored_noise: float = 0.0  # A, stationary std
+    current_correlation_time: float = 0.05  # s
+    encoder_offset: float = 0.0  # rad
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -44,6 +55,8 @@ class QDDMotorState:
     u: float = 0.0  # commanded current
     T_load: float = 0.0  # cable tension at the drum
     i_ff: float = 0.0  # feedforward current holding the nominal pretension (set at reset)
+    temperature: float = 25.0
+    current_noise_state: float = 0.0
 
 
 class QDDMotor:
@@ -51,13 +64,16 @@ class QDDMotor:
 
     def __init__(self, params: QDDMotorParams | None = None, rng: np.random.Generator | None = None):
         self.p = params or QDDMotorParams()
+        if min(self.p.K_t, self.p.K_t_nominal, self.p.thermal_capacity, self.p.thermal_resistance, self.p.current_correlation_time) <= 0:
+            raise ValueError("motor constants and thermal/noise time scales must be positive")
         self.s = QDDMotorState()
         self.rng = rng or np.random.default_rng(0)
 
     def reset(self, T_hold: float = 0.0) -> None:
         """Start at rest holding the cable tension ``T_hold`` (the current needed to balance it at the drum)."""
         self.s = QDDMotorState()
-        self.s.i_ff = self.p.r_drum * T_hold / self.p.K_t
+        self.s.temperature = self.p.ambient_temperature
+        self.s.i_ff = self.p.r_drum * T_hold / self.p.K_t_nominal
         self.s.i = self.s.u = float(np.clip(self.s.i_ff, -self.p.i_max, self.p.i_max))
         self.s.T_load = T_hold
 
@@ -68,6 +84,11 @@ class QDDMotor:
     @property
     def xd_in(self) -> float:
         return self.p.r_drum * self.s.omega
+
+    @property
+    def effective_K_t(self) -> float:
+        factor = 1 + self.p.K_t_temperature_coeff * (self.s.temperature - self.p.ambient_temperature)
+        return self.p.K_t * float(np.clip(factor, .5, 1.5))
 
     def command_from_reference(self, theta_ref: float, omega_ref: float = 0.0) -> float:
         """Motor-side PD position controller with pretension feedforward: returns the current command (A), saturated."""
@@ -83,20 +104,26 @@ class QDDMotor:
             s.i += dt / p.tau_elec * (s.u - s.i)
         else:
             s.i = s.u
-        tau = p.K_t * s.i - p.b_m * s.omega - p.tau_c_m * np.tanh(s.omega / p.v_eps) - p.r_drum * T_in
+        # Single-lump approximation; not a calibrated winding/magnet thermal model.
+        heat = s.i**2 * p.winding_resistance
+        s.temperature += dt * (heat - (s.temperature - p.ambient_temperature) / p.thermal_resistance) / p.thermal_capacity
+        tau = self.effective_K_t * s.i - p.b_m * s.omega - p.tau_c_m * np.tanh(s.omega / p.v_eps) - p.r_drum * T_in
         s.omega += tau / p.J_m * dt
         s.theta += s.omega * dt
         s.T_load = T_in
 
-    def observation(self) -> dict[str, float]:
+    def observation(self, sample_dt: float = 1e-3) -> dict[str, float]:
         """Motor-only observation ``[q_m, qd_m, i_m, u_m]`` with the modelled sensing imperfections."""
         p, s = self.p, self.s
-        q = s.theta
+        q = s.theta + p.encoder_offset
         if p.encoder_cpr > 0:
             q = np.round(q * p.encoder_cpr / (2 * np.pi)) * (2 * np.pi) / p.encoder_cpr
         qd = s.omega + (self.rng.normal(0.0, p.velocity_noise) if p.velocity_noise > 0 else 0.0)
-        i = s.i + (self.rng.normal(0.0, p.current_noise) if p.current_noise > 0 else 0.0)
-        return {"position": float(q), "velocity": float(qd), "current": float(i), "applied_command": float(s.u), "estimated_motor_torque": float(p.K_t * i)}
+        if p.current_colored_noise > 0:
+            rho = np.exp(-sample_dt / p.current_correlation_time)
+            s.current_noise_state = rho * s.current_noise_state + p.current_colored_noise * np.sqrt(1-rho*rho) * self.rng.normal()
+        i = p.current_gain * s.i + p.current_bias + s.current_noise_state + (self.rng.normal(0.0, p.current_noise) if p.current_noise > 0 else 0.0)
+        return {"position": float(q), "velocity": float(qd), "current": float(i), "applied_command": float(s.u), "estimated_motor_torque": float(p.K_t_nominal * i)}
 
 
 # --------------------------------------------------------------------------------------------------
