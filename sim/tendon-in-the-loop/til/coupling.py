@@ -25,6 +25,7 @@ import numpy as np
 from .cable import CablePlant, CableParams
 from .finger import Finger, FingerParams
 from .motors import QDDMotor, QDDMotorParams, EmulationMotor, EmulationMotorParams
+from .sensing import MotorSensor, MotorSensorParams
 
 
 @dataclass
@@ -46,9 +47,11 @@ class SensorParams:
 
 @dataclass
 class SimConfig:
+    transmission: dict | None = None  # opt-in Phase 2 plant; Phase 1 defaults remain available
     finger: FingerParams = field(default_factory=FingerParams)
     cable: CableParams = field(default_factory=CableParams)
     motor: QDDMotorParams = field(default_factory=QDDMotorParams)
+    motor_sensor: MotorSensorParams = field(default_factory=MotorSensorParams)
     emulator: EmulationMotorParams = field(default_factory=EmulationMotorParams)
     timing: TimingParams = field(default_factory=TimingParams)
     sensors: SensorParams = field(default_factory=SensorParams)
@@ -70,8 +73,13 @@ class TiLSimulator:
         self.record_rng = np.random.default_rng(c.seed + 2)
         self.delay_rng = np.random.default_rng(c.seed + 4)
         self.finger = Finger(c.finger)
-        self.plant = CablePlant(c.cable, seed=c.seed + 3)
+        if c.transmission is None:
+            self.plant = CablePlant(c.cable, seed=c.seed + 3)
+        else:
+            from .transmission import TransmissionPlant, TransmissionParams
+            self.plant = TransmissionPlant(TransmissionParams.from_dict(c.transmission))
         self.motor = QDDMotor(c.motor, rng=np.random.default_rng(c.seed + 1))
+        self.motor_sensor = MotorSensor(c.motor_sensor, seed=c.seed+5)
         self.emulator = EmulationMotor(c.emulator, dt=c.timing.plant_dt)
         self.mj_dt = self.finger.dt
         self.n_sub = int(round(self.mj_dt / c.timing.plant_dt))
@@ -104,7 +112,8 @@ class TiLSimulator:
         self.finger.reset(q0, pretension=self.cfg.cable.pretension)
         self.plant.reset()
         self.motor.reset(T_hold=self.cfg.cable.pretension)
-        self.emulator.reset()
+        self.motor_sensor.reset()
+        self.emulator.reset(T_hold=self.cfg.cable.pretension)
         T0 = self.cfg.cable.pretension
         for _ in range(self._tdelay.maxlen or 0):
             self._tdelay.append(T0)
@@ -124,7 +133,7 @@ class TiLSimulator:
         for _ in range(self.n_sub):
             u = self.motor.command_from_reference(theta_ref, omega_ref)
             self.motor.step(dt, u, self.plant.s.T1)
-            self.emulator.step(x_cmd)
+            self.emulator.step(x_cmd, self.plant.s.T2)
             self.plant.step(dt, self.motor.x_in, self.motor.xd_in, self.emulator.s.x, self.emulator.s.v)
         self.T_in_meas = self._measure(self.plant.s.T1, self.cfg.sensors.input_tension_bias)
         self.T_out_meas = self._measure(self.plant.s.T2, self.cfg.sensors.output_tension_bias)
@@ -152,7 +161,8 @@ class TiLSimulator:
         f, pl, em, mo = self.finger, self.plant, self.emulator, self.motor
         gt = pl.ground_truth()
         con = f.contact()
-        motor_obs = mo.observation(self.cfg.timing.log_dt)
+        motor_obs = self.motor_sensor.sample(self.t, mo.observation(self.cfg.timing.log_dt))
+        motor_obs["estimated_motor_torque"]=mo.p.K_t_nominal*motor_obs["current"]
         x_in_meas = mo.p.r_drum * motor_obs["position"]
         x_e_meas = em.s.x + self.cfg.sensors.emulator_pos_bias + (self.record_rng.normal(0.0, self.cfg.sensors.emulator_pos_noise) if self.cfg.sensors.emulator_pos_noise > 0 else 0.0)
         obj_pos, obj_vel = f.object_state()
@@ -163,6 +173,9 @@ class TiLSimulator:
                 "actual_position": float(x_e_meas),
                 "velocity": em.s.v,
                 "tracking_error": em.tracking_error,
+                "actuator_force": em.s.actuator_force,
+                "load_force": em.s.load_force,
+                "force_saturated": em.s.force_saturated,
             },
             "transmission": {
                 "input_tension": self.T_in_meas,
@@ -188,6 +201,9 @@ class TiLSimulator:
                 "tip_position": f.tip_position(),
             },
             "ground_truth": {
+                "motor_current_true": mo.s.i,
+                "electromagnetic_torque_true": mo.effective_K_t*mo.s.i,
+                "motor_sensor_bias": self.motor_sensor.bias,
                 "effective_motor_torque_constant": mo.effective_K_t,
                 "motor_temperature": mo.s.temperature,
                 "apparent_elongation_true": mo.x_in + em.s.x,
@@ -200,6 +216,20 @@ class TiLSimulator:
 
 
 CHANNEL_UNITS: dict[str, str] = {
+    "emulator/actuator_force": "N",
+    "emulator/load_force": "N",
+    "emulator/force_saturated": "bool",
+    "ground_truth/motor_current_true": "A",
+    "ground_truth/electromagnetic_torque_true": "N m",
+    "ground_truth/motor_sensor_bias": "A",
+    "ground_truth/cable_segment_strains": "1 (Phase 2 true dimensionless axial strains)",
+    "ground_truth/viscoelastic_state": "m (segments 1, 2)",
+    "ground_truth/parameter_work": "J (signed exchange)",
+    "ground_truth/aging_dissipation": "J",
+    "ground_truth/energy_residual": "J (transmission boundary only)",
+    "ground_truth/sliding_distance": "m",
+    "ground_truth/effective_reference_length": "m",
+    "ground_truth/intervention_state": "bool",
     "ground_truth/effective_motor_torque_constant": "N m/A",
     "ground_truth/motor_temperature": "deg C (single-lump proxy)",
     "ground_truth/apparent_elongation_true": "m",

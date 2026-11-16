@@ -11,6 +11,11 @@ Sim2Real improvement is claimed.**
 
 ## Layout
 
+Phase 2 adds dimensioned viscoelastic mechanics, routing/specimen experiments, motor/sensor realism
+and strict motor-only joint-state estimation. See [PHASE2.md](PHASE2.md) for executed results, limits
+and reproduction commands; [PHASE2_DESIGN.md](PHASE2_DESIGN.md) records the source audit. Phase 1
+artifacts remain the historical reference.
+
 ```
 til/
   cable.py      synthetic two-port cable plant (compliance, damping, slack, pulley inertia + friction,

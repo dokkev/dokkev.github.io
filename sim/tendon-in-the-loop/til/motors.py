@@ -129,6 +129,8 @@ class QDDMotor:
 # --------------------------------------------------------------------------------------------------
 @dataclass
 class EmulationMotorParams:
+    effective_mass: float = 0.0  # kg; 0 preserves Phase 1 kinematic servo
+    force_max: float = 80.0  # N, Phase 2 finite-effort servo
     mode: Literal["servo", "ideal"] = "servo"
     Kp: float = 1.5e5  # 1/s^2, position loop (acceleration per metre of error): ~60 Hz
     Kd: float = 780.0  # 1/s (critically damped)
@@ -150,6 +152,10 @@ class EmulationMotorParams:
 
 @dataclass
 class EmulationMotorState:
+    holding_force: float = 0.
+    actuator_force: float = 0.
+    load_force: float = 0.
+    force_saturated: float = 0.
     x: float = 0.0
     v: float = 0.0
     x_cmd: float = 0.0  # command currently being tracked (after the delay)
@@ -168,12 +174,13 @@ class EmulationMotor:
             raise ValueError("emulator delay must be a nonnegative integer multiple of dt")
         self._buf: deque[float] = deque([0.0] * n, maxlen=n) if n > 0 else deque(maxlen=0)
 
-    def reset(self) -> None:
+    def reset(self, T_hold: float = 0.0) -> None:
         self.s = EmulationMotorState()
+        self.s.holding_force=T_hold
         for _ in range(self._buf.maxlen or 0):
             self._buf.append(0.0)
 
-    def step(self, x_cmd: float) -> None:
+    def step(self, x_cmd: float, T_load: float = 0.0) -> None:
         p, s = self.p, self.s
         s.x_cmd_raw = x_cmd
         if self._buf.maxlen:
@@ -187,6 +194,12 @@ class EmulationMotor:
             s.x = x_cmd
             return
         a = p.Kp * (x_cmd - s.x) + p.Kd * (v_cmd - s.v)
+        if p.effective_mass>0:
+            requested=p.effective_mass*a+s.holding_force
+            s.actuator_force=float(np.clip(requested,-p.force_max,p.force_max))
+            s.force_saturated=float(abs(requested)>p.force_max)
+            s.load_force=T_load
+            a=(s.actuator_force-T_load)/p.effective_mass
         a = float(np.clip(a, -p.a_max, p.a_max))
         s.v = float(np.clip(s.v + a * self.dt, -p.v_max, p.v_max))
         s.x += s.v * self.dt

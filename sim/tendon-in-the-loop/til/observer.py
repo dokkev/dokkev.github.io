@@ -12,10 +12,10 @@ TARGETS = ["ground_truth/output_tension_true", "transmission/apparent_elongation
 
 
 class Observer(nn.Module):
-    def __init__(self, hidden=32):
+    def __init__(self, hidden=32, outputs=2):
         super().__init__()
         self.gru = nn.GRU(4, hidden, batch_first=True)
-        self.head = nn.Linear(hidden, 2)
+        self.head = nn.Linear(hidden, outputs)
 
     def forward(self, x, hidden=None):
         state, hidden = self.gru(x, hidden)

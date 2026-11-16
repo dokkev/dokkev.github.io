@@ -1,0 +1,17 @@
+{
+  "version": "phase2-v1",
+  "design_seed": 261116,
+  "material_status": "Hypothetical effective properties and engineering priors, not measured hardware distributions",
+  "counts": {
+    "pilot": {"train": 6, "validation": 2, "test_in_range": 2, "test_contact": 2, "test_specimen": 2, "test_routing": 2, "test_drift": 2, "test_combined": 2, "test_observability": 2, "test_sensitivity": 4, "test_slack": 2},
+    "full": {"train": 48, "validation": 8, "test_in_range": 8, "test_contact": 8, "test_specimen": 8, "test_routing": 8, "test_drift": 8, "test_combined": 8, "test_observability": 8, "test_sensitivity": 8, "test_slack": 8}
+  },
+  "training_fixtures": ["straight", "large_guide"],
+  "held_out_fixtures": ["small_guide", "two_guides"],
+  "combined_fixture": "wide_wrap",
+  "nominal_motor_calibration": {"K_t": 0.1, "r_drum": 0.02, "J_m": 0.00002, "b_m": 0.00002},
+  "specimen_priors": {"diameter_m": [0.00045, 0.00055], "modulus_pa": [8000000000, 12000000000], "friction_mu": [0.03, 0.07], "maxwell_ratio": [0.2, 0.5], "relaxation_time_s": [0.25, 1.0]},
+  "quality_diagnostics": {"minimum_joint_range_deg": 2.0, "maximum_strain": 0.05, "maximum_tension_N": 100.0, "maximum_tracking_error_m": 0.005, "maximum_saturation_fraction": 0.5},
+  "training": {"epochs": 60, "seeds": [0, 1, 2], "hidden": 32, "window_samples": 128, "burn_in_samples": 32},
+  "notes": ["Randomized specimens persist within each split series; actual end-of-session aging is carried to their next session.", "Independent split series are numerical replicas, not a claim of resetting a real cable's age.", "Conditioning changes with sliding distance; creep depends on tension; intervention is explicitly prescribed.", "Weak-excitation stress pairs use different calibrated initial postures and spring preloads; they test ambiguity across unknown setup, not a known fixed-preload mechanism."]
+}

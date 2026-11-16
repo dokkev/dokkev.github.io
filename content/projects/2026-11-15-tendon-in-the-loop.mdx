@@ -310,7 +310,7 @@ The first estimation experiment evaluates whether a causal neural observer can i
 
 A **32-unit GRU** receives motor position, velocity, current, and command at **200 Hz**. It predicts distal tendon tension and apparent transmission deformation. Distal measurements and numerical plant states provide training targets but are excluded from the model inputs.
 
-This experiment does **not yet evaluate joint-position estimation or explicit identification of evolving stiffness and friction**.
+This Phase 1 experiment did **not evaluate joint-position estimation or explicit identification of evolving stiffness and friction**. Its dataset and reported results are preserved as the reference for Phase 2.
 
 The dataset contains **24 independent runs**, divided into 12 training, 3 validation, and 9 test runs.
 
@@ -341,9 +341,50 @@ The results are limited by three test runs per condition, one training seed, and
 
 [Observer settings, learning history, and per-run errors](/assets/data/tendon-in-the-loop/observer-verification.json) · [Training and reproduction instructions](https://github.com/dokkev/dokkev.github.io/blob/main/sim/tendon-in-the-loop/OBSERVER.md)
 
+### Phase 2 — Transmission Priors and Joint-State Estimation
+
+Phase 2 adds dimensions-derived cable compliance, recoverable viscoelastic memory, fixed routing fixtures, load-dependent creep and conditioning, and finite-effort emulation. True motor torque constants differ from nominal calibration; telemetry includes gain/bias, temporal correlation, causal filtering, delay and sample hold. Material, thermal, bending and aging parameters remain **hypothetical priors**, not measured hardware properties.
+
+The study contains **128 simulated sessions**, including linked specimen histories and controlled replays. A 32-unit motor-only GRU now predicts **distal tension, proximal angle, and distal angle**. Training uses 48 sessions, validation uses 8, and the remaining sessions cover separate held-out conditions. No joint state, contact label, routing ID or true mechanical parameter enters the four-channel motor input. All **66 tests** pass.
+
+The table reports mean per-run MAE across **three training seeds**. Seed variability, RMSE, high-percentile errors and initialization/contact/reversal breakdowns are recorded in the full report.
+
+| Held-out condition | Tension MAE [N] | Proximal MAE [deg] | Distal MAE [deg] |
+|---|---|---|---|
+| Within training ranges | 0.482 | 1.17 | 1.24 |
+| Contact conditions | 0.700 | 3.28 | 2.91 |
+| Cable specimen | 0.467 | 1.30 | 1.82 |
+| Routing fixture | 1.141 | 1.52 | 1.61 |
+| Mechanical evolution | 0.577 | 1.88 | 4.20 |
+| Combined OOD | 1.266 | 3.73 | 4.22 |
+| Payout / slack diagnostic | 0.584 | 6.62 | 3.24 |
+| Weak / ambiguous setup | 0.188 | 11.40 | 22.92 |
+
+<figure className="til-flow-figure">
+  <div className="til-flow-scroll" role="region" aria-label="Phase 2 distal joint estimation across held-out conditions" tabIndex="0">
+    <img src="/assets/img/tendon-in-the-loop/phase2/13_distal_joint.svg" alt="MuJoCo distal joint reference, motor-only GRU prediction and rigid equal-joint baseline for in-range, unseen-specimen, unseen-routing and combined-OOD sessions." loading="lazy" />
+  </div>
+  <figcaption>Distal-joint trajectories from one session per condition. The rigid baseline assumes equal joint angles, nominal initial zero and no cable stretch; it is not an unconstrained two-joint inverse model. <a href="/assets/img/tendon-in-the-loop/phase2/12_proximal_joint.svg">Proximal-joint trajectories</a> and <a href="/assets/img/tendon-in-the-loop/phase2/11_predicted_tension.svg">tension trajectories</a> are reported separately.</figcaption>
+</figure>
+
+Joint prediction is useful within the tested task distribution, but low average error does not prove observability. A controlled weak-excitation search finds two valid equilibria with identical motor histories at the observer interface and joint differences of **22.92° and 45.84°**. Their calibrated tendon zeros and passive spring preloads differ. This demonstrates ambiguity across unknown setup conditions, not non-observability of a known fixed-preload mechanism.
+
+<figure className="til-flow-figure">
+  <div className="til-flow-scroll" role="region" aria-label="Ambiguous motor observations with different joint configurations" tabIndex="0">
+    <img src="/assets/img/tendon-in-the-loop/phase2/18_ambiguous_histories.svg" alt="Two simulated free-space equilibria have overlapping motor observations but different proximal and distal joint angles because preload and tendon-zero setup differ." loading="lazy" />
+  </div>
+  <figcaption>Setup ambiguity in actual simulated trajectories. The shaded motor bands indicate comparison scales; they do not represent measured hardware uncertainty.</figcaption>
+</figure>
+
+The 120-session core completed numerically. Eight weak-motion sessions and one saturation-dominated validation session retain diagnostic flags. A subsequent frozen-model payout test adds eight sessions; runs that actually reach slack are distinguished from taut controls. Timestep refinement improves joint trajectories, but contact-force peaks remain sensitive. These limits matter before interpreting small differences between observers as physical improvements.
+
+No explicit mechanics-parameter recovery or online adaptation is claimed. Repeatable homing and preload calibration, known mechanical coupling, or additional sensing may be necessary in ambiguous conditions. Independent joint and tension measurements on the proposed HIL hardware remain the next validation reference.
+
+[Phase 2 configurations, three-seed metrics, diagnostics and 22 figures](/assets/data/tendon-in-the-loop/phase2-verification.json) · [Design, assumptions and reproduction commands](https://github.com/dokkev/dokkev.github.io/blob/main/sim/tendon-in-the-loop/PHASE2.md)
+
 ### Current Scope
 
-The numerical experiments establish a reproducible environment for testing force–motion coupling and an initial motor-only transmission observer. They also show that accurate prediction under one set of contact conditions does not establish equal accuracy when the transmission law changes.
+The numerical experiments now cover force–motion coupling, motor-only transmission and joint-state prediction, and explicit tests of setup ambiguity. They show useful estimation under specified task conditions and failures when those conditions provide insufficient information. The physical testbed and hardware transfer remain unvalidated.
 
 The central questions remain open. How much of the transmission dynamics can be identified across different routing geometries? Can an observer distinguish mechanical aging from changes in robot loading? Under which conditions can distal tension and joint positions be reconstructed from motor-side measurements alone?
 

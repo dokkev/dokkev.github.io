@@ -17,14 +17,14 @@ from til.observer import Observer, load_runs, fit_scaler, windows, predict, base
 from til.coupling import MOTOR_ONLY_CHANNELS
 
 
-def train(runs, seed, epochs):
+def train(runs, seed, epochs, hidden=32):
     torch.manual_seed(seed)
     np.random.seed(seed)
     torch.set_num_threads(2)
     torch.use_deterministic_algorithms(True)
     scaler = fit_scaler(runs)
     x, y = windows(runs, scaler)
-    model = Observer()
+    model = Observer(hidden=hidden, outputs=y.shape[-1])
     optimizer = torch.optim.Adam(model.parameters(), lr=.003)
     loader = DataLoader(TensorDataset(x, y), batch_size=32, shuffle=True,
                         generator=torch.Generator().manual_seed(seed))

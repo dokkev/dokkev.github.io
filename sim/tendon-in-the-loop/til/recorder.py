@@ -23,6 +23,33 @@ import numpy as np
 
 from .coupling import CHANNEL_UNITS, MOTOR_ONLY_CHANNELS
 
+PHASE2_UNITS = {
+    "ground_truth/friction_state": "rad (presliding spring deflection)",
+    "ground_truth/effective_friction": "1 (sliding guide friction coefficient)",
+}
+
+
+def episode_units(config):
+    units=dict(CHANNEL_UNITS)
+    if config.get("transmission") is not None:units.update(PHASE2_UNITS)
+    return units
+
+
+def normalize_episode_units(file):
+    """Clarify plant-dependent units after merging; never change signal values."""
+    has_phase2=False
+    for group in file["episodes"].values():
+        config=json.loads(group.attrs["config"]);units=episode_units(config)
+        group.attrs["units"]=json.dumps(units)
+        if config.get("transmission") is not None:
+            has_phase2=True
+            for key,unit in PHASE2_UNITS.items():
+                if key in group:group[key].attrs["units"]=unit
+    if has_phase2:
+        root_units=dict(CHANNEL_UNITS)
+        for key in PHASE2_UNITS:root_units[key]="plant-dependent; see episode/dataset units"
+        file.attrs["units"]=json.dumps(root_units)
+
 COUPLING_NOTES = (
     "Causal coupling: the distal tension applied in MuJoCo step k is the plant output at the end of step k, "
     "driven by the finger configuration at the start of step k (one MuJoCo step of lag), plus the configured "
@@ -48,6 +75,7 @@ class EpisodeWriter:
 
     def __init__(self, group: h5py.Group, chunk: int = 2000):
         self.g = group
+        self.units=json.loads(group.attrs.get("units",json.dumps(CHANNEL_UNITS)))
         self.chunk = chunk
         self._buf: dict[str, list] = {}
         self._ds: dict[str, h5py.Dataset] = {}
@@ -74,7 +102,7 @@ class EpisodeWriter:
             if key not in self._ds:
                 shape = arr.shape[1:]
                 ds = self.g.create_dataset(key, shape=(0, *shape), maxshape=(None, *shape), chunks=(self.chunk, *shape), dtype=np.float64, compression="gzip", compression_opts=4)
-                ds.attrs["units"] = CHANNEL_UNITS.get(key, "")
+                ds.attrs["units"] = self.units.get(key, "")
                 self._ds[key] = ds
             ds = self._ds[key]
             ds.resize(ds.shape[0] + arr.shape[0], axis=0)
@@ -103,6 +131,7 @@ class DatasetFile:
     def episode(self, episode_id: str, config: dict, chunk: int = 2000) -> EpisodeWriter:
         g = self.f["episodes"].create_group(episode_id)
         g.attrs["config"] = json.dumps(config, default=str)
+        g.attrs["units"]=json.dumps(episode_units(config))
         for k in ("scenario_id", "seed", "cable_specimen_id", "cable_preset"):
             if k in config:
                 g.attrs[k] = config[k]

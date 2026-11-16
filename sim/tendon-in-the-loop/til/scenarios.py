@@ -33,9 +33,12 @@ class MotorProfile:
     hold_frac: float = 0.3
     release_frac: float = 0.3  # rest = remainder
     settle_time: float = 0.3  # s at rest before the first cycle
+    kind: str = "press"
+    frequency_end_hz: float = 3.
+    offset: float = 0.0  # m, smoothly introduced payout offset for explicit slack stress tests
 
     def __post_init__(self):
-        if not all(np.isfinite(v) for v in asdict(self).values()):
+        if not all(np.isfinite(v) for v in asdict(self).values() if isinstance(v,(int,float))):
             raise ValueError("profile values must be finite")
         if self.period <= 0 or self.n_cycles < 1 or int(self.n_cycles) != self.n_cycles:
             raise ValueError("period must be positive and n_cycles a positive integer")
@@ -43,16 +46,32 @@ class MotorProfile:
             raise ValueError("invalid amplitude, settling time or phase fractions")
         if self.ramp_frac + self.hold_frac + self.release_frac > 1 + 1e-12:
             raise ValueError("profile phase fractions must sum to at most one")
+        if self.kind not in {"press","triangle","oscillation","chirp","multisine"}:
+            raise ValueError("unknown motor excitation family")
 
     @property
     def duration(self) -> float:
         return self.settle_time + self.period * self.n_cycles
 
     def x_ref(self, t: float) -> float:
+        if t<self.settle_time:return 0.
+        ramp=.5*(1-np.cos(np.pi*min(1.,(t-self.settle_time)/.3)))
+        return self.offset*ramp+self._shape(t)
+
+    def _shape(self, t: float) -> float:
         if t < self.settle_time:
             return 0.0
         tc = (t - self.settle_time) % self.period / self.period
         A = self.amplitude
+        elapsed=t-self.settle_time
+        if self.kind=="triangle": return A*(1-abs(2*tc-1))
+        if self.kind=="oscillation": return A*.5*(1-np.cos(2*np.pi*tc))
+        if self.kind=="chirp":
+            slope=(self.frequency_end_hz-1/self.period)/(self.period*self.n_cycles)
+            return A*.5*(1-np.cos(2*np.pi*(elapsed/self.period+.5*slope*elapsed**2)))
+        if self.kind=="multisine":
+            envelope=.5*(1-np.cos(np.pi*min(1.,elapsed/.3)))
+            return A*envelope*(.5+.25*np.sin(2*np.pi*tc)+.15*np.sin(2*np.pi*2.3*elapsed/self.period)+.1*np.sin(2*np.pi*4.1*elapsed/self.period))
         if tc < self.ramp_frac:
             return A * 0.5 * (1 - np.cos(np.pi * tc / self.ramp_frac))
         tc -= self.ramp_frac
@@ -81,18 +100,20 @@ class EpisodeConfig:
     pretension: float = 10.0
     profile: MotorProfile = field(default_factory=MotorProfile)
     sim_overrides: dict = field(default_factory=dict)  # nested dicts: {"emulator": {...}, "motor": {...}, "sensors": {...}, "cable": {...}, "timing": {...}}
+    transmission: dict | None = None
+    metadata: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         return asdict(self)
 
     def sim_config(self) -> SimConfig:
-        unknown = set(self.sim_overrides) - {"finger", "cable", "motor", "emulator", "sensors", "timing"}
+        unknown = set(self.sim_overrides) - {"finger", "cable", "motor", "motor_sensor", "emulator", "sensors", "timing"}
         if unknown:
             raise ValueError(f"unknown simulation namespaces: {sorted(unknown)}")
         cable = replace(PRESETS[self.cable_preset], **{"pretension": self.pretension, **self.sim_overrides.get("cable", {})})
         finger = FingerParams(**{"obj_x": self.obj_x, "obj_z": self.obj_z, "k_obj": self.k_obj, **self.sim_overrides.get("finger", {})})
-        cfg = SimConfig(finger=finger, cable=cable, seed=self.seed)
-        for ns in ("motor", "emulator", "sensors", "timing"):
+        cfg = SimConfig(finger=finger, cable=cable, seed=self.seed, transmission=self.transmission)
+        for ns in ("motor", "motor_sensor", "emulator", "sensors", "timing"):
             if ns in self.sim_overrides:
                 setattr(cfg, ns, replace(getattr(cfg, ns), **self.sim_overrides[ns]))
         return cfg
