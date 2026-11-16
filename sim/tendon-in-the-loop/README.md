@@ -226,3 +226,8 @@ reproduction commands. Install `requirements-observer.txt` for this optional tra
 active probing, controlled contact, passive-mechanism changes and reachable-posture control.
 The report preserves initialization errors and negative probing/control comparisons alongside
 the calibrated-regime results; all Phase 1 and Phase 2 workflows remain available.
+
+[Two-tendon architecture verification](TWO_TENDON_VERIFICATION.md) adds a separate constant-moment-arm
+reference with two robot motors, two emulators and coupled two-joint actuation. It verifies independent
+motion before comparing eight-channel motor-only estimators. The original Phase 1–3 results continue
+to describe the single-tendon underactuated baseline.

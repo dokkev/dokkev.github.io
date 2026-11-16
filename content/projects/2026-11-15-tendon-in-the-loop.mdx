@@ -92,6 +92,8 @@ The initial apparatus can characterize transmission behavior under robot-generat
 
 The two-tendon illustration extends the single-channel concept. Each independently tested tendon has its own input and emulation actuator pair. Both interactive examples illustrate the proposed mechanisms rather than physical HIL measurements.
 
+The intended two-tendon apparatus therefore has **four motors: two robot actuators and two boundary emulators**. The original Phase 1–3 numerical studies below use a single-tendon underactuated finger. A separate two-channel reference now verifies coupled actuation and motor-only reconstruction; it approximates constant pulley moment arms rather than claiming an exact derivation of the illustrated spatial routing.
+
 ## Experimental Methodology
 
 ### Controlled Contact and Loading
@@ -414,6 +416,39 @@ The standardized **0.5 mm, 1.2 s multisine probe did not establish an additional
 </figure>
 
 [Phase 3 configurations, per-run errors, three-seed histories and 15 figures](/assets/data/tendon-in-the-loop/phase3-verification.json) · [Calibration assumptions, numerical limits and reproduction commands](https://github.com/dokkev/dokkev.github.io/blob/main/sim/tendon-in-the-loop/PHASE3_RESULTS.md)
+
+### Two-Tendon Architecture Verification
+
+The corrected numerical reference connects **two separate actuator–transmission–emulator chains** to one MuJoCo finger. Tendon 1 acts on q₁; tendon 2 acts on both q₁ and q₂. Its declared pulley approximation uses excursions $e_1 = 0.015\Delta q_1$ and $e_2 = 0.010(\Delta q_1+\Delta q_2)$ in metres. The full-rank mapping permits independent motion within a bounded tensile-force region. Passive return springs provide the opposing torque; arbitrary signed joint torques are unavailable.
+
+<figure className="til-flow-figure">
+  <div className="til-flow-scroll" role="region" aria-label="Independent joint positioning through two tendon transmission channels" tabIndex="0">
+    <img src="/assets/img/tendon-in-the-loop/two-tendon/04_independent_control.svg" alt="Proximal-only and distal-only target trajectories compared with actual MuJoCo joint motion driven through two finite actuator, cable and emulator models." loading="lazy" />
+  </div>
+  <figcaption>Motor-displacement control with nominal elastic compensation independently moves either joint. Proximal-only MAE is 0.501°/0.202°; distal-only MAE is 0.253°/0.772°. These motion-window scores include holds and release. No true joint feedback imposes the trajectories.</figcaption>
+</figure>
+
+Jacobian and torque checks cover the intended joint range. Two-channel force–motion coupling, isolated transmission energy, limits, timestep refinement, controller rate and contact sensitivity pass the declared numerical gates. Contact still increases tracking error, and the actual P1/P2/idler routing remains a separate hardware-design question. The previous single-tendon ambiguity results are not transferred to this architecture.
+
+After those checks, **72 sessions** compare estimators using only position, velocity, current and command from both robot motors. The table reports full-run joint MAE, including initialization; nominal contact groups reflect actual sustained contact rather than object placement alone.
+
+| Motor-only estimator | Free, 6 runs: proximal / distal [deg] | Contact, 2 runs: proximal / distal [deg] |
+|---|---|---|
+| Rigid two-tendon geometry | 0.526 / 1.519 | 2.084 / 1.758 |
+| Calibrated deformation correction | **0.089 / 0.153** | **0.134 / 0.137** |
+| Calibrated reduced physics filter | 0.074 / 0.145 | 0.160 / 0.165 |
+| 32-unit GRU, three-seed mean | 0.150 / 0.207 | 0.162 / 0.253 |
+
+The simple deformation correction outperforms the GRU's mean in both nominal groups. Changed stiffness, routing, pretension and reference zero produce different failure patterns. Re-establishing a known-home encoder reference reduces the zero-error test from 1.907°/4.726° to 0.087°/0.163° with the same compliance model. This requires a one-time reference setup; it does not demonstrate online adaptation. The physics filter was developed iteratively with training-reference residual calibration, so its comparison is not a preregistered blind study.
+
+<figure className="til-flow-figure">
+  <div className="til-flow-scroll" role="region" aria-label="Two-motor joint estimation against kinematic and physics baselines" tabIndex="0">
+    <img src="/assets/img/tendon-in-the-loop/two-tendon/09_joint_observers.svg" alt="Two joint reference trajectories compared with rigid geometry, compliance correction, a calibrated physics filter and an eight-input GRU in free and contact motion." loading="lazy" />
+  </div>
+  <figcaption>All estimators use the same held-out motor histories. Independent tendon excursions strengthen the geometric baseline; accurate prediction alone still does not establish global observability or physical hardware transfer.</figcaption>
+</figure>
+
+[Two-tendon configurations, diagnostics, three-seed metrics and 13 figures](/assets/data/tendon-in-the-loop/two-tendon-verification.json) · [Routing assumptions, control/estimation comparisons and reproduction](https://github.com/dokkev/dokkev.github.io/blob/main/sim/tendon-in-the-loop/TWO_TENDON_VERIFICATION.md)
 
 ### Current Scope
 
