@@ -221,3 +221,8 @@ Results of the runs that were performed are summarised in `RESULTS.md`.
 The first motor-only GRU study is documented in [OBSERVER.md](OBSERVER.md), including independent
 training/validation/test runs, QDD/compliance baselines, changed-law and drift stress tests, and
 reproduction commands. Install `requirements-observer.txt` for this optional training workflow.
+
+[Phase 3 — calibrated motor-only joint proprioception](PHASE3_RESULTS.md) evaluates fixed setup,
+active probing, controlled contact, passive-mechanism changes and reachable-posture control.
+The report preserves initialization errors and negative probing/control comparisons alongside
+the calibrated-regime results; all Phase 1 and Phase 2 workflows remain available.

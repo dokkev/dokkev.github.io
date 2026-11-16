@@ -382,6 +382,39 @@ No explicit mechanics-parameter recovery or online adaptation is claimed. Repeat
 
 [Phase 2 configurations, three-seed metrics, diagnostics and 22 figures](/assets/data/tendon-in-the-loop/phase2-verification.json) · [Design, assumptions and reproduction commands](https://github.com/dokkev/dokkev.github.io/blob/main/sim/tendon-in-the-loop/PHASE2.md)
 
+### Phase 3 — Calibrated Motor-Only Joint Proprioception
+
+Phase 3 tests whether repeatable home, tendon zero, spring preload and pretension improve two-joint estimation under a fixed routing. This is **one-time reference calibration**: a hardware implementation would require an angle-referenced jig, boundary encoders and load cells during setup. The deployed observer still receives only motor position, velocity, current and command.
+
+The numerical study contains **146 sessions** and fifteen independently trained **32-unit GRUs** across five training conditions and three seeds. Each model uses 16 training and 4 validation runs. The table reports mean per-run joint MAE across three seeds, after a common **1.2 s hold or probe prefix**. Each primary condition has three free and three contact test runs; complete startup errors are retained separately.
+
+| Setup and excitation | Free motion: proximal / distal [deg] | Controlled contact: proximal / distal [deg] |
+|---|---|---|
+| Unknown setup | 2.775 / 6.390 | 2.151 / 5.900 |
+| Homed, residual mechanical uncertainty | 2.768 / 3.012 | 1.463 / 1.261 |
+| Calibrated, passive prefix | **0.301 / 0.345** | **0.416 / 0.491** |
+| Calibrated, active probe | 0.286 / 0.347 | 0.409 / 0.488 |
+
+<figure className="til-flow-figure">
+  <div className="til-flow-scroll" role="region" aria-label="Calibration conditions and changed-mechanics estimation errors" tabIndex="0">
+    <img src="/assets/img/tendon-in-the-loop/phase3/09_calibration_and_transfer.svg" alt="Joint estimation errors across unknown, homed and calibrated setups, followed by frozen calibrated-observer errors under changed preload, tendon zero, routing, passive stiffness and mechanical drift." loading="lazy" />
+  </div>
+  <figcaption>Calibration supports accurate prediction within the tested regime. Error bars show variation across three training seeds. Changed passive stiffness without recalibration produces large errors; the long-run drift test is compared with a matched constant-mechanics reference.</figcaption>
+</figure>
+
+All calibrated seeds meet the proposed post-prefix targets of 2° free-motion and 5° contact MAE per joint. Immediate startup remains weaker: the largest first-0.3-second errors reach **7.31° / 19.97°**. A calibrated reduced physics observer also meets the free-motion target at **0.578° / 0.520°**, so these results do not establish that a neural model is necessary.
+
+The standardized **0.5 mm, 1.2 s multisine probe did not establish an additional benefit**. With the same frozen model and paired subsequent tasks, active-minus-passive error is approximately +0.0016° / +0.0001°, comparable with numerical sensitivity. Local sensitivity varies with operating point and passive mechanics; neither a better singular value nor low prediction error proves observability. A restricted search retaining identical preload and tendon zero found no pair meeting its ambiguity criterion, which also does not prove global observability.
+
+<figure className="til-flow-figure">
+  <div className="til-flow-scroll" role="region" aria-label="Probe effort, diagnostic accuracy and paired task comparison" tabIndex="0">
+    <img src="/assets/img/tendon-in-the-loop/phase3/11_probe_cost_and_accuracy.svg" alt="Executed home-probe effort and duration compared with conditional sensitivity and cold-start diagnostic error, alongside near-zero paired active-minus-passive task errors." loading="lazy" />
+  </div>
+  <figcaption>Probe effort and achieved motion are recorded rather than assumed. Quiet probe diagnostics and the noisy paired task benchmark are reported separately. The optional neural-feedback posture demo also failed to improve on calibrated feedforward.</figcaption>
+</figure>
+
+[Phase 3 configurations, per-run errors, three-seed histories and 15 figures](/assets/data/tendon-in-the-loop/phase3-verification.json) · [Calibration assumptions, numerical limits and reproduction commands](https://github.com/dokkev/dokkev.github.io/blob/main/sim/tendon-in-the-loop/PHASE3_RESULTS.md)
+
 ### Current Scope
 
 The numerical experiments now cover force–motion coupling, motor-only transmission and joint-state prediction, and explicit tests of setup ambiguity. They show useful estimation under specified task conditions and failures when those conditions provide insufficient information. The physical testbed and hardware transfer remain unvalidated.
