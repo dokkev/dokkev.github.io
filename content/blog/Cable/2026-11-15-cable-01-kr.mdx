@@ -1,6 +1,6 @@
 ---
-title: "Cable 01 — 케이블은 무려 휜다!"
-description: "케이블이 원격 구동과 감속을 함께 제공하는 이유, LIMS·AMBIDEX의 설계 사례, capstan drive에 숨은 설계 조건, 그리고 사양표가 설명하지 못하는 것을 살펴봅니다."
+title: "Cable 01 — 로봇은 왜 케이블을 쓰는가"
+description: "케이블 구동의 장점과 capstan drive의 설계 조건, 그리고 케이블 사양표의 한계를 정리합니다."
 published: true
 hidden: false
 date: 2026-11-15 00:00:00
@@ -15,19 +15,19 @@ tags: [Robotics, Hardware Development, Cable, Tendon-driven Robots]
 import CableTransmissionDemo from "../../../src/components/demos/CableTransmissionDemo";
 import CapstanTensionDemo from "../../../src/components/demos/CapstanTensionDemo";
 
-*Why Robots Use Cables — and Why Designing with Them Is Harder Than It Looks*
+*Why Robots Use Cables*
 
-## 1. 케이블은 무려 휜다!
+## 1. 휘는 전달 요소
 
 기어, 축, 링크로 이루어진 전달계에서는 힘이 지나가는 경로가 부품의 형상으로 정해집니다. 모터의 회전을 관절까지 보내려면 그 사이를 단단한 부품으로 이어야 하므로, 모터와 감속기는 대개 관절 가까이에 놓입니다. 이 구조는 모듈화하기 쉽고 하중 경로가 짧지만, 모터와 감속기의 질량이 링크에 그대로 실립니다.
 
 케이블은 휩니다. 풀리와 가이드를 따라 경로를 꺾을 수 있으므로, 모터를 몸통이나 proximal link에 두고 가벼운 케이블만 관절까지 보낼 수 있습니다. 이를 **remote actuation**(또는 proximal actuation)이라고 부릅니다. 모터가 관절에서 멀어진 만큼 움직이는 링크에 실리는 질량과 관성이 줄어듭니다.
 
-> 이 시리즈에서는 편의상 cable-driven mechanism과 tendon-driven mechanism을 같은 의미로 씁니다.
+> 로보틱스에서는 케이블을 이용한 구동 방식을 cable-driven 또는 tendon-driven이라고 부릅니다. 일반적으로 Cable은 힘을 전달하는 유연한 부품 자체를, Tendon은 관절을 당겨 구동하는 역할을 강조하지만, 두 용어는 문헌에서도 혼용됩니다. 이 시리즈에서도 별도의 구분 없이 같은 의미로 사용하겠습니다.
 
 케이블은 감속기 역할도 합니다. 반지름이 다른 두 드럼에 케이블을 감아 연결하면, 감기고 풀리는 케이블 길이가 같아야 하므로 작은 드럼이 여러 바퀴 돌 때 큰 드럼은 조금만 돕니다. 회전 속도가 줄어든 만큼 토크는 커집니다. 기어 치면이 없으므로 기어에서 생기는 백래시도 없습니다.
 
-그래서 케이블은 모터와 관절을 잇는 연결 부품에 그치지 않습니다. 모터를 어디에 두고 관절을 어떻게 구동할지, 로봇의 구동 구조 자체를 정하는 transmission 요소입니다.
+그래서 케이블을 쓰느냐는 모터를 어디에 두고 관절을 어떻게 구동할지, 로봇의 구동 구조를 함께 정하는 선택입니다.
 
 케이블로 관절을 움직이는 기본 구성은 세 가지 선택으로 나누어 볼 수 있습니다.
 
@@ -35,47 +35,45 @@ import CapstanTensionDemo from "../../../src/components/demos/CapstanTensionDemo
 - **출력단.** 관절에 풀리를 달고 케이블을 감으면 모멘트 암이 풀리 반지름으로 일정합니다. 케이블 끝을 링크에 직접 고정해 당기면 풀리가 필요 없지만, 관절 각도에 따라 케이블과 관절 사이의 거리, 즉 모멘트 암이 달라집니다.
 - **배치.** 두 가닥을 평행하게 보내면 입력과 출력이 같은 방향으로 돌고, 교차시키면 반대 방향으로 돕니다.
 
-아래 예시에서 세 가지를 조합해 보며 입력이 출력으로 어떻게 전달되는지 확인해 보겠습니다.
+아래 예시에서 세 가지를 조합해 입력이 출력으로 전달되는 방식을 비교할 수 있습니다.
 
 <CableTransmissionDemo client:visible lang="en" />
 
-## 2. 두 가지 장점을 모두 활용한 로봇 — LIMS와 AMBIDEX
+## 2. 사례: LIMS(AMBIDEX)
 
-원격 구동과 케이블 감속을 함께 활용한 예로 김용재 교수(KOREATECH)의 LIMS와, 네이버랩스가 같은 연구 흐름에서 공개한 AMBIDEX가 있습니다.
+원격 구동과 케이블 감속을 함께 활용한 예로 김용재 교수(KOREATECH) 연구실의 로봇팔 LIMS(Low-Inertia high-stiffness Manipulator)가 있습니다. 네이버랩스와 함께 개발해 AMBIDEX라는 이름으로도 공개되었습니다 [1](#ref-1), [2](#ref-2).
 
 <figure>
-  <img src="/assets/img/cable/ambidex-dual-arm.jpg" alt="네이버랩스의 양팔 로봇 AMBIDEX" loading="lazy" />
-  <figcaption>네이버랩스의 AMBIDEX. 무거운 구동기를 어깨와 몸체에 두고, 팔은 와이어로 구동합니다. <a href="#ref-4">[4]</a></figcaption>
+  <img src="/assets/img/cable/ambidex-dual-arm.jpg" alt="양팔 로봇 LIMS(AMBIDEX)" loading="lazy" />
+  <figcaption>LIMS(AMBIDEX). 무거운 구동기를 어깨와 몸체에 두고, 팔은 와이어로 구동합니다. <a href="#ref-2">[2]</a></figcaption>
 </figure>
 
-LIMS(Low-Inertia high-stiffness Manipulator)는 케이블로 구동하는 7자유도 로봇팔입니다. 어깨 너머의 질량과 관성이 사람 팔보다 작습니다 [1](#ref-1). 움직이는 질량과 관성이 작으면 같은 속도에서 저장되는 운동 에너지가 작으므로, 사람과 부딪혔을 때 더 안전합니다 [2](#ref-2).
+LIMS는 무거운 구동기를 모두 어깨와 몸체에 두고, 가벼운 팔을 케이블로 구동합니다 [1](#ref-1), [2](#ref-2). 그래서 어깨 너머의 질량과 관성이 사람 팔보다 작습니다 [3](#ref-3). 움직이는 질량과 관성이 작으면 같은 속도에서 저장되는 운동 에너지가 작으므로, 사람과 부딪혔을 때 더 안전합니다 [4](#ref-4).
 
-가벼운 팔을 케이블로 구동하면 강성이 문제가 됩니다. 케이블은 늘어나므로 관절이 부드러워지기 쉽고, 관절 강성은 위치 제어 성능과 직결됩니다. LIMS는 가벼운 장력 증폭 메커니즘(tension-amplification mechanism)으로 이 문제를 풀었습니다. 팔을 가볍게 유지하면서 관절 강성을 높인 것입니다 [1](#ref-1).
-
-후속 LIMS2도 무거운 구동기를 모두 어깨에 두었습니다 [3](#ref-3). AMBIDEX도 무거운 구동기를 모두 어깨와 몸체에 두고, 가벼운 팔을 와이어로 구동합니다 [4](#ref-4).
+가벼운 팔을 케이블로 구동하면 강성이 문제가 됩니다. 케이블은 늘어나므로 관절이 부드러워지기 쉽고, 관절 강성은 위치 제어 성능과 직결됩니다. LIMS는 가벼운 장력 증폭 메커니즘(tension-amplification mechanism)으로 이 문제를 풀었습니다. 팔을 가볍게 유지하면서 관절 강성을 높인 것입니다 [3](#ref-3).
 
 <figure>
   <div style={{position: "relative", width: "100%", aspectRatio: "16 / 9"}}>
     <iframe src="https://www.youtube-nocookie.com/embed/aLaqMreVj9o" title="LIMS2-AMBIDEX mechanical design" loading="lazy" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen style={{position: "absolute", inset: 0, width: "100%", height: "100%", border: 0}}></iframe>
   </div>
-  <figcaption>LIMS2-AMBIDEX의 기구 설계 <a href="#ref-9">[9]</a></figcaption>
+  <figcaption>LIMS(AMBIDEX)의 기구 설계 <a href="#ref-5">[5]</a></figcaption>
 </figure>
 
-두 로봇은 케이블의 두 장점을 모두 씁니다. 원격 구동으로 팔을 가볍게 만들고, 케이블 기반 장력 증폭으로 가벼운 팔에 강성과 힘을 되돌려 줍니다. 가볍고 빠르면서도 사람과 부딪혀도 안전해야 하는, 물리적 상호작용을 하는 로봇에 필요한 조합입니다.
+LIMS는 원격 구동으로 팔을 가볍게 만들고, 케이블 기반 장력 증폭으로 그 팔에 강성을 되돌려 줍니다. 사람과 부딪힐 수 있는 환경에서 빠르게 움직여야 하는 로봇에 맞는 조합입니다.
 
-이렇게 매력적인 구동 방식을 왜 모든 로봇이 쓰지는 않을까요?
+그렇다면 왜 모든 로봇이 케이블을 쓰지는 않을까요?
 
-## 3. 케이블로 움직이는 것과 잘 움직이게 만드는 것은 다르다
+## 3. 움직이는 것과 오래 잘 움직이는 것
 
 케이블을 당겨 관절을 움직이는 원리는 단순합니다. 앞의 예시처럼 드럼을 돌리면 케이블이 감기고, 케이블이 관절을 당깁니다. 어려운 것은 원하는 감속비, 강성, transparency, 크기를 동시에 만족시키는 일입니다. 케이블에 감속과 원격 전달을 함께 맡길수록, 한 조건을 바꾸면 다른 조건이 함께 움직이는 경우가 늘어납니다.
 
-ETH Zurich의 Capler-Leg는 cable–pulley transmission 한 단으로 다리 관절을 구동합니다. 백래시 없이 토크를 투명하게 전달하지만, 큰 토크에서는 케이블이 늘어나 출력각이 눈에 띄게 변했습니다 [5](#ref-5).
+ETH Zurich의 Capler-Leg는 cable–pulley transmission 한 단으로 다리 관절을 구동합니다. 백래시 없이 토크를 투명하게 전달하지만, 큰 토크에서는 케이블이 늘어나 출력각이 변했습니다 [6](#ref-6).
 
-케이블 전달계는 이렇게 투명할 수 있지만, 늘어나지 않는 강체 transmission은 아닙니다. 그리고 시험대에서 몇 번 잘 움직이는 prototype과, 수많은 반복 뒤에도 같은 장력과 같은 전달 특성을 유지하는 transmission 사이에는 거리가 있습니다.
+케이블 전달계는 투명할 수 있지만, 늘어나지 않는 강체 transmission은 아닙니다. 그리고 시험대에서 몇 번 잘 움직이는 prototype과, 수많은 반복 뒤에도 같은 장력과 같은 전달 특성을 유지하는 transmission 사이에는 거리가 있습니다.
 
-## 4. Capstan drive를 예로 들어 보자
+## 4. Capstan drive의 설계 조건
 
-### 4.1 원리는 간단하다
+### 4.1 원리
 
 케이블 감속기의 대표적인 형태가 capstan drive입니다. 반지름 $r_m$인 작은 입력 드럼과 반지름 $r_j$인 큰 출력 드럼을 케이블로 연결합니다. 케이블이 늘어나지 않고 미끄러지지 않는다면 양쪽에서 감기고 풀리는 길이가 같아야 합니다.
 
@@ -93,9 +91,9 @@ $$
 
 기어처럼 치면이 맞물리지 않으므로 백래시가 거의 없고, 마찰이 작아 출력 쪽에서 밀었을 때 모터까지 쉽게 되돌아가는 backdrivability를 얻기 좋습니다. 이름은 원래 드럼에 감긴 로프의 마찰로 큰 장력을 지지하는 장치에서 왔지만, 로봇용 capstan drive는 대개 케이블을 여러 번 감고 양끝을 드럼에 고정해 길이 관계를 구속합니다.
 
-### 4.2 감속비만 정하면 끝일까?
+### 4.2 감속비 외의 조건
 
-수식은 한 줄이지만, 실제로 설계하려면 감속비 외에도 고려해야 할 것이 많습니다. 여기서는 네 가지만 소개하겠습니다.
+수식은 한 줄이지만, 실제로 설계하려면 감속비 외에도 정해야 할 것이 있습니다. 여기서는 네 가지를 봅니다.
 
 1. **Tension vector:** pretension이 shaft와 베어링에 어떤 하중을 만드는가?
 2. **Lead angle과 fleet angle:** 케이블이 설계된 경로를 제대로 따라가는가?
@@ -106,7 +104,7 @@ $$
 
 첫 번째는 **장력의 방향(tension vector)**입니다.
 
-케이블은 구동 중 느슨해지는 것을 막기 위해 일정한 초기 장력(pretension)을 걸어 설치합니다. 그런데 이 장력은 드럼을 돌리는 토크만 만드는 것이 아닙니다. 케이블이 뻗어 나가는 방향으로 shaft와 베어링도 당깁니다. 그래서 같은 pretension을 주더라도, 케이블을 드럼의 어느 쪽으로 감고 두 드럼을 어떻게 배치했느냐에 따라 shaft에 걸리는 힘이 크게 달라집니다.
+케이블은 구동 중 느슨해지는 것을 막기 위해 일정한 초기 장력(pretension)을 걸어 설치합니다. 그런데 이 장력은 드럼을 돌리는 토크만 만드는 것이 아닙니다. 케이블이 뻗어 나가는 방향으로 shaft와 베어링도 당깁니다. 그래서 같은 pretension을 주더라도, 케이블을 드럼의 어느 쪽으로 감고 두 드럼을 어떻게 배치했느냐에 따라 shaft에 걸리는 힘이 달라집니다.
 
 두 장력이 거의 정반대 방향으로 작용하면, 구동하지 않는 상태에서 pretension에 의한 합력이 서로 상쇄되어 shaft와 베어링에 걸리는 불필요한 하중이 줄어듭니다. 반대로 두 장력이 같은 방향의 성분을 가지면 이 성분은 상쇄되지 않고 더해지므로, 모터가 토크를 전달하지 않는 순간에도 shaft와 베어링에 하중이 걸립니다.
 
@@ -131,23 +129,23 @@ $$
 
 주의할 점은 이 합력을 정하는 변수가 감속비가 아니라는 것입니다. 감속비가 1:1이어도 두 장력 벡터가 같은 쪽을 향하면 합력이 생깁니다. 두 가닥을 교차시켰는지(crossed)도 그 자체로 답을 정하지 않습니다. Open과 crossed는 모두 실제로 쓰이는 배치이고, 어느 한쪽을 원래 나쁜 배치라고 부를 수는 없습니다. 합력을 정하는 것은 케이블의 경로와, 드럼에 들어가고 나오는 접선의 방향입니다.
 
-특정한 배치에서는 두 드럼의 간격이 커질수록 케이블이 드럼에 들어가고 나오는 방향이 불리해져 합력이 커지기도 합니다. 아래 예시의 드럼 중심에는 두 가닥이 축을 당기는 방향과, 두 가닥에 같은 pretension이 걸렸을 때의 합력 ΣF를 표시했습니다. 교차 배치에서 중심거리를 늘려 보면 두 가닥이 점점 같은 쪽을 향하면서 합력이 커집니다. 평행(open) 배치로 바꾸면 두 가닥이 드럼의 같은 쪽에서 나란히 풀리로 향하므로, 중심거리를 최소로 줄여도 합력이 크게 남습니다. 같은 감속비, 같은 pretension에서 배치만 바꿔도 shaft가 받는 하중이 달라집니다.
+특정한 배치에서는 두 드럼의 간격이 커질수록 케이블이 드럼에 들어가고 나오는 방향이 불리해져 합력이 커지기도 합니다. 아래 예시의 드럼 중심에는 두 가닥이 축을 당기는 방향과, 두 가닥에 같은 pretension이 걸렸을 때의 합력 ΣF를 표시했습니다. 교차 배치에서 중심거리를 늘려 보면 두 가닥이 점점 같은 쪽을 향하면서 합력이 커집니다. 평행(open) 배치로 바꾸면 두 가닥이 드럼의 같은 쪽에서 나란히 풀리로 향하므로, 중심거리를 최소로 줄여도 합력이 크게 남습니다. 이 결과는 예시에서 정한 경로 기하에서 나온 것이고, 같은 open이나 crossed라도 케이블을 드럼의 어느 쪽으로 감고 어디로 보내느냐에 따라 합력은 달라집니다.
 
 <CapstanTensionDemo client:visible lang="en" />
 
-실제 구동 중에는 두 장력에 차이가 생기므로 완벽한 상쇄는 유지되지 않습니다. 중요한 것은 **토크 전달에 필요하지 않은 pretension이 불필요한 구조 하중을 만들지 않도록 배치하는 것**입니다 [10](#ref-10).
+실제 구동 중에는 두 장력에 차이가 생기므로 완벽한 상쇄는 유지되지 않습니다. 중요한 것은 **토크 전달에 필요하지 않은 pretension이 불필요한 구조 하중을 만들지 않도록 배치하는 것**입니다 [7](#ref-7).
 
 드럼 사이의 거리는 강성에도 영향을 줍니다. 같은 케이블이라면 길수록 같은 장력에서 더 늘어나므로, 드럼을 멀리 떨어뜨릴수록 transmission이 부드러워집니다(선형 탄성 케이블의 축 방향 강성은 $k=EA/L$입니다). 정리하면, **케이블의 길이는 transmission의 compliance를 정하고, 케이블의 경로는 pretension이 구조물에 어떤 하중을 거는지를 정합니다.**
 
-케이블로 멀리 떨어진 관절을 구동할 수 있다고 해서, 감속을 맡는 두 드럼까지 멀리 떨어뜨려야 하는 것은 아닙니다 [10](#ref-10). 두 기능을 하나의 케이블 경로에서 함께 구현하려 하면 이런 기하학적 제약까지 맞춰야 하므로, 때로는 감속과 원격 전달을 별도의 단계로 나누는 편이 더 합리적입니다. Capstan drive는 두 드럼의 반지름을 정하는 문제가 아니라, **케이블이 어디를 지나고, 어느 방향으로 당기며, 그 힘을 어떤 구조물이 받아내는지까지 함께 설계해야 하는 문제**입니다.
+케이블로 멀리 떨어진 관절을 구동할 수 있다고 해서, 감속을 맡는 두 드럼까지 멀리 떨어뜨려야 하는 것은 아닙니다 [7](#ref-7). 두 기능을 하나의 케이블 경로에서 함께 구현하려 하면 이런 기하학적 제약까지 맞춰야 하므로, 때로는 감속과 원격 전달을 별도의 단계로 나누는 편이 더 합리적입니다. Capstan drive를 설계한다는 것은 두 드럼의 반지름뿐 아니라, 케이블이 어디를 지나고 어느 방향으로 당기며 그 힘을 어떤 구조물이 받는지까지 정하는 일입니다.
 
 ### 4.4 Lead angle과 fleet angle
 
-케이블이 드럼에 어떻게 감기는지도 중요합니다. 작은 입력 드럼에서 미끄러지지 않으려면 케이블을 여러 번 감아야 하는데, 겹치지 않게 감으려면 한 바퀴마다 축 방향으로 일정한 피치만큼 옮겨 가는 나선을 따라 감아야 합니다(자세한 이유는 다음 절에서 봅니다). 이 나선의 기울기가 **lead angle**입니다. 나선 홈을 가공한 드럼이라면 lead angle은 일정합니다.
+케이블이 드럼에 어떻게 감기는지도 중요합니다. 작은 입력 드럼에 케이블을 여러 번 감으면 접촉 길이를 확보하고 끝단에 집중되는 하중을 줄일 수 있습니다. 여러 번 감을 때 겹치지 않게 하려면 한 바퀴마다 축 방향으로 일정한 피치만큼 옮겨 가는 나선을 따라 감아야 합니다(자세한 이유는 다음 절에서 봅니다). 이 나선의 기울기가 **lead angle**입니다. 나선 홈을 가공한 드럼이라면 lead angle은 일정합니다.
 
 반면 **fleet angle**은 실제 케이블이 드럼에 들어오거나 빠져나가는 방향이 드럼 축에 수직인 기준 평면에서 얼마나 벗어나는지를 나타냅니다. Lead angle이 드럼에 설계된 감김 형상이라면, fleet angle은 드럼과 주변 기구의 배치가 정하는 실제 방향입니다.
 
-홈을 가공한 드럼에서는 두 방향이 맞아야 합니다. 차이가 커지면 케이블이 홈의 측벽을 누르면서 마찰과 마모가 늘고, 심하면 홈을 벗어날 수 있습니다 [10](#ref-10). 케이블을 감을 공간을 확보하는 것과 함께, 케이블이 감기도록 설계된 방향과 실제로 당겨지는 방향이 일치하는지도 확인해야 합니다.
+홈을 가공한 드럼에서는 두 방향이 맞아야 합니다. 차이가 커지면 케이블이 홈의 측벽을 누르면서 마찰과 마모가 늘고, 심하면 홈을 벗어날 수 있습니다 [7](#ref-7). 엄밀하게는 축에 수직인 평면에서 잰 두 각을 비교하는 것이 아니라, 케이블의 실제 방향과 홈 접선 사이의 3차원 각도를 봐야 합니다. $\alpha_f\approx\lambda$는 그 조건을 같은 기준 평면에서 단순화한 것입니다. 케이블을 감을 공간을 확보하는 것과 함께, 케이블이 감기도록 설계된 방향과 실제로 당겨지는 방향이 일치하는지도 확인해야 합니다.
 
 <details className="math-details">
 <summary>수식: lead angle과 fleet angle</summary>
@@ -172,13 +170,13 @@ $$
 
 ### 4.5 Cable walk와 드럼 형상
 
-작은 입력 드럼에서 미끄러지지 않으려면 케이블을 여러 번 감아야 합니다. 그런데 같은 자리에 겹쳐 감으면 케이블끼리 눌리고 비벼집니다. 케이블과 케이블이 맞닿아 미끄러지면 마모(abrasion)가 생기고, 다른 가닥 위에 올라탄 구간은 감김 반경이 달라져 감속비까지 흔들립니다.
+케이블을 여러 번 감을 때 같은 자리에 겹쳐 감으면 케이블끼리 눌리고 비벼집니다. 케이블과 케이블이 맞닿아 미끄러지면 마모(abrasion)가 생기고, 다른 가닥 위에 올라탄 구간은 감김 반경이 달라져 감속비까지 흔들립니다.
 
 그래서 케이블은 겹치지 않도록 나선을 따라 비스듬히 감습니다. 한 바퀴마다 축 방향으로 피치만큼 옮겨 가며 감고, 이웃한 가닥이 닿지 않도록 피치는 케이블 지름보다 크게 잡습니다. 보통 드럼에 나선 홈(helical groove)을 가공해 이 경로를 잡아 줍니다. 이 나선의 기울기가 앞에서 본 lead angle입니다.
 
-나선으로 감으면 드럼이 돌 때 감긴 부분 전체가 움직입니다. 한쪽 가닥은 감겨 들어오고 다른 쪽 가닥은 풀려 나가므로 감긴 바퀴 수는 그대로지만, 나선 전체가 입력 한 바퀴마다 피치만큼 축 방향으로 이동합니다. 이것이 **cable walk**입니다. 앞의 예시에서 입력 각도를 끝까지 돌려 보면, top view에서 감긴 나선이 옆으로 이동하는 것을 볼 수 있습니다.
+홈은 드럼에 고정되어 있지만, 드럼이 돌면 한쪽 케이블은 홈을 따라 새로 감겨 들어오고 다른 쪽 케이블은 그만큼 풀려 나갑니다. 그래서 케이블이 드럼에 감겨 들어오고 빠져나가는 접점(take-up point)이 입력 한 바퀴마다 피치만큼 축 방향으로 이동합니다. 이것이 **cable walk**입니다. 앞의 예시에서 입력 각도를 끝까지 돌려 보면, top view에서 두 케이블이 드럼을 떠나는 위치가 옆으로 이동하는 것을 볼 수 있습니다.
 
-따라서 입력 드럼은 감긴 나선이 차지하는 길이에, 입력 회전 범위만큼 나선이 걸어가는 거리까지 담을 수 있도록 축 방향으로 길어야 합니다. 미끄럼을 막으려고 더 많이 감을수록, 그리고 감속비가 커서 입력 드럼이 더 많이 돌수록 드럼은 길어집니다.
+따라서 입력 드럼은 감긴 나선이 차지하는 길이에, 입력 회전 범위만큼 나선이 걸어가는 거리까지 담을 수 있도록 축 방향으로 길어야 합니다. 더 많이 감을수록, 그리고 감속비가 커서 입력 드럼이 더 많이 돌수록 드럼은 길어집니다.
 
 <details className="math-details">
 <summary>수식: 필요한 드럼 길이</summary>
@@ -203,17 +201,27 @@ Walk는 fleet angle도 바꿉니다. 출력 풀리의 홈이 평범한 원주 �
 
 마지막은 장력과 케이블의 끝을 유지하는 문제입니다. Pretension은 얼마나 줘야 할까요? 그리고 반복해서 움직인 뒤에도 처음 맞춘 장력과 전달 특성이 유지될까요?
 
-케이블 끝은 드럼에 고정해야 합니다. 일반적인 매듭은 장기 반복 하중에 충분히 견고하지 않을 수 있고, eye splice 하나로는 creep을 버티지 못해 여러 번 splice하기도 합니다 [5](#ref-5).
+케이블 끝은 드럼에 고정해야 합니다. 일반적인 매듭은 장기 반복 하중에 충분히 견고하지 않을 수 있고, eye splice 하나로는 creep을 버티지 못해 여러 번 splice하기도 합니다 [6](#ref-6).
 
 감속비 하나를 얻으려는 것인데, 고려할 것이 이렇게 많습니다.
 
-하나씩 따라가 보면, 모든 질문이 결국 같은 곳으로 돌아옵니다. **어떤 케이블을 쓰는가**입니다.
+### 4.7 평면 메커니즘
 
-## 5. 제약이 까다로워질수록 cable specification이 중요해진다
+모든 케이블 메커니즘이 이렇게 복잡하지는 않습니다. 1절의 예시처럼 케이블을 풀리에 한 바퀴보다 적게 감고 양끝을 고정하면, 케이블은 처음부터 끝까지 한 평면 안에 머뭅니다. 감긴 케이블이 옆으로 옮겨 갈 일이 없으니 나선 홈도, lead angle도, cable walk도 필요 없습니다. 두 풀리의 홈을 같은 평면에 맞춰 두면 fleet angle도 0으로 유지됩니다.
+
+대신 치르는 비용이 있습니다. 입력 쪽 회전이 한 바퀴 안으로 묶이므로, 감속비를 키울수록 출력의 운동 범위가 줄어듭니다. 감김 마찰에 기댈 수 있는 접촉 길이도 짧아져, termination이 하중을 더 직접 받습니다.
+
+### 4.8 남은 문제: 케이블 자체
+
+평면 메커니즘을 써도 남는 문제가 있습니다. 지금까지는 케이블이 어디를 지나고, 어떻게 감기고, 어디에 고정되는지만 이야기했습니다. **케이블 자체**는 아직 다루지 않았습니다.
+
+## 5. Cable specification
+
+지금까지의 질문을 하나씩 따라가 보면 모두 같은 곳으로 돌아옵니다. **어떤 케이블을 쓰는가**입니다.
 
 메커니즘의 제약이 까다로워질수록 케이블 선택의 여유는 줄어듭니다. 공간이 좁으면 케이블 지름과 굽힘 반지름이 먼저 걸립니다. 큰 하중을 전달하려면 강도와 안전 여유를 따져야 합니다. 출력 위치를 정밀하게 전달해야 한다면 하중에 따라 케이블이 얼마나 늘어나는지도 조건이 됩니다. 반복해서 작동하는 로봇이라면 오래 쓴 뒤의 거동까지 고려해야 합니다. 같은 구동 구조라도 어떤 케이블을 고르느냐에 따라 설계할 수 있는 범위와 성능이 달라집니다.
 
-그래서 자연스럽게 제조사의 datasheet를 열게 됩니다. 대표적으로 다음 항목을 확인합니다.
+그래서 제조사의 datasheet를 확인하게 됩니다. 대표적인 항목은 다음과 같습니다.
 
 - 최소 파단 하중(minimum breaking strength)
 - 공칭 지름(nominal diameter)
@@ -221,17 +229,17 @@ Walk는 fleet angle도 바꿉니다. 출력 풀리의 홈이 평범한 원주 �
 - 권장 최소 굽힘 지름 등 굽힘에 관한 조건
 - 사용 조건에 따른 내구성 정보(제공되는 경우)
 
-모든 datasheet가 같은 항목을 제공하지는 않습니다. Samson의 HMPE 로프 AmSteel-Blue 제품 페이지는 지름별 무게, 평균·최소 파단 하중, ISO 2307 기준 강도를 함께 적고, 하중 단계별 탄성 신율까지 제시합니다 [6](#ref-6). 굽힘에 관한 안내는 제품 페이지가 아니라 별도의 안내 문서에 있으며, $D/d$가 작아질수록 정적 강도와 수명이 줄어든다는 일반적인 경고로 제시됩니다 [7](#ref-7). 1 mm 지름부터 나오는 LIROS의 Dyneema 코드 D-Pro 제품 페이지에는 지름, 파단 하중과 "working stretch < 1%" 정도가 적혀 있고, 시험 규격이나 굽힘 조건은 없습니다 [8](#ref-8).
+모든 datasheet가 같은 항목을 제공하지는 않습니다. Samson의 HMPE 로프 AmSteel-Blue 제품 페이지는 지름별 무게, 평균·최소 파단 하중, ISO 2307 기준 강도를 함께 적고, 하중 단계별 탄성 신율까지 제시합니다 [8](#ref-8). 굽힘에 관한 안내는 제품 페이지가 아니라 별도의 안내 문서에 있으며, $D/d$가 작아질수록 정적 강도와 수명이 줄어든다는 일반적인 경고로 제시됩니다 [9](#ref-9). 1 mm 지름부터 나오는 LIROS의 Dyneema 코드 D-Pro 제품 페이지에는 지름, 파단 하중과 "working stretch < 1%" 정도가 적혀 있고, 시험 규격이나 굽힘 조건은 없습니다 [10](#ref-10).
 
-## 6. 그런데 datasheet를 그대로 믿어도 될까?
+## 6. Datasheet의 한계
 
-Datasheet의 값은 특정 시험 조건과 측정 방법을 전제로 합니다. 대개 곧게 편 시편을 정해진 방식으로 고정하고 당겨서 얻은 값입니다. 앞의 Samson 페이지가 ISO 2307 강도는 splice하지 않은 로프, 나머지 강도는 splice한 로프의 값이라고 따로 밝히는 것도 이 때문입니다 [6](#ref-6). 끝단을 어떻게 고정했는지만 달라져도 같은 로프의 강도 값이 달라집니다.
+Datasheet의 값은 특정 시험 조건과 측정 방법을 전제로 합니다. 대개 곧게 편 시편을 정해진 방식으로 고정하고 당겨서 얻은 값입니다. 앞의 Samson 페이지가 ISO 2307 강도는 splice하지 않은 로프, 나머지 강도는 splice한 로프의 값이라고 따로 밝히는 것도 이 때문입니다 [8](#ref-8). 끝단을 어떻게 고정했는지만 달라져도 같은 로프의 강도 값이 달라집니다.
 
 로봇 안의 케이블은 직선으로 당겨지기만 하지 않습니다. 풀리에 감기고, 굽혀지고, 같은 구간이 반복해서 움직이며, 다른 부품과 접촉합니다. 표준 시험에서 얻은 특성이 이렇게 설치된 transmission의 특성을 그대로 정하지는 않습니다. 사양표가 틀렸다는 뜻이 아닙니다. 사양표는 정해진 시험에 대한 답이고, 실제 사용 조건을 설명하기에는 정보가 부족할 수 있다는 뜻입니다.
 
-우리는 케이블이 휠 수 있기 때문에 케이블을 씁니다. 그런데 바로 그 굽힘이 케이블의 거동을 훨씬 복잡하게 만듭니다.
+우리는 케이블이 휠 수 있기 때문에 케이블을 씁니다. 그런데 바로 그 굽힘이 케이블의 거동을 복잡하게 만듭니다.
 
-케이블이 휘는 순간, 과연 무엇이 달라질까요?
+케이블이 휘면 무엇이 달라질까요?
 
 다음 포스트: Cable 02 — 케이블은 생각보다 훨씬 어렵다. Specification이 전부가 아니다. (준비 중)
 
@@ -241,40 +249,40 @@ Datasheet의 값은 특정 시험 조건과 측정 방법을 전제로 합니다
 
 <span id="ref-1"></span>
 
-[1] Y.-J. Kim, “Anthropomorphic Low-Inertia High-Stiffness Manipulator for High-Speed Safe Interaction,” *IEEE Transactions on Robotics*, 33(6), 1358–1374, 2017. [DOI: 10.1109/TRO.2017.2732354](https://doi.org/10.1109/TRO.2017.2732354).
+[1] H. Song, Y.-S. Kim, J. Yoon, S.-H. Yun, J. Seo, and Y.-J. Kim, “Development of Low-Inertia High-Stiffness Manipulator LIMS2 for High-Speed Manipulation of Foldable Objects,” *2018 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)*, 4145–4151, 2018. [DOI: 10.1109/IROS.2018.8594005](https://doi.org/10.1109/IROS.2018.8594005).
 
 <span id="ref-2"></span>
 
-[2] Y.-J. Kim, “Design of low inertia manipulator with high stiffness and strength using tension amplifying mechanisms,” *2015 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)*, 5850–5856, 2015. [DOI: 10.1109/IROS.2015.7354208](https://doi.org/10.1109/IROS.2015.7354208).
+[2] NAVER LABS, “AMBIDEX, robot arm with innovative cable-driven mechanisms,” blog post, 2017-10-16. [Link](https://naverlabs.com/en/blogDetail?seq=33674). 양팔 사진의 출처(라이선스 표기 없음).
 
 <span id="ref-3"></span>
 
-[3] H. Song, Y.-S. Kim, J. Yoon, S.-H. Yun, J. Seo, and Y.-J. Kim, “Development of Low-Inertia High-Stiffness Manipulator LIMS2 for High-Speed Manipulation of Foldable Objects,” *2018 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)*, 4145–4151, 2018. [DOI: 10.1109/IROS.2018.8594005](https://doi.org/10.1109/IROS.2018.8594005).
+[3] Y.-J. Kim, “Anthropomorphic Low-Inertia High-Stiffness Manipulator for High-Speed Safe Interaction,” *IEEE Transactions on Robotics*, 33(6), 1358–1374, 2017. [DOI: 10.1109/TRO.2017.2732354](https://doi.org/10.1109/TRO.2017.2732354).
 
 <span id="ref-4"></span>
 
-[4] NAVER LABS, “AMBIDEX, robot arm with innovative cable-driven mechanisms,” blog post, 2017-10-16. [Link](https://naverlabs.com/en/blogDetail?seq=33674). 양팔 사진의 출처(라이선스 표기 없음).
+[4] Y.-J. Kim, “Design of low inertia manipulator with high stiffness and strength using tension amplifying mechanisms,” *2015 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)*, 5850–5856, 2015. [DOI: 10.1109/IROS.2015.7354208](https://doi.org/10.1109/IROS.2015.7354208).
 
 <span id="ref-5"></span>
 
-[5] J. Hwangbo, V. Tsounis, H. Kolvenbach, and M. Hutter, “Cable-Driven Actuation for Highly Dynamic Robotic Systems,” arXiv:1806.10632, 2018. [Paper](https://arxiv.org/abs/1806.10632).
+[5] IRIM LAB KOREATECH, “LIMS2-AMBIDEX mechanical design,” YouTube video. [Link](https://www.youtube.com/watch?v=aLaqMreVj9o).
 
 <span id="ref-6"></span>
 
-[6] Samson Rope Technologies, “AmSteel-Blue,” product page. [Link](https://www.samsonrope.com/mooring/amsteel--blue). 2026-11-16 확인.
+[6] J. Hwangbo, V. Tsounis, H. Kolvenbach, and M. Hutter, “Cable-Driven Actuation for Highly Dynamic Robotic Systems,” arXiv:1806.10632, 2018. [Paper](https://arxiv.org/abs/1806.10632).
 
 <span id="ref-7"></span>
 
-[7] Samson Rope Technologies, “Warning statement” (rope use and bending guidance). [Link](https://www.samsonrope.com/warning-statement). 2026-11-16 확인.
+[7] Stanford CS235, “Applied Robot Design, Lecture 7—Introduction to Cable Transmissions.” 21:08–25:39 케이블 경로와 드럼 간격에 따른 pretension 합력, 26:01–29:16 감속과 원격 전달의 분리, 33:14 lead angle, 49:14 fleet angle. {/* TODO(ref): 확인 필요 — 강의 URL과 연도 */}
 
 <span id="ref-8"></span>
 
-[8] LIROS GmbH, “D-Pro 1 mm,” product page. [Link](https://www.liros.com/catalog/en/d-pro-1mm-p3511/). 2026-11-16 확인.
+[8] Samson Rope Technologies, “AmSteel-Blue,” product page. [Link](https://www.samsonrope.com/mooring/amsteel--blue). 2026-11-16 확인.
 
 <span id="ref-9"></span>
 
-[9] IRIM LAB KOREATECH, “LIMS2-AMBIDEX mechanical design,” YouTube video. [Link](https://www.youtube.com/watch?v=aLaqMreVj9o).
+[9] Samson Rope Technologies, “Warning statement” (rope use and bending guidance). [Link](https://www.samsonrope.com/warning-statement). 2026-11-16 확인.
 
 <span id="ref-10"></span>
 
-[10] Stanford CS235, “Applied Robot Design, Lecture 7—Introduction to Cable Transmissions.” 21:08–25:39 케이블 경로와 드럼 간격에 따른 pretension 합력, 26:01–29:16 감속과 원격 전달의 분리, 33:14 lead angle, 49:14 fleet angle. {/* TODO(ref): 확인 필요 — 강의 URL과 연도 */}
+[10] LIROS GmbH, “D-Pro 1 mm,” product page. [Link](https://www.liros.com/catalog/en/d-pro-1mm-p3511/). 2026-11-16 확인.
