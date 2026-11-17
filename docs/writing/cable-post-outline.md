@@ -16,6 +16,37 @@
 
 ---
 
+## 2026-11-16 재구성 결정 (아래 10편 지도보다 우선)
+
+사용자 결정으로 시리즈를 **6편**으로 줄입니다. 아래 1장의 10편 지도와 2장의 brief는 각 글의 재료로만 참고합니다. 옛 05–10의 모델링·식별·시뮬레이터 주제는 이 시리즈에서 다루지 않습니다(Tendon-in-the-Loop 프로젝트 쪽 주제).
+
+| 글 | 다룰 내용 | 재료 |
+| --- | --- | --- |
+| 01 | 로봇은 왜 케이블로 관절을 움직이는가: 장점, 감속·원격 전달, 반력, capstan, termination, cable walk, pretension, return spring. 데모 2개 | 옛 로봇 하드웨어 08(`/hardware08-kr/`, 비공개) |
+| 02 | 케이블은 생각보다 어렵다: 사양표, 직선 인장 모델, 실제 로봇에서 깨지는 가정, "위치 제어 ≠ 하중 제어" | 2026-11-16 축소한 옛 01 |
+| 03 | 케이블 구조, 굽힘($D/d$), 시간 의존 거동 | `drafts/moved/cable-03.md`, 옛 brief 02 |
+| 04 | 끝단 고정과 자리잡음 | `drafts/moved/cable-04.md`, 옛 brief 03 |
+| 05 | 풀리·고정 가이드·Bowden의 마찰과 transparency | `drafts/moved/cable-05.md`, 옛 brief 04 |
+| 06 | 하중 이력을 제어하는 시험장치(CBOS testbed) | `drafts/moved/cable-06.md`, 옛 brief 07 |
+
+**글쓰기 규칙.** 본문에서 "이 내용은 Cable 0X에서 다룹니다" 같은 뒤 글 예고를 넣지 않습니다. 글 끝에 다음 글로 넘어가는 한두 문장과 "다음 포스트" 링크만 둡니다. 앞 글로 돌아가는 링크는 써도 됩니다.
+
+**개념별 본거지.**
+
+| 개념 | 본거지 |
+| --- | --- |
+| 감속비 $N=r_j/r_m$, 공통·차동 장력, 장력 합력과 반력 경로, return spring | Cable 01 |
+| Capstan 관계 $T_{\mathrm{high}}/T_{\mathrm{low}}\le e^{\mu\phi}$: 장치로서의 capstan | Cable 01 |
+| Capstan 관계의 가정과 한계(고정 가이드 vs 회전 풀리, 분포 마찰) | Cable 05 |
+| 직선 인장 모델 $\delta=TL/EA$, $x_m=rq+\delta$ | Cable 02 |
+| 늘어남의 원인 구분, conditioning, pretension을 작동 조건으로 기록 | Cable 03 |
+| 끝단 직렬 compliance, 파단 효율 $\eta_{\mathrm{term}}$ | Cable 04 |
+| "위치 제어 ≠ 하중 제어" 사례(2025-07-28) | Cable 06 (02는 동기로만 소개) |
+
+옛 Cable 05·08 초안은 `drafts/removed/`로 옮겼습니다. 로봇 하드웨어 08 파일은 Cable 01로 옮긴 뒤에도 아직 그 자리에 남아 있습니다(처리 미정).
+
+---
+
 ## 0. How to use this document
 
 ### 0.1 Authority and source hierarchy
