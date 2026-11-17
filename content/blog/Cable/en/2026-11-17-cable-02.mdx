@@ -1,0 +1,210 @@
+---
+title: "Cable 02 — What Changes When a Cable Bends"
+description: "Bending strain and D/d, combined tension and bending, and cyclic bend over sheave (CBOS) testing"
+published: true
+hidden: false
+date: 2026-11-17 00:00:00
+permalink: /cable02/
+series: "Cable-driven Mechanism"
+series_order: 2
+series_label: "02"
+lang: en
+translations:
+  - lang: en
+    label: EN
+    url: /cable02/
+  - lang: ko
+    label: KR
+    url: /cable02-kr/
+tags: [Robotics, Hardware Development, Cable, Tendon-driven Robots]
+---
+
+import BendingStressDemo from "../../../../src/components/demos/BendingStressDemo";
+
+## 1. A cable that does not hold what the datasheet says
+
+The manufacturer's datasheet said the cable could carry an ample tensile load. Yet once installed in the robot, it sometimes broke at a load below the datasheet breaking load. {/* TODO(data): before putting back a figure such as "less than half", confirm the cable product and its specification (breaking load, diameter), the actual breaking load and how it was measured, where it broke (cable body or termination), the pulley D/d and the termination method */}
+
+Stretch was a problem too. We pre-stretched the cable to reduce the initial elongation, but after repeated operation its reference length changed again, and each time the pretension we had set had to be readjusted.
+
+At first it was hard to tell whether we had picked the wrong product, not pre-stretched enough, or fixed the cable the wrong way. Even now this experience alone cannot pin the failure and the length change on a single cause, because the installation combines bending with termination, friction and load history.
+
+Still, the datasheet values and the conditions the robot imposes on the cable come from different tests. The breaking load on a datasheet is the result of a specific tensile test, not a working load guaranteed under every installation condition.
+
+In the [previous post](/cable01/) we said that the advantage of a cable is that it bends: the motor can sit far away, and the path of the force can be changed freely.
+
+But the moment a cable bends, mechanics that did not exist under straight tension begin.
+
+## 2. Why does bending create stress?
+
+A real braided rope is hard to calculate directly. Let us first assume the cable is a linear elastic rod with a uniform cross-section. If the same tension $T$ acts along the rod's axis, the mean tensile stress over the cross-sectional area $A$ is
+
+$$
+\sigma_a=\frac{T}{A}
+$$
+
+Assuming small deformation and uniform stress, the elongation is $\delta=TL/(EA)$.
+
+When the rod is bent, however, not every point of the cross-section can travel the same length. The outer side follows a longer arc and the inner side a shorter one.
+
+Let $\rho$ be the radius of curvature of the reference centerline through the centre of the cross-section, $\theta$ the bend angle, and $y$ the distance measured outward from the reference centerline. In pure bending this reference centerline is the neutral axis. The length of the reference centerline is $s_0=\rho\theta$ and the length at position $y$ is $s(y)=(\rho+y)\theta$, so
+
+$$
+\varepsilon_b(y)=\frac{s(y)-s_0}{s_0}=\frac{y}{\rho}=\kappa y,
+\qquad \kappa=\frac{1}{\rho}.
+$$
+
+Here $\kappa$ is the curvature. The outer side ($y>0$) stretches and the inner side ($y<0$) shortens. For a linear elastic material,
+
+$$
+\sigma_b(y)=E\kappa y
+$$
+
+**Bending creates a gradient of strain and stress across the section.** People often say the stress "concentrates", but what we mean here is not the stress concentration at a notch; it is the non-uniform stress distribution produced by pure bending.
+
+In beam theory the bending moment is $M=EI\kappa$, which is why a larger bending stiffness $EI$ needs a larger moment for the same curvature. The model assumes that plane sections remain plane, that strains are small, and that there is no slip inside the cross-section.
+
+## 3. Where does D/d come from?
+
+Now wrap a round rod of diameter $d$ around a pulley of diameter $D$. Define $D$ as the effective pulley contact diameter, where the inner side of the cable touches, and assume the cross-section does not flatten. The radius of curvature of the cable's centerline is then
+
+$$
+\rho\simeq\frac{D+d}{2}
+$$
+
+The outermost fibre is $d/2$ from the reference centerline, so
+
+$$
+\boxed{\varepsilon_{b,\max}\simeq\frac{d}{D+d}=\frac{1}{D/d+1}}
+$$
+
+and for $D\gg d$ we get the common approximation $\varepsilon_{b,\max}\simeq d/D$. The corresponding ideal stress is
+
+$$
+\sigma_{b,\max}\simeq E\frac{d}{D+d}.
+$$
+
+Winding the same cable on a smaller pulley, or a thicker cable on the same pulley, increases the bending strain. This is why $D/d$, the ratio of sheave diameter to rope diameter, is an important design measure.
+
+In tensile tests on synthetic fibre ropes held in a bent configuration, the ropes also lost strength at small bending ratios $D/d$ [1](#ref-1). A straight-tension specification alone is therefore not enough to judge the limits of an installed tendon.
+
+At $D/d=20$ this formula still predicts a peak bending strain of about 4.8%. Depending on the material, that is already too large for the small-strain linear-elastic assumption. Yet not every yarn in a real braided rope experiences this strain, because the fibres inside the rope can move relative to each other and the structure can deform.
+
+The example below lets you change the pulley diameter, cable diameter, tension and material. At the same $D/d$ the peak bending *strain* is the same, but a different $E$ gives a different ideal *stress*. It is a conceptual model of a homogeneous rod and does not predict an allowable load or a fatigue life.
+
+<BendingStressDemo client:visible lang="en" />
+
+## 4. What if tension and bending act together?
+
+For a homogeneous rod under small strain and linear elasticity, axial load and pure bending can be superposed. With $\varepsilon_0$ the axial strain of the reference centerline,
+
+$$
+\varepsilon(y)=\varepsilon_0+\kappa y,
+\qquad
+\varepsilon_0=\frac{T}{EA}
+$$
+
+so
+
+$$
+\boxed{\sigma(y)=E\varepsilon_0+E\kappa y=\frac{T}{A}+E\frac{y}{\rho}}
+$$
+
+Once axial tension is added, the point of zero stress is no longer the centre of the section.
+
+Tension adds to the stress on the outer side, while on the inner side the compressive bending component is partly offset by the axial tension. This gives the intuition that, at the same $T$, a smaller pulley radius can raise the peak stress in the section.
+
+A cable wrapped on a pulley also carries a contact load. Consider a short segment of a flexible cable along a smooth path with nearly constant tension $T$. From the change in direction of the tension vectors at its two ends,
+
+$$
+\mathrm dF_n\simeq T\,\mathrm d\theta,
+\qquad \mathrm ds=\rho\,\mathrm d\theta
+$$
+
+so the normal reaction per unit path length is
+
+$$
+q_n\simeq\frac{T}{\rho}
+$$
+
+Its unit is N/m. To find the contact pressure (Pa) you also need the contact width and the deformed shape. This relation is an approximation from the local force balance of a flexible cable; it does not describe every contact situation of a rope with bending stiffness.
+
+So a small pulley not only raises the bending strain but also makes the contact problem harder. That still does not allow comparing $\sigma_{\max}$ directly with the rope's breaking strength to compute a real safety factor, because the model so far is for a homogeneous rod.
+
+## 5. Then should we pick a cable with a low E?
+
+From the equations so far, the answer looks simple.
+
+$$
+\sigma_{b,\max}\propto E\frac{1}{D/d+1}.
+$$
+
+A cable with a lower Young's modulus would have lower bending stress at the same curvature. In the homogeneous-rod model, that is true.
+
+In the same homogeneous rod, lowering $E$ lowers not only the bending stress but also the bending stiffness $EI$. And a cable does not exist only to bend; it has to transmit the motor's force and position to the output. In the same simple model the axial stiffness is
+
+$$
+k_a=\frac{EA}{L}
+$$
+
+With everything else equal, a smaller $E$ means more axial stretch. Lowering only the bending stress can cost the transmission its stiffness in transmitting position.
+
+There is a more fundamental problem: the Young's modulus of an individual fibre is not the bending modulus of the finished rope. Fibre properties can be compared, but they cannot be plugged directly into the $EI$ of a braided rope, because the individual yarns inside the rope touch and move relative to each other. In a homogeneous rod the axial stiffness $EA$ and the bending stiffness $EI$ are tied to the same $E$, but in a real braided rope the two stiffnesses may not be linked by a single $E$.
+
+So when choosing a high $E$ in the example above gives an unrealistically large stress, that is not a prediction that the real rope experiences that stress. It is a sign of the limits of the solid-rod model.
+
+## 6. Bending once is not the same as bending tens of thousands of times
+
+In a robot, a cable does not sit still on a pulley. As the joint moves, part of the cable repeatedly winds onto the pulley and straightens again. The standard test for this condition is the cyclic bend over sheave (CBOS) test.
+
+There are three different questions here: how much it holds *now* while bent, how much strength *remains* after repeated bending, and *after how many cycles* it fails under given conditions. These correspond to the bent breaking load, the residual breaking strength and the fatigue life, and they are not the same value.
+
+One study compared ten synthetic fibre ropes of different materials and constructions and two stainless steel wire ropes in repeated bending tests [2](#ref-2). Under the specified test conditions, a UHMWPE rope with high resistance to frictional wear (SK-71) and a 7×19 steel wire rope showed no significant loss of tensile strength, while the other ropes lost strength. Under severe conditions with a small pulley or high tension, some synthetic fibre ropes did better than the steel wire ropes.
+
+Another study ran CBOS tests on a 12-strand braided HMPE rope with a nominal diameter of 19 mm [3](#ref-3). It analysed specimens cycled to failure together with specimens whose tests were stopped to measure residual strength, and proposed an empirical model that uses results from constant-load tests to describe the life under varying load histories.
+
+The important point is that **a cable that has not broken yet is not the same as a cable that still has its original breaking strength.** That said, a life model for a 19 mm marine rope cannot be applied directly to a 1–2 mm robot tendon.
+
+## 7. Does the same D/d mean the same life?
+
+What load the cable experiences matters as much as the geometric bending ratio.
+
+In CBOS tests of a 24 mm HMPE rope on a 400 mm sheave ($D/d\approx16.7$) with varying dynamic tension [4](#ref-4), within the tested range the CBOS life decreased as the mean load, amplitude and period of the load increased, and the nominal stiffness increased with mean load and period and decreased with amplitude. So even with the same bending geometry, a different load history makes it hard to represent the result with a single life value.
+
+Bending tests on coated circular braided UHMWPE ropes have also used tension, fleet angle, sheave material, $D/d$ and ambient temperature as test variables [5](#ref-5). Here, too, the key point is that **$D/d$ is necessary but not sufficient information**. When interpreting CBOS results, check which other test conditions changed along with $D/d$. In tests where the sheave material changed together with the diameter ratio, an observed difference in life cannot be attributed to a single variable.
+
+The observations in the literature cannot be collapsed into a single law $N_f=f(D/d)$. The number of cycles to failure $N_f$ is defined conditionally on at least the material and construction, tension history, bending geometry, environment and test method.
+
+## 8. A real cable is not a single rod
+
+The equations so far explain why a small pulley can be unfavourable. They do not explain why ropes of the same nominal diameter retain strength differently under repeated bending.
+
+The cable we treated as a homogeneous rod is in fact a structure of many filaments and yarns twisted and braided together. Its components can touch and move relative to each other as they accommodate bending. That movement makes bending possible, and it can also bring friction and wear.
+
+The length change after pre-stretch mentioned at the start cannot be explained by this simple bending-stress formula either. One has to distinguish which elements stretched, which rearranged, and whether the termination moved.
+
+**What we design is not just a strong fibre, but a cable in which many fibres work together.**
+
+Next post: Cable 03 (coming soon)
+
+## References
+
+<span id="ref-1"></span>
+
+[1] A. Horigome and G. Endo, “Basic study for drive mechanism with synthetic fiber rope – investigation of strength reduction by bending and terminal fixation method,” *Advanced Robotics*, 30(3), 206–217, 2016. [DOI: 10.1080/01691864.2015.1102649](https://doi.org/10.1080/01691864.2015.1102649).
+
+<span id="ref-2"></span>
+
+[2] A. Horigome and G. Endo, “Investigation of Repetitive Bending Durability of Synthetic Fiber Ropes,” *IEEE Robotics and Automation Letters*, 3(3), 1779–1786, 2018. [DOI: 10.1109/LRA.2018.2800129](https://doi.org/10.1109/LRA.2018.2800129).
+
+<span id="ref-3"></span>
+
+[3] P. Davies, M. François, N. Lacotte, T. D. Vu, and D. Durville, “An empirical model to predict the lifetime of braided HMPE handling ropes under cyclic bend over sheave (CBOS) loading,” *Ocean Engineering*, 97, 74–81, 2015. [DOI: 10.1016/j.oceaneng.2015.01.003](https://doi.org/10.1016/j.oceaneng.2015.01.003).
+
+<span id="ref-4"></span>
+
+[4] G. Li, W. Li, H. Ye, H. Li, Y. Ge, and S. Lin, “Experimental study on cyclic-bend-over-sheave (CBOS) characteristics of an HMPE fibre rope under dynamic loading,” *Applied Ocean Research*, 138, 103642, 2023. [DOI: 10.1016/j.apor.2023.103642](https://doi.org/10.1016/j.apor.2023.103642).
+
+<span id="ref-5"></span>
+
+[5] C. Müller, A. Kretschmer, P. Koskenjoki, K. Saarinen-Pulli, and M. Golder, “Bending tests on circular braided ropes under variation of different peripheral test conditions,” *innoTRAC*, 3(1), 39–54, 2024. [DOI: 10.14464/innotrac.v3i1.792](https://doi.org/10.14464/innotrac.v3i1.792).

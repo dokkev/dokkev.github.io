@@ -1,6 +1,6 @@
 ---
 title: "Cable 01 — Why Robots Use Cables"
-description: "The advantages of cable drives, the design conditions of a capstan drive, and the limits of a cable datasheet."
+description: "Advantages of cable drives, design conditions of a capstan drive, and limits of a cable datasheet"
 published: true
 hidden: false
 date: 2026-11-15 00:00:00
@@ -19,8 +19,8 @@ translations:
 tags: [Robotics, Hardware Development, Cable, Tendon-driven Robots]
 ---
 
-import CableTransmissionDemo from "../../../src/components/demos/CableTransmissionDemo";
-import CapstanTensionDemo from "../../../src/components/demos/CapstanTensionDemo";
+import CableTransmissionDemo from "../../../../src/components/demos/CableTransmissionDemo";
+import CapstanTensionDemo from "../../../../src/components/demos/CapstanTensionDemo";
 
 ## 1. A transmission element that bends
 
@@ -94,7 +94,7 @@ N=\frac{\theta_m}{\theta_j}=\frac{r_j}{r_m},
 \frac{\tau_j}{\tau_m}=N
 $$
 
-With no meshing teeth there is almost no backlash, and the low friction makes it easy to get backdrivability, where pushing on the output turns the motor. The name comes from devices that hold a large rope tension through friction on a drum, but robot capstan drives usually wind the cable several times and fix both ends to the drums to constrain the length relation.
+With no meshing teeth there is almost no backlash, and the low friction makes it easy to get backdrivability, where pushing on the output turns the motor. The name comes from devices that hold a large rope tension through friction on a drum, but robot capstan drives may wind the cable several times and fix both ends to the drums to constrain the length relation [6](#ref-6).
 
 ### 4.2 Beyond the reduction ratio
 
@@ -132,7 +132,7 @@ It cancels for $\alpha=180^\circ$, when the two tensions are opposite, and grows
 
 </details>
 
-Note that the reduction ratio is not what sets this resultant. Even at 1:1, a resultant appears if the two tension vectors point to the same side. Whether the strands are crossed does not decide it by itself either. Open and crossed layouts are both used in practice, and neither is inherently a bad layout. What sets the resultant is the cable path and the direction of the tangents where the cable enters and leaves the drum.
+Note that the reduction ratio is not what sets this resultant. Even at 1:1, a resultant appears if the two tension vectors point to the same side. Whether the strands are crossed does not decide it by itself either. Neither open nor crossed is good or bad in itself. What sets the resultant is the cable path and the direction of the tangents where the cable enters and leaves the drum.
 
 In some layouts, a larger distance between the drums turns the entry and exit directions unfavourably and the resultant grows. The example below marks, at the drum centre, the directions in which the two strands pull the shaft and the resultant ΣF for equal pretension in both strands. In the crossed layout, increasing the centre distance turns the two strands toward the same side and the resultant grows. In the open layout the two strands leave the same side of the drum and run side by side to the pulley, so the resultant stays large even at the minimum centre distance. These results come from the path geometry chosen in the example; with the same open or crossed layout, the resultant changes with which side of the drum the cable is wound on and where it is sent.
 
@@ -248,7 +248,7 @@ We use cables because they bend. And that very bending makes the behaviour of th
 
 What changes when a cable bends?
 
-Next post: Cable 02 (coming soon)
+[Next post: Cable 02 — What Changes When a Cable Bends](/cable02/)
 
 ## References
 

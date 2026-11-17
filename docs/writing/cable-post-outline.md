@@ -121,7 +121,7 @@ The following separation was applied on 2026-11-15 to keep the project page focu
 
 | Content | Repository location | Scope |
 |---|---|---|
-| Robot-hand and cable-material image gallery | [Cable 01](../../content/blog/Cable/2026-11-15-cable-01-kr.md) | Application and specification context; image references travel with the gallery |
+| Robot-hand and cable-material image gallery | [Cable 01](../../content/blog/Cable/kr/2026-11-15-cable-01-kr.mdx) | Application and specification context; image references travel with the gallery |
 | Transmission model, routing/friction, history effects, pose-to-force error, general physics/residual modeling | [Cable 05 draft](../../content/blog/Cable/2026-11-15-cable-05-kr.md) | General modeling background migrated from TiL; literature comparison remains to be completed |
 | Fixed/spatial tendon, native mechanics, distributed-friction and history limits | [Cable 08 draft](../../content/blog/Cable/2026-11-15-cable-08-kr.md) | General MuJoCo explanation; executable, version-pinned MJCF work remains pending |
 | Cyclic creep visualization | [Interactive demos](../../content/blog/Cable/2026-11-15-interactive_demo.mdx) | Shared demonstration; not duplicated in the project page |

@@ -1,6 +1,6 @@
 ---
 title: "Cable 01 — 로봇은 왜 케이블을 쓰는가"
-description: "케이블 구동의 장점과 capstan drive의 설계 조건, 그리고 케이블 사양표의 한계를 정리합니다."
+description: "케이블 구동의 장점, capstan drive의 설계 조건, 케이블 사양표의 한계"
 published: true
 hidden: false
 date: 2026-11-15 00:00:00
@@ -19,8 +19,8 @@ translations:
 tags: [Robotics, Hardware Development, Cable, Tendon-driven Robots]
 ---
 
-import CableTransmissionDemo from "../../../src/components/demos/CableTransmissionDemo";
-import CapstanTensionDemo from "../../../src/components/demos/CapstanTensionDemo";
+import CableTransmissionDemo from "../../../../src/components/demos/CableTransmissionDemo";
+import CapstanTensionDemo from "../../../../src/components/demos/CapstanTensionDemo";
 
 *Why Robots Use Cables*
 
@@ -96,7 +96,7 @@ N=\frac{\theta_m}{\theta_j}=\frac{r_j}{r_m},
 \frac{\tau_j}{\tau_m}=N
 $$
 
-기어처럼 치면이 맞물리지 않으므로 백래시가 거의 없고, 마찰이 작아 출력 쪽에서 밀었을 때 모터까지 쉽게 되돌아가는 backdrivability를 얻기 좋습니다. 이름은 원래 드럼에 감긴 로프의 마찰로 큰 장력을 지지하는 장치에서 왔지만, 로봇용 capstan drive는 대개 케이블을 여러 번 감고 양끝을 드럼에 고정해 길이 관계를 구속합니다.
+기어처럼 치면이 맞물리지 않으므로 백래시가 거의 없고, 마찰이 작아 출력 쪽에서 밀었을 때 모터까지 쉽게 되돌아가는 backdrivability를 얻기 좋습니다. 이름은 원래 드럼에 감긴 로프의 마찰로 큰 장력을 지지하는 장치에서 왔지만, 로봇용 capstan drive는 케이블을 여러 번 감고 양끝을 드럼에 고정해 길이 관계를 구속하기도 합니다 [6](#ref-6).
 
 ### 4.2 감속비 외의 조건
 
@@ -134,7 +134,7 @@ $$
 
 </details>
 
-주의할 점은 이 합력을 정하는 변수가 감속비가 아니라는 것입니다. 감속비가 1:1이어도 두 장력 벡터가 같은 쪽을 향하면 합력이 생깁니다. 두 가닥을 교차시켰는지(crossed)도 그 자체로 답을 정하지 않습니다. Open과 crossed는 모두 실제로 쓰이는 배치이고, 어느 한쪽을 원래 나쁜 배치라고 부를 수는 없습니다. 합력을 정하는 것은 케이블의 경로와, 드럼에 들어가고 나오는 접선의 방향입니다.
+주의할 점은 이 합력을 정하는 변수가 감속비가 아니라는 것입니다. 감속비가 1:1이어도 두 장력 벡터가 같은 쪽을 향하면 합력이 생깁니다. 두 가닥을 교차시켰는지(crossed)도 그 자체로 답을 정하지 않습니다. Open이든 crossed이든 그 자체로 좋거나 나쁜 배치는 아닙니다. 합력을 정하는 것은 케이블의 경로와, 드럼에 들어가고 나오는 접선의 방향입니다.
 
 특정한 배치에서는 두 드럼의 간격이 커질수록 케이블이 드럼에 들어가고 나오는 방향이 불리해져 합력이 커지기도 합니다. 아래 예시의 드럼 중심에는 두 가닥이 축을 당기는 방향과, 두 가닥에 같은 pretension이 걸렸을 때의 합력 ΣF를 표시했습니다. 교차 배치에서 중심거리를 늘려 보면 두 가닥이 점점 같은 쪽을 향하면서 합력이 커집니다. 평행(open) 배치로 바꾸면 두 가닥이 드럼의 같은 쪽에서 나란히 풀리로 향하므로, 중심거리를 최소로 줄여도 합력이 크게 남습니다. 이 결과는 예시에서 정한 경로 기하에서 나온 것이고, 같은 open이나 crossed라도 케이블을 드럼의 어느 쪽으로 감고 어디로 보내느냐에 따라 합력은 달라집니다.
 
@@ -250,9 +250,7 @@ Datasheet의 값은 특정 시험 조건과 측정 방법을 전제로 합니다
 
 케이블이 휘면 무엇이 달라질까요?
 
-다음 포스트: Cable 02 — 휘는 게 문제다! (준비 중)
-
-{/* TODO: Cable 02를 공개하면 링크로 되돌리기: [다음 포스트: Cable 02 — 휘는 게 문제다!](/cable02-kr/) */}
+[다음 포스트: Cable 02 — 케이블이 휘면 무엇이 달라지는가](/cable02-kr/)
 
 ## References
 

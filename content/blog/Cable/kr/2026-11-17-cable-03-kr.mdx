@@ -1,6 +1,6 @@
 ---
-title: "Cable 03 — 케이블은 스스로를 갉아먹는다"
-description: "Filament에서 yarn, strand, braided rope까지. 케이블 내부 구조와 yarn-on-yarn friction·abrasion이 유효 강성, 히스테리시스, 길이 안정성과 반복 굽힘 내구성을 어떻게 바꾸는지 살펴봅니다."
+title: "Cable 03 — 케이블은 재료가 아니라 구조다"
+description: "케이블 내부 구조와 yarn-on-yarn 마찰·마모가 유효 강성, 히스테리시스, 길이 안정성, 반복 굽힘 내구성에 미치는 영향"
 published: false
 hidden: false
 date: 2026-11-17 00:00:00
@@ -18,22 +18,20 @@ tags: [Robotics, Hardware Development, Cable, Tendon-driven Robots]
 
 [지난 글](/cable02-kr/)에서는 케이블을 하나의 균일한 탄성 막대라고 가정했습니다. 이 가정 덕분에 $D/d$와 굽힘 변형률의 관계를 단순하게 유도할 수 있었지만, 실제 CBOS 시험에서 왜 로프마다 결과가 다른지는 설명하지 못했습니다.
 
-비슷한 문제가 인장 강성에서도 나타납니다. 분명 강성이 높은 섬유로 만든 케이블인데도, 실제로 당겨보면 예상보다 잘 늘어납니다. 처음에는 부드럽다가 몇 번 당긴 뒤 단단해지는 경우도 있습니다. 무엇이 바뀐 걸까요?
+비슷한 문제가 인장 강성에서도 나타납니다. 강성이 높은 섬유로 만든 케이블인데도, 실제로 당겨 보면 예상보다 잘 늘어납니다. 처음에는 부드럽다가 몇 번 당긴 뒤 단단해지는 경우도 있습니다. 무엇이 바뀐 걸까요?
 
-로프를 확대해 보면 답을 찾을 실마리가 있습니다. 로프는 하나의 연속된 고체가 아니라, **filament → yarn → strand → rope**로 이어지는 계층적 구조물입니다. 여러 filament가 모여 yarn을 이루고, yarn들이 꼬이거나 엮여 strand를 이루며, strand들이 다시 편조됩니다. 제품에 따라 이 단계의 명칭과 실제 구성은 다릅니다.
+로프를 확대해 보면 실마리가 있습니다. 로프는 하나의 연속된 고체가 아니라, **filament → yarn → strand → rope**로 이어지는 계층적 구조물입니다. 여러 filament가 모여 yarn을 이루고, yarn들이 꼬이거나 엮여 strand를 이루며, strand들이 다시 편조됩니다. 제품에 따라 이 단계의 명칭과 실제 구성은 다릅니다.
 
-Leech (2002)는 이런 polymer fibre rope를 비균질하고 이방성인 구조물로 다뤘습니다 [1]. 각 구성 요소가 별도의 운동을 할 수 있고, twist와 braid 때문에 힘의 전달 방향도 로프 축과 일치하지 않기 때문입니다.
-
-케이블을 고를 때 소재 이름만 읽는 것은, 로봇의 모터 재질만 보고 감속기 전체의 강성을 예측하려는 것과 비슷할지도 모릅니다.
+Polymer fibre rope는 비균질하고 이방성인 구조물로 다뤄집니다 [1](#ref-1). 각 구성 요소가 따로 움직일 수 있고, twist와 braid 때문에 힘이 전달되는 방향도 로프 축과 일치하지 않기 때문입니다.
 
 ## 2. 같은 섬유인데 왜 로프 강성은 달라질까?
 
-이번에는 rope construction의 효과를 가장 단순한 기하학으로 살펴보겠습니다.
+Rope construction의 효과를 가장 단순한 기하학으로 살펴보겠습니다.
 
 로프 축을 따라 길이 $L$인 구간에 yarn 하나가 반지름 $r$의 나선 경로로 $n$바퀴 감겨 있다고 가정하겠습니다. 그러면 yarn의 실제 길이 $s$는
 
 $$
-\boxed{s=\sqrt{L^2+(2\pi nr)^2}}
+s=\sqrt{L^2+(2\pi nr)^2}
 $$
 
 입니다. Yarn이 로프 축과 이루는 각도를 $\alpha$라고 정의하면
@@ -50,7 +48,7 @@ $$
 \Delta s\simeq\cos\alpha\,\Delta L.
 $$
 
-즉, 로프의 축 방향 변위 $\Delta L$가 그대로 yarn의 축 방향 신장으로 바뀌지는 않습니다. Yarn이 비스듬하게 놓여 있기 때문입니다.
+즉, 로프의 축 방향 변위 $\Delta L$이 그대로 yarn의 축 방향 신장으로 바뀌지는 않습니다. Yarn이 비스듬하게 놓여 있기 때문입니다.
 
 이제 yarn의 실제 단면적을 $A_y$, 축 방향 탄성률을 $E_y$라고 하겠습니다. Yarn의 신장 에너지는
 
@@ -58,13 +56,13 @@ $$
 U_y=\frac12\frac{E_yA_y}{s}(\Delta s)^2
 $$
 
-입니다. 위의 기하학을 대입하고 $s=L/\cos\alpha$를 사용하면
+입니다. 위의 기하학을 대입하고 $s=L/\cos\alpha$를 쓰면
 
 $$
 U_y\simeq\frac12\frac{E_yA_y}{L}\cos^3\alpha\,(\Delta L)^2.
 $$
 
-서로 동일한 방식으로 변형되는 여러 yarn의 에너지를 합치면, 이 **stretch-only, fixed-radius helix model**에서
+같은 방식으로 변형되는 여러 yarn의 에너지를 합치면, 이 stretch-only, fixed-radius helix model에서
 
 $$
 \boxed{(EA)_{\mathrm{rope,ideal}}=\sum_i E_iA_i\cos^3\alpha_i}
@@ -72,9 +70,9 @@ $$
 
 라는 축 방향 유효 강성의 한 형태를 얻습니다.
 
-이 식을 실제 편조 로프의 설계 공식으로 그대로 쓰면 안 됩니다. $r$이 변하지 않고, yarn끼리 미끄러지지 않으며, yarn의 굽힘·비틀림·압축·마찰을 무시했기 때문입니다. 실제 braid는 당겨질 때 각도와 지름이 바뀌고, yarn이 재배열되며, 코어와 커버가 서로 다른 하중을 분담할 수 있습니다.
+이 식을 실제 편조 로프의 설계 공식으로 그대로 쓰면 안 됩니다. $r$이 변하지 않고, yarn끼리 미끄러지지 않으며, yarn의 굽힘·비틀림·압축·마찰을 무시했기 때문입니다. 실제 braid는 당겨질 때 각도와 지름이 바뀌고, yarn이 재배열되며, 코어와 커버가 서로 다른 하중을 나눠 받을 수 있습니다.
 
-하지만 이 식만으로도 중요한 사실을 확인할 수 있습니다.
+그래도 이 식으로 확인할 수 있는 것이 있습니다.
 
 $$
 (EA)_{\mathrm{rope}}\ne E_{\mathrm{fiber}}A_{\mathrm{nominal}}
@@ -82,11 +80,9 @@ $$
 
 **섬유의 물성이 같아도 그 섬유가 어떤 경로로 배열되어 있는지에 따라 완성된 로프의 기계적 응답은 달라질 수 있습니다.**
 
-이것은 단순한 기하학적 상상이 아닙니다. Li et al. (2021)은 구성이 서로 다른 세 종류의 HMPE braided rope를 장기 반복 하중으로 시험했고, dynamic stiffness의 차이가 rope construction, 특히 twist angle과 연관된다고 보고했습니다 [2]. Hamouda et al. (2020)은 27가지 braided polyester rope를 제작해 braid process와 구조적 변수가 인장 특성에 미치는 영향을 실험했습니다 [3].
+실험에서도 같은 경향이 보고되었습니다. 구성이 다른 세 종류의 HMPE braided rope를 장기 반복 하중으로 시험한 연구는 dynamic stiffness의 차이가 rope construction, 특히 twist angle과 연관된다고 보고했습니다 [2](#ref-2). {/* TODO(ref): 확인 필요 — Li et al. (2021)의 초록을 구하지 못해 "twist angle과 연관" 부분을 원문에서 확인하지 못함 */} 27가지 braided polyester rope를 만들어 take-up 속도, 장력, braid pattern 같은 제조 변수가 braid angle과 인장 특성에 미치는 영향을 조사한 연구도 있습니다 [3](#ref-3).
 
-<!-- INTERACTIVE TODO: RopeConstructionExplorer. One helix and optionally counter-wound second helix. Sliders braid angle alpha [degrees], rope axial extension Delta L (small), reference yarn EA; show path lengths s,L, yarn extension Delta s, normalized ideal axial stiffness cos^3(alpha). Two modes: fixed-radius stretch-only (quantitative idealization) versus rearrangement/sliding (qualitative motion only). Show strong disclaimer: no validated braid mechanics or fatigue prediction. No import until component exists. -->
-
-여기에 **Rope Construction Explorer**를 배치할 수 있습니다. Braid angle을 바꾸면서 같은 축 방향 신장에 대해 yarn의 경로 길이와 이상적인 강성 계수가 어떻게 달라지는지 보여주는 것입니다. 이 그림에서 계산하는 것은 나선형 yarn 모델이지, 실제 로프의 강성 측정값은 아닙니다.
+{/* INTERACTIVE TODO: RopeConstructionExplorer. One helix and optionally counter-wound second helix. Sliders braid angle alpha [degrees], rope axial extension Delta L (small), reference yarn EA; show path lengths s, L, yarn extension Delta s, normalized ideal axial stiffness cos^3(alpha). Two modes: fixed-radius stretch-only (quantitative idealization) versus rearrangement/sliding (qualitative motion only). Show strong disclaimer: no validated braid mechanics or fatigue prediction. */}
 
 ## 3. 그런데 yarn들은 서로 미끄러질 수 있다
 
@@ -100,15 +96,15 @@ $$
 |F_t|\le\mu N_c
 $$
 
-로 표현합니다. 접촉점이 이 한계 안에 머물면 상대 운동을 억제하고, 한계를 넘으면 미끄럼이 발생할 수 있습니다. 실제 섬유 표면에는 접착, 접촉 면적 변화, 온도 의존성 등이 있어 이 식만으로 모든 미끄럼을 설명할 수는 없습니다.
+로 표현합니다. 접촉점이 이 한계 안에 머물면 상대 운동이 억제되고, 한계를 넘으면 미끄럼이 생길 수 있습니다. 실제 섬유 표면에는 접착, 접촉 면적 변화, 온도 의존성 등이 있어 이 식만으로 모든 미끄럼을 설명할 수는 없습니다.
 
-중요한 것은 **내부 마찰이 로프의 거시적인 힘–변형 응답에도 영향을 줄 수 있다는 점**입니다. 같은 길이로 되돌아오더라도 내부 yarn이 이전과 같은 위치로 돌아오지 않았다면, 다음 하중을 가할 때의 거동이 달라질 수 있습니다.
+**내부 마찰은 로프의 거시적인 힘–변형 응답에도 영향을 줄 수 있습니다.** 같은 길이로 되돌아오더라도 내부 yarn이 이전과 같은 위치로 돌아오지 않았다면, 다음 하중을 가할 때의 거동이 달라질 수 있습니다.
 
-Leech (2002)는 로프의 계층적 구조에서 발생하는 여러 상대 운동과 마찰을 모델링했고 [1], Ziyuan Li et al. (2023)은 yarn-level finite element model로 braided rope가 sheave에 굽혀질 때 crossing point의 이동과 yarn 사이의 상대 운동을 분석했습니다 [4]. 여기서 얻은 접촉력과 상대 운동은 **해당 모델의 계산 결과**이지 모든 로프에서 직접 측정된 보편적인 값은 아닙니다.
+로프의 계층적 구조에서 생기는 여러 상대 운동과 마찰은 모델로 다뤄졌습니다 [1](#ref-1). Braided rope가 sheave에 굽혀질 때 crossing point의 이동과 yarn 사이의 상대 운동을 yarn 수준 유한요소 모델로 분석한 연구도 있습니다 [4](#ref-4). 여기서 얻은 접촉력과 상대 운동은 해당 모델의 계산 결과이지, 모든 로프에서 직접 측정된 보편적인 값은 아닙니다.
 
 ## 4. 마찰과 마모는 같은 말이 아니다
 
-Yarn들이 상대적으로 움직이면 접촉 마찰이 생길 수 있습니다. 하지만 **friction**과 **abrasion**은 다른 현상입니다.
+Yarn들이 상대적으로 움직이면 접촉 마찰이 생길 수 있습니다. 하지만 friction과 abrasion은 다른 현상입니다.
 
 Friction은 접촉 상태에서 상대 운동에 저항하는 힘과 에너지 손실의 메커니즘입니다. Abrasion은 반복 접촉과 운동으로 표면이나 구성 섬유에 실제 손상이 누적되는 현상입니다. 마찰이 있다고 해서 언제나 눈에 띄는 마모가 같은 속도로 진행되는 것은 아닙니다.
 
@@ -120,76 +116,90 @@ $$
 W_{\mathrm{loop}}=\oint T\,\mathrm dL
 $$
 
-로 표현할 수 있습니다. 동일한 기계적 상태로 돌아오는 주기이며 측정 경계가 명확하다면 이 면적은 해당 경계 안의 순 에너지 소산과 연결됩니다. 그러나 이것을 곧바로 **yarn-on-yarn abrasion에 사용된 에너지**라고 해석하면 안 됩니다. 섬유 점탄성, 끝단 움직임, 외부 접촉, 장치 마찰 등이 섞일 수 있고, 상태가 주기마다 변하면 저장 에너지의 변화도 고려해야 하기 때문입니다.
+로 표현할 수 있습니다. 같은 기계적 상태로 돌아오는 주기이고 측정 경계가 분명하다면 이 면적은 그 경계 안의 순 에너지 소산과 연결됩니다. 그러나 이것을 곧바로 yarn-on-yarn abrasion에 쓰인 에너지라고 해석하면 안 됩니다. 섬유 점탄성, 끝단 움직임, 외부 접촉, 장치 마찰 등이 섞일 수 있고, 상태가 주기마다 변하면 저장 에너지의 변화도 고려해야 하기 때문입니다.
 
-즉, Hysteresis가 크다고 해서 곧바로 내부 마모가 심하다고 결론내릴 수는 없습니다. 반대로 hysteresis가 작다는 이유만으로 내구성이 좋다고 단정할 수도 없습니다.
+즉, hysteresis가 크다고 해서 곧바로 내부 마모가 심하다고 결론 내릴 수는 없습니다. 반대로 hysteresis가 작다는 이유만으로 내구성이 좋다고 단정할 수도 없습니다.
 
-## 5. Yarn-on-Yarn Abrasion — 케이블이 스스로를 갉아먹는다면
+## 5. Yarn-on-yarn abrasion
 
 이제 마찰이 장기적인 손상으로 이어지는 경우를 살펴보겠습니다.
 
-Braided rope에는 많은 crossing point가 존재합니다. 반복 굽힘을 수용하면서 서로 다른 yarn 사이에 미끄럼과 접촉 압력이 발생하면, 그 지점에서 마찰열과 표면 손상이 누적될 수 있습니다. 이것이 yarn-on-yarn abrasion을 로프 내구성의 후보 메커니즘으로 주목하는 이유입니다.
+Braided rope에는 많은 crossing point가 있습니다. 반복 굽힘을 수용하면서 서로 다른 yarn 사이에 미끄럼과 접촉 압력이 생기면, 그 지점에서 마찰열과 표면 손상이 누적될 수 있습니다. 이것이 yarn-on-yarn abrasion을 로프 내구성의 후보 메커니즘으로 보는 이유입니다.
 
-**Hongxia Li et al. (2024)**은 UHMWPE, PET, PPTA, PAR 등 네 종류의 yarn을 대상으로 yarn-on-yarn abrasion 시험을 수행하고, infrared imaging과 SEM을 사용하여 손상 양상을 분석했습니다 [5].
+UHMWPE, PET, PPTA, PAR 네 종류의 yarn을 대상으로, 마모 주파수와 yarn 장력을 바꾸며 yarn-on-yarn abrasion 시험을 하고 마모 부위의 온도, yarn 상태, 마모 부스러기 형태를 관찰한 연구가 있습니다 [5](#ref-5). 이 시험에서 PPTA와 PAR에서는 비교적 길고 많은 fuzz가 관찰됐고, UHMWPE와 PET는 기계적 마모뿐 아니라 마찰열의 영향도 받았습니다. UHMWPE의 마모 수명은 시험한 조건에서 주파수에 따라 한 방향으로만 변하지 않았습니다. {/* TODO(ref): 확인 필요 — Li et al. (2024)의 fuzz, 마찰열, 주파수 의존성 서술은 초록에 없어 원문에서 확인하지 못함 */} 마찰열이 언제나 나쁘다거나 어떤 섬유가 언제나 가장 강하다는 식의 단순한 순위를 만들기 어려운 이유입니다.
 
-이 연구에서 PPTA와 PAR는 마찰 과정에서 비교적 길고 많은 fuzz가 관찰됐고, UHMWPE와 PET는 기계적 마모뿐 아니라 마찰열의 영향도 받았습니다. UHMWPE의 마모 수명은 시험한 조건에서 주파수에 따라 단순히 한 방향으로 변하지 않았습니다. **마찰열이 언제나 나쁘다**거나 **어떤 섬유가 언제나 가장 강하다**는 식의 단순한 순위를 만들기 어려운 이유입니다.
+여기서 조심할 점이 있습니다. 이 실험은 yarn-on-yarn 시험이지 완성된 로프의 CBOS 시험이 아닙니다. 어떤 yarn의 abrasion 결과가 좋다고 해서 그 섬유로 만든 임의의 rope가 같은 순서의 CBOS 수명을 갖는다고 주장할 수는 없습니다. 완성된 로프에서는 braid angle, packing, 코어, 코팅, 장력 분포가 달라지기 때문입니다.
 
-여기서 조심해야 할 점이 있습니다. 이 실험은 **yarn-on-yarn 시험**이지 완성된 로프의 CBOS 시험이 아닙니다. 어떤 yarn의 abrasion 결과가 좋다고 해서 그 섬유로 만든 임의의 rope가 같은 순서의 CBOS 수명을 갖는다고 주장할 수는 없습니다. 완성된 로프에서는 braid angle, packing, 코어, 코팅, 장력 분포가 달라지기 때문입니다.
+실제 braided HMPE rope의 CBOS 시험에서도 로프 내부의 수많은 crossing point가 internal abrasion의 원인이 될 가능성이 논의되었습니다 [6](#ref-6). 이 역시 내부 마모가 모든 CBOS 파손의 유일한 원인이라고 증명하는 것은 아닙니다.
 
-Davies et al. (2015)은 실제 braided HMPE rope의 CBOS 시험에서 로프 내부의 수많은 crossing point가 internal abrasion의 원인이 될 가능성을 논의했습니다 [6]. 이 역시 내부 마모가 **모든 CBOS 파손의 유일한 원인**이라고 증명하는 것은 아닙니다.
+## 6. 그러면 rope construction을 어떻게 바꿔야 할까?
 
-## 6. 그러면 Rope Construction을 어떻게 바꿔야 할까?
+이제 섬유의 이름 대신 구조를 보게 됩니다.
 
-이제 단순히 섬유의 이름 대신 **구조**를 보게 됩니다.
+Braid angle을 바꾸면 yarn이 하중 방향으로 놓이는 정도와 서로 만나는 형상이 바뀝니다. Core/cover 구조를 선택하면 어떤 yarn이 인장 하중을 주로 받고 어떤 yarn이 외부 접촉을 감당하는지를 나눌 수도 있습니다. Coating이나 strand jacketing을 쓰면 접촉과 마모 환경이 달라질 수 있지만, 같은 변화가 굽힘 강성, 직경, 패키징, 열 축적에도 영향을 줄 수 있습니다.
 
-Braid angle을 바꾸면 yarn이 하중 방향으로 놓이는 정도와 서로 만나는 형상이 바뀝니다. Core/cover 구조를 선택하면 어떤 yarn이 인장 하중을 주로 받고 어떤 yarn이 외부 접촉을 감당하는지를 분리할 수도 있습니다. Coating이나 strand jacketing을 사용하면 접촉과 마모 환경이 달라질 수 있지만, 같은 변화가 굽힘 강성, 직경, 패키징, 열 축적에도 영향을 줄 수 있습니다.
+따라서 '마모를 줄이려면 코팅을 두껍게 하면 된다'고 단정할 수 없습니다. 코팅이 움직임을 제한하면 상대 미끄럼은 줄어들 수 있지만, 접촉력이나 굽힘 저항은 다른 방식으로 달라질 수 있습니다. 또한 바깥쪽 cover만 보호하는 구조와 각 strand를 개별적으로 보호하는 구조는 같은 설계가 아닙니다.
 
-따라서 '마모를 줄이려면 코팅을 두껍게 하면 된다'고 단정할 수 없습니다. 코팅이 움직임을 제한하면 상대 미끄럼은 줄어들 수 있지만, 접촉력이나 굽힘 저항은 다른 방식으로 달라질 수 있습니다. 또한 바깥쪽 cover만 보호하는 구조와 **각 strand를 개별적으로 보호하는 구조**는 같은 설계가 아닙니다.
+제조 변수에 따라 braided polyester rope의 인장 특성이 달라지고 [3](#ref-3), rope construction에 따라 동적 강성이 달라진다는 결과도 있습니다 [2](#ref-2). 하지만 이런 인장 및 반복 하중 시험만으로 특정 코팅이나 jacket이 yarn-on-yarn abrasion을 얼마나 억제하는지까지 결론 낼 수는 없습니다.
 
-실제로 Hamouda et al. (2020)은 제조 변수에 따라 braided polyester rope의 인장 특성이 달라질 수 있음을 보여줬고 [3], Li et al. (2021)은 서로 다른 rope construction의 동적 강성 차이를 보고했습니다 [2]. 하지만 이러한 인장 및 반복 하중 시험만으로 특정 코팅이나 jacket이 yarn-on-yarn abrasion을 얼마나 억제하는지까지 결론낼 수는 없습니다.
+우리가 비교해야 하는 것은 이름이 붙은 소재 하나가 아니라, 섬유 물성, 구조, 접촉 조건, 하중 이력의 조합입니다.
 
-우리가 비교해야 하는 것은 이름이 붙은 소재 하나가 아니라, **섬유 물성 + 구조 + 접촉 조건 + 하중 이력**의 조합입니다.
+## 7. Pre-stretch를 했는데 왜 또 늘어났을까?
 
-## 7. 분명 Pre-stretch했는데 왜 또 늘어났을까?
+처음의 질문으로 돌아가 보겠습니다. Pre-stretch를 했는데도 케이블 길이가 다시 변할 수 있는 이유는 무엇일까요?
 
-여기서 처음의 질문으로 돌아가 보겠습니다. Pre-stretch를 했는데도 케이블 길이가 다시 변할 수 있는 이유는 무엇일까요?
+먼저 reversible elastic extension과 reference-length change를 구분해야 합니다. 하중을 제거하면 되돌아오는 탄성 신장은 로프가 '늘어나서 망가졌다'는 증거가 아닙니다. 반면 같은 기준 하중에서 측정한 길이가 이전과 달라졌다면, 구조적 자리잡음이나 시간 의존 변형, 끝단 이동 등의 가능성을 고려해야 합니다.
 
-먼저 **reversible elastic extension**과 **reference-length change**를 구분해야 합니다. 하중을 제거하면 되돌아오는 탄성 신장은 로프가 '늘어나서 망가졌다'는 증거가 아닙니다. 반면 동일한 기준 하중에서 측정한 길이가 이전과 달라졌다면, 구조적 자리잡음이나 시간 의존 변형, 끝단 이동 등의 가능성을 고려해야 합니다.
+Bedding-in 또는 constructional stretch는 yarn의 배열과 접촉 상태가 하중 이력에 따라 자리잡는 과정과 관련됩니다. Creep은 일정한 하중을 유지할 때 시간에 따라 진행되는 변형이며, 재료에 따라 회복되는 성분과 비가역 성분이 있을 수 있습니다. Plastic deformation은 재료 수준의 비가역 변형을 뜻합니다. Termination settling/slip은 로프 본체가 아니라 끝단에서 생기는 이동입니다. 한 번의 길이 측정만으로는 이들을 분리하기 어렵습니다.
 
-**Bedding-in 또는 constructional stretch**는 yarn의 배열과 접촉 상태가 하중 이력에 따라 자리잡는 과정과 관련됩니다. **Creep**은 일정한 하중을 유지할 때 시간에 따라 진행되는 변형이며, 재료 의존적인 회복·비가역 성분이 존재할 수 있습니다. **Plastic deformation**은 재료 수준의 비가역 변형을 뜻합니다. **Termination settling/slip**은 로프 본체가 아니라 끝단에서 생기는 이동입니다. 한 번의 길이 측정만으로는 이들을 분리하기 어렵습니다.
+HMPE와 aramid rope 및 섬유를 비교한 연구에서는 새 HMPE 로프의 초기 강성이 bedding-in 과정에서 커질 수 있음이 보고되었습니다 [7](#ref-7). 평균 하중, 진폭, 반복 횟수가 synthetic fiber rope의 bedding-in 수준에 미치는 영향도 조사되었습니다 [8](#ref-8).
 
-Davies et al. (2011)은 HMPE와 aramid rope 및 섬유를 비교하면서 새로운 HMPE 로프의 초기 강성이 bedding-in 과정에서 증가할 수 있음을 보고했습니다 [7]. Lian et al. (2018)은 평균 하중, 진폭, 반복 횟수가 synthetic fiber rope의 bedding-in 수준에 미치는 영향을 조사했습니다 [8].
-
-따라서 Pre-stretch를 한 번 했다는 사실만으로 이후의 모든 하중 이력에 대한 구조적 변화가 끝났다고 가정할 수는 없습니다. 그렇다고 **Pre-stretch 이후의 신장이 반드시 yarn-on-yarn abrasion 때문**이라고 말할 수도 없습니다. 원인을 구별하려면 끝단에 slip marker를 표시하고, 로프 본체의 gauge length와 전체 구동계의 변위를 분리하여 측정해야 합니다.
+따라서 pre-stretch를 한 번 했다는 사실만으로 이후의 모든 하중 이력에 대한 구조적 변화가 끝났다고 가정할 수는 없습니다. 그렇다고 pre-stretch 이후의 신장이 반드시 yarn-on-yarn abrasion 때문이라고 말할 수도 없습니다. 원인을 구별하려면 끝단에 slip marker를 표시하고, 로프 본체의 gauge length와 전체 구동계의 변위를 나눠 측정해야 합니다.
 
 ## 8. 로봇은 이 차이를 언제 느낄까?
 
-결국 로봇이 경험하는 케이블은 하나의 상수 $E$로 대표되는 재료가 아닙니다. 특정 Pretension과 하중 이력 아래에서 만들어진 **effective axial stiffness**, 굽힘과 접촉에 따른 **hysteresis**, 시간과 반복에 따른 **reference length**를 가진 전달 요소입니다.
+로봇이 경험하는 케이블은 하나의 상수 $E$로 대표되는 재료가 아닙니다. 특정 pretension과 하중 이력 아래에서 만들어진 effective axial stiffness, 굽힘과 접촉에 따른 hysteresis, 시간과 반복에 따른 reference length를 가진 전달 요소입니다.
 
 같은 모터 위치 명령을 보내도 케이블의 유효 길이가 달라졌다면 출력 관절의 위치와 장력이 바뀔 수 있습니다. 내부 구조가 자리잡아 apparent stiffness가 커졌다고 해서 케이블이 더 건강해졌다는 뜻도 아닙니다. **강성 변화와 잔류 파단강도는 서로 다른 측정량**이기 때문입니다.
 
-여기까지의 이야기는 다소 역설적입니다. 케이블은 유연하기 때문에 복잡한 경로를 따라 힘을 전달할 수 있습니다. 그런데 그 유연함을 만들어주는 계층적 구조와 내부 운동이, 다시 케이블의 기계적 응답을 복잡하게 만듭니다.
+케이블은 유연하기 때문에 복잡한 경로를 따라 힘을 전달할 수 있습니다. 그런데 그 유연함을 만드는 계층적 구조와 내부 운동이, 다시 케이블의 기계적 응답을 복잡하게 만듭니다.
 
 **케이블은 하나의 재료라기보다, 수많은 작은 요소가 접촉하며 작동하는 기계 시스템에 가깝습니다.**
 
-그리고 이런 케이블을 실제 로봇에 연결하려면 마지막에 반드시 해야 하는 일이 하나 있습니다. 어떻게든 끝을 고정해야 한다는 것이죠.
+그리고 이런 케이블을 실제 로봇에 연결하려면 마지막으로 해야 하는 일이 있습니다. 어떻게든 끝을 고정해야 합니다.
 
-[다음 포스트 — Cable 04, 케이블 끝에서는 무슨 일이 일어날까?](/cable04-kr/)
+다음 포스트: Cable 04 — 케이블 끝에서는 무슨 일이 일어날까? (준비 중)
 
 ## References
 
-[1] C. M. Leech, “The modelling of friction in polymer fibre ropes,” *International Journal of Mechanical Sciences*, 44(3), 621–643, 2002. https://doi.org/10.1016/S0020-7403(01)00095-9
+<span id="ref-1"></span>
 
-[2] G. Li, W. Li, S. Lin, H. Li, Y. Ge, and Y. Sun, “Dynamic stiffness of braided HMPE ropes under long-term cyclic loads: A full-scale experimental investigation,” *Ocean Engineering*, 231, 109076, 2021. https://doi.org/10.1016/j.oceaneng.2021.109076
+[1] C. M. Leech, “The modelling of friction in polymer fibre ropes,” *International Journal of Mechanical Sciences*, 44(3), 621–643, 2002. [DOI: 10.1016/S0020-7403(01)00095-9](https://doi.org/10.1016/S0020-7403(01)00095-9).
 
-[3] T. Hamouda, N. M. Aly, and M. H. Elshakankery, “An experimental study on the interaction between braiding structural parameters and their effects on ropes mechanical properties,” *Journal of Industrial Textiles*, 2020. https://doi.org/10.1177/1528083720960732
+<span id="ref-2"></span>
 
-[4] Z. Li, Z. Shang, E. Zappa, L. Van Langenhove, and B. Malengier, “Yarn level finite element method simulation for bending over sheaves of braided ropes,” *Journal of Industrial Textiles*, 53, 2023. https://doi.org/10.1177/15280837231189891
+[2] G. Li, W. Li, S. Lin, H. Li, Y. Ge, and Y. Sun, “Dynamic stiffness of braided HMPE ropes under long-term cyclic loads: A full-scale experimental investigation,” *Ocean Engineering*, 230, 109076, 2021. [DOI: 10.1016/j.oceaneng.2021.109076](https://doi.org/10.1016/j.oceaneng.2021.109076).
 
-[5] H. Li et al., “Abrasion performance and failure mechanism of fiber yarns based on molecular segmental differences,” *Journal of Engineered Fibers and Fabrics*, 19, 2024. https://doi.org/10.1177/15589250241228263
+<span id="ref-3"></span>
 
-[6] P. Davies, M. François, N. Lacotte, T. D. Vu, and D. Durville, “An empirical model to predict the lifetime of braided HMPE handling ropes under cyclic bend over sheave (CBOS) loading,” *Ocean Engineering*, 97, 74–81, 2015. https://doi.org/10.1016/j.oceaneng.2015.01.003
+[3] T. Hamouda, N. M. Aly, and M. H. Elshakankery, “An experimental study on the interaction between braiding structural parameters and their effects on ropes mechanical properties,” *Journal of Industrial Textiles*, 51(9), 1467–1493, 2020. [DOI: 10.1177/1528083720960732](https://doi.org/10.1177/1528083720960732).
 
-[7] P. Davies, Y. Reaud, L. Dussud, and P. Woerther, “Mechanical behaviour of HMPE and aramid fibre ropes for deep sea handling operations,” *Ocean Engineering*, 38(17–18), 2208–2214, 2011. https://doi.org/10.1016/j.oceaneng.2011.10.010
+<span id="ref-4"></span>
 
-[8] Y. Lian, H. Liu, L. Li, and Y. Zhang, “An experimental investigation on the bedding-in behavior of synthetic fiber ropes,” *Ocean Engineering*, 160, 368–381, 2018. https://doi.org/10.1016/j.oceaneng.2018.04.071
+[4] Z. Li, Z. Shang, E. Zappa, L. Van Langenhove, and B. Malengier, “Yarn level finite element method simulation for bending over sheaves of braided ropes,” *Journal of Industrial Textiles*, 53, 2023. [DOI: 10.1177/15280837231189891](https://doi.org/10.1177/15280837231189891).
+
+<span id="ref-5"></span>
+
+[5] H. Li, G. He, Z. Zhao, Q. Liu, J. Wang, Y. Yin, Y. Cui, X. Ning, and F. Ning, “Abrasion performance and failure mechanism of fiber yarns based on molecular segmental differences,” *Journal of Engineered Fibers and Fabrics*, 19, 2024. [DOI: 10.1177/15589250241228263](https://doi.org/10.1177/15589250241228263).
+
+<span id="ref-6"></span>
+
+[6] P. Davies, M. François, N. Lacotte, T. D. Vu, and D. Durville, “An empirical model to predict the lifetime of braided HMPE handling ropes under cyclic bend over sheave (CBOS) loading,” *Ocean Engineering*, 97, 74–81, 2015. [DOI: 10.1016/j.oceaneng.2015.01.003](https://doi.org/10.1016/j.oceaneng.2015.01.003).
+
+<span id="ref-7"></span>
+
+[7] P. Davies, Y. Reaud, L. Dussud, and P. Woerther, “Mechanical behaviour of HMPE and aramid fibre ropes for deep sea handling operations,” *Ocean Engineering*, 38(17–18), 2208–2214, 2011. [DOI: 10.1016/j.oceaneng.2011.10.010](https://doi.org/10.1016/j.oceaneng.2011.10.010).
+
+<span id="ref-8"></span>
+
+[8] Y. Lian, H. Liu, L. Li, and Y. Zhang, “An experimental investigation on the bedding-in behavior of synthetic fiber ropes,” *Ocean Engineering*, 160, 368–381, 2018. [DOI: 10.1016/j.oceaneng.2018.04.071](https://doi.org/10.1016/j.oceaneng.2018.04.071).
