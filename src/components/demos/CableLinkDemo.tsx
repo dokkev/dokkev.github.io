@@ -58,10 +58,6 @@ const text = {
     state: "Tendon 상태",
     taut: "팽팽함",
     slack: "느슨함 (slack)",
-    helpPair:
-      "두 tendon이 같은 구동 풀리에 감겨 있어서, 한쪽을 감는 만큼 다른 쪽이 풀립니다. 풀리였다면 두 길이 변화가 정확히 같지만, 링크에 고정하면 두 모멘트 암이 서로 다르고 각도에 따라 바뀌므로 신전 tendon이 느슨해지거나 더 늘어나야 하는 상황이 생깁니다. 실제로는 pretension과 케이블 컴플라이언스가 이 차이를 받아 냅니다. 전달비 r/h_f도 각도에 따라 바뀝니다. 점선은 관절에서 각 tendon까지의 모멘트 암입니다.",
-    helpSpring:
-      "굴곡(링크 음의 방향)은 파란 tendon이 능동으로, 신전은 관절의 비틀림 스프링(초록)이 수동으로 만듭니다. 평행 배치에서는 입력을 음의 방향으로, 교차 배치에서는 양의 방향으로 돌려야 굴곡이 됩니다. 입력을 누르고 있지 않으면 스프링이 링크와 입력을 천천히 0°로 되돌립니다. 입력을 반대로 돌리면 링크는 stopper에 머물고 tendon이 느슨해집니다. 모멘트 암 h_f가 각도에 따라 바뀌므로 같은 입력 회전에도 링크가 도는 양이 달라집니다.",
     note: `교육용 기구학 모델입니다. 구동 풀리 반지름 r = ${r} mm, 관절에서 고정점까지 거리 ${A_ATT} mm, 고정점은 링크 축에서 ±${W} mm, 가이드는 관절에서 ${J.x - GX} mm 앞, 중심선에서 ±${GH} mm에 있습니다. Tendon은 늘어나지 않고 가이드에서 마찰 없이 꺾입니다. 관절 각도는 굴곡 tendon 길이에서 구합니다. 양방향 모드의 범위는 두 tendon 선이 관절을 넘어가지 않는 각도까지입니다(관절에서 ${H_MIN} mm 이내면 넘어간 것으로 봅니다). 스프링 복귀는 시정수 ${TAU} s의 1차 응답으로 그린 것입니다. 힘, 마찰, pretension은 넣지 않았습니다.`,
   },
   en: {
@@ -81,10 +77,6 @@ const text = {
     state: "Tendon",
     taut: "taut",
     slack: "slack",
-    helpPair:
-      "Both tendons are wound on the same driver, so whatever one reels in, the other pays out. On a pulley the two length changes match exactly; terminated on a link, the two moment arms differ and change with angle, so the extensor either goes slack or would have to stretch. In practice pretension and cable compliance absorb the difference. The ratio r/h_f changes with angle too. The dashed lines are the moment arms from the joint to each tendon.",
-    helpSpring:
-      "Flexion (negative link angle) is driven actively by the blue tendon and extension passively by the torsion spring (green) at the joint. In the open layout a negative input flexes; in the crossed layout a positive one does. When the input is not held, the spring slowly brings the link and the input back to 0°. Turn the input the other way and the link stays at its stop while the tendon goes slack. Because h_f changes with angle, the same input rotation turns the link by different amounts.",
     note: `Teaching kinematics model. Driver radius r = ${r} mm, terminations ${A_ATT} mm from the joint and ±${W} mm off the link axis, guides ${J.x - GX} mm before the joint and ±${GH} mm off the centre line. Tendons are inextensible and bend over the guides without friction. The joint angle follows from the flexor length. In antagonistic mode the range stops where a tendon line would cross the joint (within ${H_MIN} mm). The spring return is drawn as a first-order response with a ${TAU} s time constant. Forces, friction and pretension are not modeled.`,
   },
 };
@@ -435,7 +427,6 @@ export function LinkBody({ lang = "ko", mode, drive }: { lang?: Lang; mode: Mode
           </>
         )}
       </output>
-      <p className="demo-help">{spring ? t.helpSpring : t.helpPair}</p>
       <div className="cable-demo-buttons">
         <button className="signal-reset" type="button" onClick={() => setPlaying((p) => !p)}>
           {playing ? t.stop : t.play}
@@ -451,7 +442,10 @@ export function LinkBody({ lang = "ko", mode, drive }: { lang?: Lang; mode: Mode
           {t.reset}
         </button>
       </div>
-      <p className="demo-model-note">{t.note}</p>
+      <details className="demo-model-details">
+        <summary>{lang === "ko" ? "구현 세부 사항" : "Implementation details"}</summary>
+        <p className="demo-model-note">{t.note}</p>
+      </details>
     </>
   );
 }

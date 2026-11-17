@@ -5,8 +5,6 @@ const copy = {
   en: {
     eyebrow: "Interactive example · 2 DoF cyclic force control",
     title: "Creep changes the geometry used for force control",
-    intro:
-      "The finger flexes into an elastic grip, ramps up a downward force, holds, then unloads and retracts. Creep accumulates under load. Even with elastic stretch corrected and motor torques delivered exactly, the drifting pose estimate changes the Jacobian and the actual fingertip force.",
     peak: "Target force during hold",
     frequency: "Cycle frequency",
     rate: "Creep rate (illustrative)",
@@ -34,7 +32,6 @@ const copy = {
     cycles: "Cycles",
     creep: "Accumulated creep",
     plot: "Force vector error [N] vs time · amber: error, shaded: target-force hold",
-    help: "Purple is Ground Truth, grey is Motor Encoder Only, and amber is Motor Encoder + Elastic Elongation Model. The grey pose includes elastic stretch and creep; the amber pose removes elastic stretch. Watch the hold: the target force stays constant while creep shifts the inferred joint angles. The controller uses J(q̂)ᵀ to calculate torques, but the real finger transfers them through J(q). Actual pose and elastic-grip deflection therefore change along with the force. Creep remains after unloading, so later cycles start with a larger estimation bias. Switch to measured joint pose to remove this source of force error while keeping the accumulated creep.",
     limit: "Illustration limit reached; reset to run again.",
     note: "Quasi-static teaching model: 50/35 mm links, coupled tendon coordinates with 10 mm moment arms, and tendon stiffness 10 N/mm. Motor travel is x₁ = r q₁ + δe₁ + δc₁ and x₂ = r(q₁ + q₂) + δe₂ + δc₂, with δe = (T − 10 N)/k. Define A = [[r, 0], [r, r]]. Encoder Only uses A⁻¹x; Encoder + Elastic Elongation Model uses A⁻¹(x − δe) and retains the creep bias. The latter supplies the default controller pose. During contact a releasable elastic grip transmits both x and y force with stiffness 6000 N/m per axis; it releases after unloading. This models a captured fingertip. Equilibrium solves J(q)ᵀ K(p(q) − p_contact) = J(q_used)ᵀ F_target. Both motors are grounded. M₁ drives P₁ directly, without an idler. M₂ passes around a freely rotating idler I₂ coaxial with joint 1, then follows the proximal link to P₂. Tendon 2 therefore acts on both joints. Pretension is 10 N and balanced; τ = Aᵀ(T − T₀). Only pulling is allowed: ΔT = max(0, A⁻ᵀ τ_des). Pulley sizes and motor positions are schematic. Free motion follows a prescribed approach/retraction path to isolate the contact force-control error. Creep is a nonrecovering, time-compressed effective length drift proportional to squared load, with different rates per joint; these are not material measurements. Friction, gravity, inertia and direct force feedback are omitted. The run pauses at 3 mm creep or a failed equilibrium solve.",
     source: "Jacobian-transpose force control",
@@ -42,8 +39,6 @@ const copy = {
   ko: {
     eyebrow: "인터랙티브 예시 · 2 DoF 반복 힘 제어",
     title: "Creep이 힘 제어에 사용하는 기하 구조를 바꾼다",
-    intro:
-      "손가락이 굽혀져 탄성 그립에 접촉하고, 아래 방향 힘을 올려 유지한 뒤 힘을 내리고 다시 펴집니다. 부하가 걸리면 creep이 쌓입니다. 탄성 신장을 보정하고 모터 토크를 정확히 전달해도, 추정 자세가 달라지면 Jacobian과 실제 끝점 힘이 달라집니다.",
     peak: "유지 구간 목표 힘",
     frequency: "반복 주파수",
     rate: "Creep 속도 (예시용)",
@@ -71,7 +66,6 @@ const copy = {
     cycles: "주기",
     creep: "누적 creep",
     plot: "힘 벡터 오차 [N] – 시간 · 주황: 오차, 음영: 목표 힘 유지 구간",
-    help: "보라색은 Ground Truth, 회색은 Motor Encoder Only, 주황색은 Motor Encoder + Elastic Elongation Model입니다. 회색에는 탄성 신장과 creep이 모두 들어가고 주황색은 탄성 신장을 보정합니다. 유지 구간을 보세요. 목표 힘은 일정하지만 creep으로 추정 관절 각도가 변합니다. 제어기는 J(q̂)ᵀ로 토크를 계산하고, 실제 손가락은 J(q)를 통해 힘을 전달합니다. 그 결과 실제 자세와 그립 변형, 끝점 힘이 함께 달라집니다. 힘을 내려도 creep은 남아 다음 주기의 추정 오차가 커집니다. 관절 측정 자세로 전환하면 누적 creep을 유지한 채 이 원인에 따른 힘 오차를 없앨 수 있습니다.",
     limit: "예시 범위에 도달했습니다. 초기화하면 다시 실행됩니다.",
     note: "교육용 준정적 모델입니다. 링크 길이 50/35 mm, 두 tendon의 결합된 좌표와 모멘트 암 10 mm를 가정합니다. Tendon 강성은 10 N/mm이며 x₁ = r q₁ + δe₁ + δc₁, x₂ = r(q₁ + q₂) + δe₂ + δc₂, δe = (T − 10 N)/k입니다. A = [[r, 0], [r, r]]라 두면 Encoder Only는 A⁻¹x, 탄성 신장 보정 모델은 A⁻¹(x − δe)로 자세를 추정합니다. 보정 후에도 creep에 따른 오차는 남으며 기본 제어기는 이 보정 자세를 사용합니다. 접촉 중에는 끝점을 잡는 탄성 그립이 x, y 두 방향으로 힘을 전달하며 강성은 축마다 6000 N/m입니다. 제하 후 그립이 풀립니다. J(q)ᵀ K(p(q) − p_contact) = J(q_used)ᵀ F_target의 평형을 풉니다. 모터는 둘 다 고정됩니다. M₁은 idler 없이 P₁을 직접 구동하고, M₂는 관절 1과 동축인 자유 회전 idler I₂를 지나 첫 번째 링크를 따라 P₂로 이어집니다. 따라서 tendon 2는 두 관절에 모두 토크를 줍니다. Pretension 10 N은 평형을 이루고 τ = Aᵀ(T − T₀)입니다. 굴곡 tendon만 당기도록 ΔT = max(0, A⁻ᵀ τ_des)로 제한합니다. 풀리 크기와 모터 위치는 개략도입니다. 자유 운동은 접촉 중 힘 제어 오차를 분리해 보기 위해 정해진 접근·복귀 경로를 따릅니다. Creep은 부하 제곱에 비례하고 회복하지 않는 시간 압축 모델이며 관절별 속도가 다릅니다. 실제 소재 측정값이 아닙니다. 마찰, 중력, 관성과 직접 힘 피드백은 생략했습니다. Creep 3 mm 또는 평형 계산 실패 시 정지합니다.",
     source: "Jacobian 전치 기반 힘 제어",
@@ -216,7 +210,6 @@ export default function TendonJacobianDemo({ lang = "en" }: { lang?: "ko" | "en"
         <span className="eyebrow">{t.eyebrow}</span>
         <h3>{t.title}</h3>
       </header>
-      <p className="demo-help">{t.intro}</p>
       <div className="dyno-params">
         <div className="cable-controls">
           {slider("peak", t.peak, peak, 2, 7, 0.5, "N", setPeak)}
@@ -467,10 +460,12 @@ export default function TendonJacobianDemo({ lang = "en" }: { lang?: "ko" | "en"
           {t.limit}
         </p>
       )}
-      <p className="demo-help">{t.help}</p>
-      <p className="demo-model-note">
-        {t.note} <a href="https://modernrobotics.northwestern.edu/nu-gm-book-resource/11-5-force-control/">{t.source}</a>.
-      </p>
+      <details className="demo-model-details">
+        <summary>{lang === "ko" ? "구현 세부 사항" : "Implementation details"}</summary>
+        <p className="demo-model-note">
+          {t.note} <a href="https://modernrobotics.northwestern.edu/nu-gm-book-resource/11-5-force-control/">{t.source}</a>.
+        </p>
+      </details>
     </section>
   );
 }

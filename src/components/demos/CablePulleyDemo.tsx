@@ -52,10 +52,6 @@ const text = {
     state: "Tendon 상태",
     taut: "팽팽함",
     slack: "느슨함 (slack)",
-    helpPair:
-      "슬라이더를 움직이거나 왼쪽 풀리를 끌어 돌려 보세요. 한 케이블이 구동 풀리에 감기는 만큼 다른 케이블이 풀리고, 피동 풀리에서는 그 반대가 일어납니다. 모멘트 암이 풀리 반지름으로 일정하므로 두 길이 변화가 항상 같고, 전달비도 일정합니다. 두 케이블이 서로 반대 방향을 맡으므로 손을 떼도 그 자리에 머뭅니다.",
-    helpSpring:
-      "케이블은 당기기만 할 수 있으므로 굴곡(flexion, 출력 음의 방향)은 파란 tendon이 능동으로 만들고, 신전(extension)은 피동 풀리의 비틀림 스프링(초록)이 수동으로 만듭니다. 평행 배치에서는 입력을 음의 방향으로, 교차 배치에서는 양의 방향으로 돌려야 굴곡이 됩니다. 입력을 누르고 있지 않으면 스프링이 출력과 입력을 천천히 평형 위치(0°)로 되돌립니다. 입력을 반대로 돌리면 출력은 stopper에 머물고 tendon은 느슨해집니다. 느슨한 tendon은 아무것도 당기지 않으므로 손을 떼도 입력이 돌아오지 않습니다.",
     note: `교육용 기구학 모델입니다. 케이블은 늘어나지 않고 풀리 위에서 미끄러지지 않으며, 케이블 끝은 풀리에 고정되어 있습니다(점). 반지름이 같으므로 감김각 변화가 그대로 출력 회전이 됩니다. 장력, 마찰, 케이블 강성은 넣지 않았습니다. Return spring 모드에서 θ_out = 0은 스프링이 stopper에 기대어 쉬는 위치이고, 손을 뗀 뒤의 복귀는 시정수 ${TAU} s의 1차 응답으로 그렸습니다(스프링 강성과 관성으로 계산한 값이 아닙니다). 느슨한 tendon의 처짐은 길이 차이를 보여 주기 위한 그림입니다. 입력 범위는 ±${LIM}°입니다.`,
   },
   en: {
@@ -83,10 +79,6 @@ const text = {
     state: "Tendon",
     taut: "taut",
     slack: "slack",
-    helpPair:
-      "Move the slider or drag the left pulley. Whatever one cable winds onto the driver, the other unwinds, and the driven pulley does the opposite. The moment arm is the pulley radius, so the two length changes always match and the ratio is constant. Each cable covers one direction, so the pulleys stay where you leave them.",
-    helpSpring:
-      "A cable can only pull, so flexion (negative output) is driven actively by the blue tendon and extension passively by the torsion spring (green) on the driven pulley. In the open layout a negative input flexes; in the crossed layout a positive one does. When the input is not held, the spring slowly brings the output and the input back to equilibrium (0°). Turn the input the other way and the output stays at its stop while the tendon goes slack; a slack tendon pulls nothing, so the input does not come back when released.",
     note: `Teaching kinematics model: inextensible cables, no slip on the pulleys, cable ends fixed to the pulleys (dots). With equal radii the change in wrap angle becomes the output rotation one to one. Tension, friction and cable stiffness are not modeled. In return-spring mode θ_out = 0 is where the spring rests against a stop, and the return after release is drawn as a first-order response with a ${TAU} s time constant (not computed from a spring stiffness and inertia). The sag of a slack tendon only illustrates the excess length. The input range is ±${LIM}°.`,
   },
 };
@@ -384,7 +376,6 @@ export function PulleyBody({ lang = "ko", mode, drive }: { lang?: Lang; mode: Mo
           </>
         )}
       </output>
-      <p className="demo-help">{spring ? t.helpSpring : t.helpPair}</p>
       <div className="cable-demo-buttons">
         <button className="signal-reset" type="button" onClick={() => setPlaying((p) => !p)}>
           {playing ? t.stop : t.play}
@@ -400,7 +391,10 @@ export function PulleyBody({ lang = "ko", mode, drive }: { lang?: Lang; mode: Mo
           {t.reset}
         </button>
       </div>
-      <p className="demo-model-note">{t.note}</p>
+      <details className="demo-model-details">
+        <summary>{lang === "ko" ? "구현 세부 사항" : "Implementation details"}</summary>
+        <p className="demo-model-note">{t.note}</p>
+      </details>
     </>
   );
 }
