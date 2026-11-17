@@ -1,0 +1,207 @@
+---
+title: "Cable 02 — 휘는 게 문제다!"
+description: "분명 충분한 인장강도를 가진 케이블이 왜 작은 풀리에서 끊어질까? 굽힘 변형률과 응력, D/d ratio, CBOS 연구를 통해 직선 인장 사양과 실제 구동 조건의 차이를 살펴봅니다."
+published: false
+hidden: false
+date: 2026-11-17 00:00:00
+permalink: /cable02-kr/
+series: "Cable-driven Mechanism"
+series_order: 2
+series_label: "02"
+lang: ko
+tags: [Robotics, Hardware Development, Cable, Tendon-driven Robots]
+---
+
+import BendingStressDemo from "../../../src/components/demos/BendingStressDemo";
+
+*Why Bending Changes Everything*
+
+## 1. 사양표대로 버티지 않는 케이블
+
+제조사 datasheet에는 이 케이블이 충분한 인장 하중을 견딘다고 적혀 있었습니다. 그런데 실제 로봇에 설치해 보니, 사양표에서 기대한 것보다 훨씬 낮은 하중에서 끊어지는 일이 있었습니다. {/* TODO(data): '절반 미만' 같은 수치를 다시 넣기 전에 확인할 것 — 케이블 제품과 사양(파단 하중, 지름), 실제 파단 하중과 측정 방법, 파단 위치(케이블 본체인지 끝단인지), 풀리 D/d와 끝단 고정 방식 */}
+
+케이블이 늘어나는 것도 문제였습니다. 초기 변형을 줄이기 위해 pre-stretch까지 했는데, 반복해서 작동시키자 기준 길이가 또 달라졌습니다. 그때마다 처음 설정한 pretension을 다시 맞춰야 했습니다.
+
+처음에는 제품을 잘못 고른 것인지, pre-stretch를 충분히 하지 않은 것인지, 아니면 케이블을 고정한 방법에 문제가 있었던 것인지 알기 어려웠습니다. 지금도 이 경험만으로 파손과 길이 변화의 원인을 하나로 단정할 수는 없습니다. 설치 상태에는 굽힘뿐 아니라 끝단 고정과 마찰, 하중 이력이 함께 들어 있기 때문입니다.
+
+다만 datasheet의 값과 로봇이 케이블에 요구하는 조건은 서로 다른 시험에서 나옵니다. Datasheet의 **breaking load**는 특정 인장 시험에서 얻은 값이지, 모든 설치 조건에서 보장되는 **working load**가 아닙니다.
+
+[이전 글](/cable01-kr/)에서 케이블의 장점은 휘어진다는 데 있다고 했습니다. 모터를 멀리 놓고, 힘이 전달되는 경로를 자유롭게 바꿀 수 있으니까요.
+
+그런데 케이블이 휘는 순간, 직선으로 당길 때는 없던 역학이 시작됩니다.
+
+## 2. 왜 휘면 응력이 생길까?
+
+실제 편조 로프를 바로 계산하기는 어렵습니다. 먼저 케이블을 **균일한 단면을 가진 선형 탄성 막대**라고 가정해 보겠습니다. 막대의 축 방향을 따라 동일한 장력 $T$가 걸리면, 단면적 $A$에서 평균 인장 응력은
+
+$$
+\sigma_a=\frac{T}{A}
+$$
+
+입니다. 작은 변형과 균일한 응력을 가정할 때 늘어난 길이는 $\delta=TL/(EA)$입니다. 모터가 당긴 길이 $x_m$가 관절의 케이블 변위 $rq$와 케이블의 신장량 $\delta$로 나뉜다는 $x_m=rq+\delta$ 역시 이런 이상화를 바탕으로 합니다.
+
+그런데 막대를 굽히면 단면 내부의 모든 점이 같은 길이를 이동할 수 없습니다. 바깥쪽은 더 긴 원호를 따라가고, 안쪽은 더 짧은 원호를 따라갑니다.
+
+단면 중심을 지나는 기준 중심선(reference centerline)의 곡률 반지름을 $\rho$, 굽힘 각도를 $\theta$, 기준 중심선에서 바깥쪽으로 잰 거리를 $y$라고 하겠습니다. 순수 굽힘에서는 이 기준 중심선이 중립축이 됩니다. 기준 중심선의 길이는 $s_0=\rho\theta$, 해당 위치의 길이는 $s(y)=(\rho+y)\theta$이므로
+
+$$
+\varepsilon_b(y)=\frac{s(y)-s_0}{s_0}=\frac{y}{\rho}=\kappa y,
+\qquad \kappa=\frac{1}{\rho}.
+$$
+
+여기서 $\kappa$는 curvature입니다. $y>0$인 바깥쪽은 늘어나고, $y<0$인 안쪽은 줄어듭니다. 선형 탄성체에서는
+
+$$
+\boxed{\sigma_b(y)=E\kappa y}
+$$
+
+입니다. **굽힘은 단면 안에 변형률과 응력의 구배를 만듭니다.** 흔히 '응력이 집중된다'고 표현하지만, 여기서는 notch의 stress concentration이 아니라 순수 굽힘으로 생기는 비균일한 응력 분포를 이야기하고 있습니다.
+
+일반적인 beam theory에서 굽힘 모멘트는 $M=EI\kappa$로 표현합니다. 같은 curvature를 만들더라도 굽힘 강성 $EI$가 클수록 더 큰 모멘트가 필요한 이유입니다. 이 모델에는 평면 단면 유지, 작은 변형률, 단면 내부 미끄럼 없음 등의 가정이 들어갑니다.
+
+## 3. D/d는 어디서 나왔을까?
+
+이번에는 직경 $d$인 원형 막대를 직경 $D$인 풀리에 감겠습니다. $D$를 케이블 안쪽이 닿는 **유효 풀리 접촉 지름**으로 정의하고, 단면이 찌그러지지 않는다고 가정하면 케이블 중심선의 곡률 반지름은
+
+$$
+\rho\simeq\frac{D+d}{2}
+$$
+
+입니다. 최외곽 섬유는 기준 중심선에서 $d/2$ 떨어져 있으므로
+
+$$
+\boxed{\varepsilon_{b,\max}\simeq\frac{d}{D+d}=\frac{1}{D/d+1}}
+$$
+
+이고, $D\gg d$인 경우 자주 쓰는 근사식 $\varepsilon_{b,\max}\simeq d/D$를 얻습니다. 이에 대응하는 이상적인 응력은
+
+$$
+\sigma_{b,\max}\simeq E\frac{d}{D+d}.
+$$
+
+같은 케이블을 작은 풀리에 감거나, 같은 풀리에 더 두꺼운 케이블을 감으면 굽힘 변형률이 커집니다. 따라서 **$D/d$**, 즉 sheave diameter와 rope diameter의 비가 중요한 설계 지표가 됩니다.
+
+Horigome and Endo (2016)는 실제 synthetic fiber rope를 굽힌 채 인장 시험하면서 $D/d$와 파단 하중 사이의 관계를 조사했습니다 [1](#ref-1). 작은 굽힘 비율에서 합성섬유 로프도 강도 저하를 겪을 수 있다는 결과는 직선 인장 사양만으로 설치된 tendon의 한계를 판단하기 어렵다는 점을 보여 줍니다.
+
+이 식은 $D/d=20$에서도 약 4.8%의 최대 굽힘 변형률을 예측합니다. 재료에 따라서는 작은 변형률의 선형 탄성 가정을 적용하기 어려운 크기입니다. 그런데 실제 braided rope를 구성하는 개별 yarn이 모두 이 변형률을 경험하는 것은 아닙니다. 로프 안에서 섬유들이 상대적으로 움직이고 구조가 변형될 수 있기 때문입니다.
+
+아래 예시에서 풀리 직경, 케이블 직경, 장력, 재료를 바꿔 볼 수 있습니다. 같은 $D/d$에서는 최대 굽힘 *변형률*이 같지만, $E$가 다르면 이상적인 *응력*은 달라집니다. 균일한 막대를 가정한 개념 모델이며, 허용 하중이나 피로 수명을 예측하지 않습니다.
+
+<BendingStressDemo client:visible lang="en" />
+
+## 4. 인장과 굽힘이 동시에 걸리면?
+
+균일 막대의 작은 변형·선형 탄성 모델이라면 축력과 순수 굽힘을 중첩할 수 있습니다. 기준 중심선의 축 변형률을 $\varepsilon_0$라고 하면
+
+$$
+\varepsilon(y)=\varepsilon_0+\kappa y,
+\qquad
+\varepsilon_0=\frac{T}{EA}
+$$
+
+이므로
+
+$$
+\boxed{\sigma(y)=E\varepsilon_0+E\kappa y=\frac{T}{A}+E\frac{y}{\rho}}
+$$
+
+입니다. 축 인장이 더해지면 응력이 0인 위치는 더 이상 단면 중심이 아닙니다.
+
+바깥쪽에는 인장 응력이 더해지고, 안쪽에서는 굽힘에 의한 압축 성분이 축 인장에 의해 일부 상쇄됩니다. 같은 $T$라도 풀리 반지름이 작아지면 단면 최대 응력이 높아질 수 있다는 직관을 얻을 수 있습니다.
+
+풀리에 감긴 케이블은 접촉 하중도 받습니다. 매끄러운 경로를 따라 장력 $T$가 거의 일정한 유연한 케이블의 작은 구간을 생각하면, 양쪽 장력 벡터의 방향 차이로부터
+
+$$
+\mathrm dF_n\simeq T\,\mathrm d\theta,
+\qquad \mathrm ds=\rho\,\mathrm d\theta
+$$
+
+이므로 경로 길이당 법선 반력은
+
+$$
+\boxed{q_n\simeq\frac{T}{\rho}}
+$$
+
+가 됩니다. 단위는 N/m입니다. **접촉 압력(Pa)** 을 구하려면 접촉 폭과 변형 형상까지 알아야 합니다. 또한 이 관계는 유연한 케이블의 국부 힘 평형으로부터 얻는 근사이지, 굽힘 강성이 있는 로프의 모든 접촉 상황을 설명하지는 않습니다.
+
+결국 작은 풀리는 굽힘 변형률을 높일 뿐 아니라 접촉 문제도 더 까다롭게 만듭니다. 그렇다고 $\sigma_{\max}$를 로프의 파단강도와 직접 비교하여 실제 안전율을 계산할 수는 없습니다. 여기까지의 모델은 균질한 막대를 위한 것이기 때문입니다.
+
+## 5. 그러면 E가 낮은 케이블을 고르면 되나?
+
+지금까지의 식만 보면 답은 간단합니다.
+
+$$
+\sigma_{b,\max}\propto E\frac{1}{D/d+1}.
+$$
+
+Young's modulus가 낮은 케이블이라면 같은 곡률에서 굽힘 응력이 낮아지겠죠. 균일한 막대 모델에서는 그렇습니다.
+
+같은 균질 막대에서 $E$를 낮추면 굽힘 응력뿐 아니라 굽힘 강성 $EI$도 함께 낮아집니다. 그리고 케이블은 굽히기 위해서만 존재하지 않습니다. 모터의 힘과 위치를 출력으로 전달해야 합니다. 같은 단순 모델에서 인장 강성은
+
+$$
+\boxed{k_a=\frac{EA}{L}}
+$$
+
+입니다. 다른 조건이 같으면 $E$가 작을수록 인장 신장이 커집니다. 굽힘 응력만 낮추다가 transmission의 위치 전달 강성을 잃을 수도 있다는 뜻입니다.
+
+더 근본적인 문제가 있습니다. **개별 섬유의 Young's modulus가 완성된 rope의 굽힘 탄성률은 아니라는 점**입니다. Kevlar는 para-aramid의 한 상표이고, Dyneema는 UHMWPE 계열의 상표입니다. 섬유 물성을 비교할 수는 있지만, 이것을 그대로 braided rope의 $EI$에 대입할 수는 없습니다. 로프 안에서는 개별 yarn이 접촉하고 서로 움직일 수 있기 때문입니다. 균질 막대에서는 축 방향 강성 $EA$와 굽힘 강성 $EI$가 같은 $E$ 하나로 묶여 있지만, 실제 braided rope에서는 두 강성이 하나의 $E$로 연결되지 않을 수 있습니다.
+
+따라서 앞의 예시에서 높은 $E$를 선택했을 때 비현실적으로 큰 응력이 계산되더라도, 그것은 실제 로프가 같은 응력을 경험한다는 예측이 아닙니다. 오히려 **solid rod 모델의 적용 한계**를 보여주는 신호입니다.
+
+## 6. 한 번 굽히는 것과 수만 번 굽히는 것은 다르다
+
+로봇에서는 케이블이 풀리에 감긴 채 가만히 있지 않습니다. 관절이 움직일 때 케이블의 일부 구간은 풀리에 감겼다가 펴지기를 반복합니다. 이런 조건을 연구하는 대표적인 시험이 **Cyclic Bend Over Sheave(CBOS)** 입니다.
+
+여기에는 서로 다른 세 가지 질문이 있습니다. 굽힌 상태에서 *지금* 얼마를 버티는가, 반복 굽힘 후 *얼마의 강도가 남는가*, 그리고 주어진 조건에서 *몇 번의 반복 후 파손되는가*입니다. 각각 bent breaking load, residual breaking strength, fatigue life에 해당하며 같은 값이 아닙니다.
+
+Horigome and Endo (2018)는 서로 다른 재료와 구성을 가진 synthetic fiber rope 10종과 stainless steel wire rope 2종을 반복 굽힘 시험으로 비교했습니다 [2](#ref-2). 연구에서 마찰 마모 저항이 높은 UHMWPE rope(SK-71)와 7×19 steel wire rope는 지정된 시험 조건에서 뚜렷한 인장강도 감소를 보이지 않았지만, 다른 rope에서는 강도 저하가 관찰됐습니다. 작은 풀리 또는 높은 장력의 가혹한 조건에서는 일부 합성섬유 로프가 steel wire rope보다 나은 결과를 보이기도 했습니다.
+
+한편 Davies et al. (2015)은 공칭 직경 19 mm의 12-strand braided HMPE rope를 CBOS 시험했습니다 [3](#ref-3). 파단할 때까지 반복한 시편과 중간에 시험을 멈춘 후 잔류강도를 측정한 시편을 함께 분석하고, 일정한 하중에서 얻은 결과를 바탕으로 하중 이력이 달라질 때의 수명을 설명하는 경험적 모델을 제안했습니다.
+
+여기서 중요한 사실은 **케이블이 아직 끊어지지 않았다는 것과 원래의 파단강도를 유지하고 있다는 것이 같지 않다**는 점입니다. 다만 해양용 19 mm 로프의 수명 모델을 1–2 mm 로봇용 tendon에 그대로 대입할 수는 없습니다.
+
+## 7. D/d가 같으면 수명도 같을까?
+
+기하학적 굽힘 비율만큼이나 케이블이 어떤 하중을 경험하는지도 중요합니다.
+
+Li et al. (2023)은 직경 24 mm HMPE rope를 직경 400 mm sheave에 감아, $D/d\approx16.7$인 조건에서 동적 장력을 변화시키는 CBOS 실험을 수행했습니다 [4](#ref-4). 시험 범위에서 하중의 평균값, 진폭, 주기가 커질수록 CBOS 수명은 줄었고, 명목 강성은 평균 하중과 주기가 커질 때 커지고 진폭이 커질 때 작아졌습니다. 따라서 같은 굽힘 형상이라도 하중 이력이 바뀌면 결과를 하나의 수명 값으로 대표하기 어렵습니다.
+
+Müller et al. (2024)은 코팅된 circular braided UHMWPE rope를 대상으로 장력, fleet angle, sheave material, $D/d$, 주변 온도를 각각 시험 변수로 두었습니다 [5](#ref-5). 여기서도 중요한 것은 **$D/d$가 필요하지만 충분하지 않은 정보**라는 점입니다. 실제 CBOS 결과를 해석할 때는 $D/d$와 함께 바뀐 시험 조건도 확인해야 합니다. 풀리 재질과 직경비가 함께 달라진 실험에서는 관찰된 수명 차이를 하나의 변수 때문이라고 단정할 수 없습니다.
+
+문헌의 관찰을 단일한 법칙으로 묶어 $N_f=f(D/d)$라고 쓸 수는 없습니다. 파단까지의 반복 횟수 $N_f$는 최소한 재료·구조, 장력 이력, 굽힘 형상, 환경과 시험 방법에 조건부로 정의됩니다.
+
+## 8. 그런데 실제 케이블은 하나의 막대가 아니다
+
+지금까지의 수식은 왜 작은 풀리가 불리할 수 있는지 설명해 줍니다. 하지만 왜 **동일한 공칭 직경의 로프들**이 반복 굽힘에서 서로 다른 강도 유지 특성을 보이는지는 설명하지 못합니다.
+
+우리가 균일한 막대라고 가정했던 케이블은 실제로는 수많은 filament와 yarn이 꼬이고 엮여 만들어진 구조물입니다. 그 안의 구성 요소는 굽힘을 수용하면서 서로 접촉하고 상대적으로 움직일 수 있습니다. 그 움직임이 굽힘을 가능하게 하는 한편, 마찰과 마모를 동반할 수도 있습니다.
+
+도입에서 언급한 pre-stretch 이후의 길이 변화 역시 이 단순한 굽힘 응력식 하나로는 설명되지 않습니다. 어떤 요소가 늘어났는지, 어떤 요소가 재배열됐는지, 또는 끝단이 움직였는지를 구분해야 합니다.
+
+**우리가 설계하는 것은 단순히 강한 섬유가 아니라, 수많은 섬유가 함께 작동하는 케이블입니다.**
+
+다음 포스트: Cable 03 — 케이블은 스스로를 갉아먹는다 (준비 중)
+
+{/* TODO: Cable 03을 공개하면 링크로 되돌리기: [다음 포스트: Cable 03 — 케이블은 스스로를 갉아먹는다](/cable03-kr/) */}
+
+## References
+
+<span id="ref-1"></span>
+
+[1] A. Horigome and G. Endo, “Basic study for drive mechanism with synthetic fiber rope – investigation of strength reduction by bending and terminal fixation method,” *Advanced Robotics*, 30(3), 206–217, 2016. [DOI: 10.1080/01691864.2015.1102649](https://doi.org/10.1080/01691864.2015.1102649).
+
+<span id="ref-2"></span>
+
+[2] A. Horigome and G. Endo, “Investigation of Repetitive Bending Durability of Synthetic Fiber Ropes,” *IEEE Robotics and Automation Letters*, 3(3), 1779–1786, 2018. [DOI: 10.1109/LRA.2018.2800129](https://doi.org/10.1109/LRA.2018.2800129).
+
+<span id="ref-3"></span>
+
+[3] P. Davies, M. François, N. Lacotte, T. D. Vu, and D. Durville, “An empirical model to predict the lifetime of braided HMPE handling ropes under cyclic bend over sheave (CBOS) loading,” *Ocean Engineering*, 97, 74–81, 2015. [DOI: 10.1016/j.oceaneng.2015.01.003](https://doi.org/10.1016/j.oceaneng.2015.01.003).
+
+<span id="ref-4"></span>
+
+[4] G. Li, W. Li, H. Ye, H. Li, Y. Ge, and S. Lin, “Experimental study on cyclic-bend-over-sheave (CBOS) characteristics of an HMPE fibre rope under dynamic loading,” *Applied Ocean Research*, 138, 103642, 2023. [DOI: 10.1016/j.apor.2023.103642](https://doi.org/10.1016/j.apor.2023.103642).
+
+<span id="ref-5"></span>
+
+[5] C. Müller, A. Kretschmer, P. Koskenjoki, K. Saarinen-Pulli, and M. Golder, “Bending tests on circular braided ropes under variation of different peripheral test conditions,” *innoTRAC*, 3(1), 39–54, 2024. [DOI: 10.14464/innotrac.v3i1.792](https://doi.org/10.14464/innotrac.v3i1.792).
