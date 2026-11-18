@@ -23,7 +23,7 @@ tags: [Hardware]
 import PendulumSwingDemo from "../../../../src/components/demos/PendulumSwingDemo";
 import ReflectedInertiaDemo from "../../../../src/components/demos/ReflectedInertiaDemo";
 
-## 들어가며: 같은 명령, 다른 힘
+## 같은 명령, 다른 힘
 
 토크 정격만으로는 하중을 받는 관절이 어떻게 움직일지 알 수 없습니다. 토크 한계가 같은 두 로봇도 같은 위치 명령으로 컵을 서로 다른 힘으로 쥘 수 있습니다. 관절이 접촉에 어떻게 반응하는지도 알아야 합니다.
 
@@ -38,19 +38,19 @@ import ReflectedInertiaDemo from "../../../../src/components/demos/ReflectedIner
 <details className="math-details">
 <summary>수식: s-plane에서 본 관절 임피던스</summary>
 
-감속기를 강체로 보면 관절의 운동 방정식은 $I_{\mathrm{BWD}}\ddot q + (B + B_c)\dot q + K_p q = \tau_{ext}$이고, 라플라스 변환하면 다음과 같습니다.
+감속기를 강체로 보면 관절의 운동 방정식은 $I_{\mathrm{BWD}}\ddot q + (B_s + B_c)\dot q + K_p q = \tau_{\mathrm{ext}}$이고($I_{\mathrm{BWD}}$는 03에서 본 역방향 유효 관성), 라플라스 변환하면 다음과 같습니다.
 
 $$
-Z(s) = I_{\mathrm{BWD}}\,s + (B + B_c) + \frac{K_p}{s} = \frac{I_{\mathrm{BWD}}\,s^2 + (B + B_c)\,s + K_p}{s}
+Z(s) = I_{\mathrm{BWD}}\,s + (B_s + B_c) + \frac{K_p}{s} = \frac{I_{\mathrm{BWD}}\,s^2 + (B_s + B_c)\,s + K_p}{s}
 $$
 
 $Z$의 영점은 외력에 대한 관절 응답 $1/Z$의 극점입니다. 분자를 표준 2차형으로 쓰면
 
 $$
-\omega_n = \sqrt{\frac{K_p}{I_{\mathrm{BWD}}}}, \qquad \zeta = \frac{B + B_c}{2\sqrt{K_p I_{\mathrm{BWD}}}}, \qquad s = -\zeta\omega_n \pm j\,\omega_n\sqrt{1-\zeta^2}
+\omega_n = \sqrt{\frac{K_p}{I_{\mathrm{BWD}}}}, \qquad \zeta = \frac{B_s + B_c}{2\sqrt{K_p I_{\mathrm{BWD}}}}, \qquad s = -\zeta\omega_n \pm j\,\omega_n\sqrt{1-\zeta^2}
 $$
 
-입니다. 극점의 원점까지 거리가 $\omega_n$, 음의 real axis와 이루는 각의 코사인이 $\zeta$입니다. 주파수 응답 $|Z(j\omega)|$는 $\omega \ll \omega_n$에서 $K_p/\omega$(스프링), $\omega \gg \omega_n$에서 $I_{\mathrm{BWD}}\,\omega$(질량)로 가고, $\omega = \omega_n$에서 두 항이 상쇄되어 감쇠 $B + B_c$만 남습니다. 본문의 경계는 이 $\omega_n$입니다. $I \approx 0.19\,\mathrm{kg\,m^2}$, $K_p = 100$이면 $\omega_n \approx 23\,\mathrm{rad/s}$, 약 3.6 Hz입니다. $K_p$를 10배 올려도 $\omega_n$은 $\sqrt{10} \approx 3.2$배만 높아집니다.
+입니다. 극점의 원점까지 거리가 $\omega_n$, 음의 real axis와 이루는 각의 코사인이 $\zeta$입니다. 주파수 응답 $|Z(j\omega)|$는 $\omega \ll \omega_n$에서 $K_p/\omega$(스프링), $\omega \gg \omega_n$에서 $I_{\mathrm{BWD}}\,\omega$(질량)로 가고, $\omega = \omega_n$에서 두 항이 상쇄되어 감쇠 $B_s + B_c$만 남습니다. 본문의 경계는 이 $\omega_n$입니다. $I \approx 0.19\,\mathrm{kg\,m^2}$, $K_p = 100$이면 $\omega_n \approx 23\,\mathrm{rad/s}$, 약 3.6 Hz입니다. $K_p$를 10배 올려도 $\omega_n$은 $\sqrt{10} \approx 3.2$배만 높아집니다.
 
 </details>
 
@@ -80,7 +80,7 @@ $$
 
 $$
 Z(s) = Z_{\mathrm{hw}}(s) + Z_{\mathrm{ctrl}}(s), \qquad
-Z_{\mathrm{hw}} \approx I_{\mathrm{BWD}}\,s + B, \qquad
+Z_{\mathrm{hw}} \approx I_{\mathrm{BWD}}\,s + B_s, \qquad
 Z_{\mathrm{ctrl}} \approx \Big(B_c + \frac{K_p}{s}\Big)\,G(s)
 $$
 
@@ -93,16 +93,16 @@ $$
 입니다. 감쇠 항만 보면 $\omega > \pi/(2T)$에서야 음수가 되므로($T = 2\,\mathrm{ms}$이면 약 125 Hz) 지연이 높은 주파수만의 문제처럼 보입니다. 하지만 강성 항도 지연을 거치면 실수부를 가지고, 저주파에서 둘째 항은 약 $-K_p T$입니다. 지연은 낮은 주파수에서도 제어기 강성의 일부를 음의 감쇠로 바꾸는 셈입니다. 하드웨어 감쇠까지 더한 실효 감쇠가 음수가 되면 관절은 에너지를 내놓는 임피던스, 즉 수동성을 잃은 관절이 됩니다. 저주파 근사로 쓰면 조건은
 
 $$
-B + B_c > K_p T \quad\Longleftrightarrow\quad K_p < \frac{B + B_c}{T}
+B_s + B_c > K_p T \quad\Longleftrightarrow\quad K_p < \frac{B_s + B_c}{T}
 $$
 
-이고, 아래 데모 수식에서 Routh 판별로 얻는 안정 상한 $K_d/T$와 같은 꼴입니다. 하드웨어 감쇠를 무시하고 $B_c = 1.5\,\mathrm{N\,m\,s/rad}$, $T = 2\,\mathrm{ms}$이면 약 750 N·m/rad입니다.
+이고, 아래 데모 수식에서 Routh 판별로 얻는 안정 상한 $B_c/T$와 같은 꼴입니다. 하드웨어 감쇠를 무시하고 $B_c = 1.5\,\mathrm{N\,m\,s/rad}$, $T = 2\,\mathrm{ms}$이면 약 750 N·m/rad입니다.
 
 </details>
 
-아래 데모는 위로 선 1자유도 팔(0.3 m, 1 kg)을 PD 위치 제어로 ±60° 흔듭니다(제어 지연 2 ms, $K_d$는 앞의 $B_c$). 팔이 명령을 따라가는 주파수 범위가 곧 제어기가 관절의 임피던스를 정하는 범위입니다.
+아래 데모는 위로 선 1자유도 팔(0.3 m, 1 kg)을 PD 위치 제어로 ±60° 흔듭니다(제어 지연 2 ms, 데모의 $K_d$는 본문의 $B_c$). 팔이 명령을 따라가는 주파수 범위가 곧 제어기가 관절의 임피던스를 정하는 범위입니다.
 
-데모의 극점 그림은 폐루프 극점을 s-plane에 그린 것입니다. 극점이 원점에서 멀수록 팔이 빠르게 따라가고, imaginary axis에 가까울수록 감쇠가 작아 공진 근처에서 명령보다 크게 흔들립니다. 같은 이득에서 감속비를 올리면 reflected inertia 때문에 극점이 원점과 imaginary axis 쪽으로 함께 다가오고, $K_p$를 올리면 지연 때문에 극점이 결국 right half-plane으로 넘어갑니다. SEA에서는 스프링과 링크가 만드는 극점 한 쌍이 더 생기며, 흔드는 주파수가 그 공진에 가까워질 때만 스프링이 드러납니다.
+데모의 극점 그림은 폐루프 극점을 s-plane에 그린 것입니다. 극점이 원점에서 멀수록 팔이 빠르게 따라가고, imaginary axis에 가까울수록 감쇠가 작아 공진 근처에서 명령보다 크게 흔들립니다. 같은 이득에서 감속비를 올리면 reflected inertia 때문에 극점이 원점과 imaginary axis 쪽으로 함께 다가오고, $K_p$를 올리면 지연 때문에 극점이 결국 right half-plane으로 넘어갑니다. 직렬 탄성 구동기(**SEA**, Series Elastic Actuator)에서는 스프링과 링크가 만드는 극점 한 쌍이 더 생기며, 흔드는 주파수가 그 공진에 가까워질 때만 스프링이 드러납니다.
 
 <PendulumSwingDemo client:visible lang="ko" />
 
@@ -112,23 +112,23 @@ $$
 **강체 관절.** 위로 선 팔은 $\sin q \approx q$로 선형화하면 중력이 음의 강성 $-mgl$로 작용합니다. 지연을 빼면 폐루프 특성방정식은
 
 $$
-I s^2 + (B + K_d)\,s + (K_p - mgl) = 0, \qquad I = J_L + N^2 J_m
+I s^2 + (B_s + B_c)\,s + (K_p - mgl) = 0, \qquad I = J_L + N^2 J_m
 $$
 
-이고, $\omega_n = \sqrt{(K_p - mgl)/I}$, $\zeta = (B + K_d)/\big(2\sqrt{(K_p - mgl)I}\big)$입니다. $K_p < mgl$이면 실근 하나가 right half-plane에 있어 팔이 서지 못합니다. 같은 이득에서 $N$을 올리면 $I$가 커져 극점이 원점 쪽($\omega_n \propto 1/\sqrt I$)과 imaginary axis 쪽($\zeta \propto 1/\sqrt I$)으로 함께 움직입니다. 50:1은 $\omega_n/2\pi \approx 3.5$ Hz, $\zeta \approx 0.30$이고 160:1은 약 2.0 Hz, $\zeta \approx 0.17$입니다. 명령 $q_d$에서 $q$까지의 진폭비는 $\zeta$가 작을수록 공진에서 크게 솟고(최대값 $\approx 1/2\zeta$), 공진을 지나면 $(\omega_n/\omega)^2$로 줄며 위상은 180°에 가깝게 늦어집니다.
+이고, $\omega_n = \sqrt{(K_p - mgl)/I}$, $\zeta = (B_s + B_c)/\big(2\sqrt{(K_p - mgl)I}\big)$입니다. $K_p < mgl$이면 실근 하나가 right half-plane에 있어 팔이 서지 못합니다. 같은 이득에서 $N$을 올리면 $I$가 커져 극점이 원점 쪽($\omega_n \propto 1/\sqrt I$)과 imaginary axis 쪽($\zeta \propto 1/\sqrt I$)으로 함께 움직입니다. 50:1은 $\omega_n/2\pi \approx 3.5$ Hz, $\zeta \approx 0.30$이고 160:1은 약 2.0 Hz, $\zeta \approx 0.17$입니다. 명령 $q_d$에서 $q$까지의 진폭비는 $\zeta$가 작을수록 공진에서 크게 솟고(최대값 $\approx 1/2\zeta$), 공진을 지나면 $(\omega_n/\omega)^2$로 줄며 위상은 180°에 가깝게 늦어집니다.
 
 **지연.** 지연 $e^{-sT}$를 1차 Padé 근사 $(1 - sT/2)/(1 + sT/2)$로 바꾸면 $s = -2/T$에 극점 하나와 $s = +2/T$에 right half-plane 영점 하나가 생깁니다. $K_p$를 올리면 근궤적이 이 영점 쪽으로 끌려가 imaginary axis를 넘습니다(데모의 회색 궤적). 3차 특성방정식에 Routh 판별을 적용하면 안정 조건은
 
 $$
-K_p < \frac{K_d}{T} - \frac{K_d^2}{4I}
+K_p < \frac{B_c}{T} - \frac{B_c^2}{4I}
 $$
 
-이고(마찰과 중력을 뺀 1차 근사), 보통 둘째 항이 작아 상한은 $K_d/T$에 가깝습니다. 지연이 저주파에서 만드는 음의 감쇠 $K_p T$가 $K_d$를 넘지 않아야 한다는, 앞의 수동성 조건과 같은 내용입니다. $K_d = 1.5$, $T = 2\,\mathrm{ms}$, 50:1이면 약 745이고, 마찰과 중력까지 넣어 정확히 풀면 데모의 약 770이 나옵니다. 이 상한은 $K_d$와 함께 커지므로, 이득을 관성에 비례해 키우는 것 자체를 막지는 않습니다. 이 모델에 없는 토크 한계와 속도 측정 노이즈가 실제의 상한을 정합니다.
+이고(마찰과 중력을 뺀 1차 근사), 보통 둘째 항이 작아 상한은 $B_c/T$에 가깝습니다. 지연이 저주파에서 만드는 음의 감쇠 $K_p T$가 $B_c$를 넘지 않아야 한다는, 앞의 수동성 조건과 같은 내용입니다. $B_c = 1.5$, $T = 2\,\mathrm{ms}$, 50:1이면 약 745이고, 마찰과 중력까지 넣어 정확히 풀면 데모의 약 770이 나옵니다. 이 상한은 $B_c$와 함께 커지므로, 이득을 관성에 비례해 키우는 것 자체를 막지는 않습니다. 이 모델에 없는 토크 한계와 속도 측정 노이즈가 실제의 상한을 정합니다.
 
-**SEA.** PD가 모터 각도 $\theta$에 걸려 있으면 링크는 모터 각도에 스프링으로 끌려가는 질량입니다.
+**SEA.** PD가 모터 각도 $\theta_m$에 걸려 있으면 링크는 출력축 환산 모터 각도 $\theta_m/N$에 스프링으로 끌려가는 질량입니다.
 
 $$
-\frac{q}{\theta}(j\omega) \approx \frac{K_s}{K_s - mgl - J_L\,\omega^2}, \qquad f_s = \frac{1}{2\pi}\sqrt{\frac{K_s - mgl}{J_L}}
+\frac{q}{\theta_m/N}(j\omega) \approx \frac{K_s}{K_s - mgl - J_L\,\omega^2}, \qquad f_s = \frac{1}{2\pi}\sqrt{\frac{K_s - mgl}{J_L}}
 $$
 
 $f \ll f_s$에서는 비가 1에 가까워 스프링이 보이지 않고, $f$가 $f_s$에 가까워지면 링크가 모터보다 크게 흔들립니다. 이 공진은 제어 이득과 무관하게 $K_s$와 $J_L$이 정하므로, 모터 쪽 이득을 아무리 올려도 링크의 추종 대역폭은 $f_s$를 넘기 어렵습니다.
@@ -149,9 +149,9 @@ $f \ll f_s$에서는 비가 1에 가까워 스프링이 보이지 않고, $f$가
 
 다관절 로봇에서 환경이 만나는 것은 관절이 아니라 말단입니다. 각 관절의 관성은 자세에 따라 말단의 각 방향으로 다르게 옮겨지므로, 같은 팔이라도 미는 방향에 따라 말단이 다르게 무겁습니다. 이 방향별 무게가 effective mass입니다.
 
-아래 데모는 2자유도 팔의 말단에서 effective mass를 타원으로 그립니다. 감속비를 올리면 reflected inertia가 각 관절의 관성을 키워 타원이 커지고, 타원의 모양은 링크 질량의 분포보다 팔의 기구학이 정하는 쪽으로 바뀝니다. 감속비가 낮을 때는 링크 관성이 순방향 효율만큼 크게 보이는 FWD 타원이 더 크지만, 감속비가 높아지면 reflected inertia가 역방향 효율만큼 크게 보이는 BWD 타원이 더 커집니다. 모터가 밀 때와 환경이 밀 때 말단이 다르게 무겁다는 뜻입니다.
+아래 데모는 2자유도 팔의 말단에서 effective mass를 타원으로 그립니다. 감속비를 올리면 reflected inertia가 각 관절의 관성을 키워 타원이 커지고, 타원의 모양은 링크 질량의 분포보다 팔의 기구학이 정하는 쪽으로 바뀝니다. 감속비가 낮을 때는 링크 관성이 순방향 효율만큼 크게 보이는 순방향(**FWD**, Forward) 타원이 더 크지만, 감속비가 높아지면 reflected inertia가 역방향 효율만큼 크게 보이는 역방향(**BWD**, Backward) 타원이 더 커집니다. 모터가 밀 때와 환경이 밀 때 말단이 다르게 무겁다는 뜻입니다.
 
-데모에서 팔 끝 주위의 화살표를 누르면 같은 공(1 kg, 3 m/s)이 그 방향으로 날아옵니다. 그 방향의 effective mass가 공보다 충분히 무거우면 공이 튕겨 나오고, 가벼우면 공이 팔 끝을 밀고 계속 나아갑니다. 말단의 관성이 방향마다 달라서 팔 끝은 공이 날아온 방향과 비스듬히 밀립니다. 아래 그래프는 충돌 뒤 위치 제어기가 팔을 되돌리는 동안의 말단 변위입니다.
+팔 끝 주위의 각 방향에서 같은 공(1 kg, 3 m/s)이 날아올 때, 그 방향의 effective mass가 공보다 충분히 무거우면 공이 튕겨 나오고, 가벼우면 공이 팔 끝을 밀고 계속 나아갑니다. 말단의 관성이 방향마다 달라서 팔 끝은 공이 날아온 방향과 비스듬히 밀립니다. 아래 그래프는 충돌 뒤 위치 제어기가 팔을 되돌리는 동안의 말단 변위입니다.
 
 <ReflectedInertiaDemo client:visible lang="ko" />
 

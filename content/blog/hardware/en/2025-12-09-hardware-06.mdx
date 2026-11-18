@@ -22,7 +22,7 @@ tags: [Hardware]
 
 import ThermalDemo from "../../../../src/components/demos/ThermalDemo";
 
-## Introduction: Thermal Drift Below the Protection Limit
+## Thermal Drift Below the Protection Limit
 
 Consider a robot whose standing posture sags or whose jumps become lower as it warms up, even with the same policy and torque commands. These are illustrative symptoms to investigate, not a new experiment reported here. A temperature log can reveal a correlation, but confirming the cause requires checking torque response and the driver's current limits. Torque can change before thermal protection limits the current.
 
@@ -31,7 +31,7 @@ If heat is only a protection problem, the explanation stops here. Too hot and th
 Commanding torque with current, and reading torque and external force from current, all rest on one line.
 
 $$
-\tau_j \approx \eta\,N\,K_t\,i_q
+\tau_{\mathrm{joint}} \approx \eta\,N\,K_t\,i_q
 $$
 
 [03](/hardware03/) covered $\eta$ and $N$, and [05](/hardware05/) covered the ripple and electrical angle error mixed into $i_q$. This post looks at the one left, the torque constant $K_t$, because it is the value temperature changes most directly. A datasheet lists $K_t$ as a single number, but in practice it differs from motor to motor, with current, and with temperature, and temperature changes in the middle of an experiment. Here I expand on the heat that [02](/hardware02/#heat-a-model-that-changes-over-time) introduced in one paragraph, examine the thermal cost of low gear ratios in QDD, and then wrap up the actuator part.
@@ -61,7 +61,7 @@ As the [table in 02](/hardware02/) showed, even motors of the same model have a 
 
 **Current.** At high current the iron core saturates, and each added amp produces less added torque. The onset and size of this saturation depend on the motor. A measured current–torque curve is needed to determine where a constant $K_t$ ceases to be an adequate approximation.
 
-**Electrical angle.** If the encoder zero is off by $\Delta\theta_e$, only $\cos\Delta\theta_e$ of the current the controller believes is on the q-axis produces torque ([05](/hardware05/#the-d-q-frame-depends-on-the-encoder)). In a measurement it looks as if $K_t$ has shrunk, but the cause is the angle, not the motor.
+**Electrical angle.** If the encoder zero is off by $\Delta\theta_e$, only $\cos\Delta\theta_e$ of the current the controller believes is on the q-axis produces torque ([05](/hardware05/#encoder-dependent-d-q-frame)). In a measurement it looks as if $K_t$ has shrunk, but the cause is the angle, not the motor.
 
 **Temperature.** The flux of NdFeB magnets drops by about 0.1% for every 1 K rise. Manufacturer material gives an example in which $K_t$ falls by about 5% when the motor is 50 °C hotter [1](#ref-1). Within the normal operating temperature range this change is reversible and recovers when the motor cools. Beyond the allowed temperature, or with a strong reverse field applied at the same time, irreversible demagnetization occurs, and then $K_t$ does not return to its original value even after cooling.
 
@@ -116,17 +116,17 @@ A single thermal node cannot represent the different time constants of the windi
 <summary>Math: one-node and two-node thermal models</summary>
 
 $$
-C_{th}\,\dot T = P_{\mathrm{loss}} - \frac{T - T_{\mathrm{amb}}}{R_{th}}, \qquad \tau_{th} = R_{th} C_{th}
+C_{th}\,\dot T = P_{\mathrm{loss}} - \frac{T - T_{\mathrm{amb}}}{R_{th}}, \qquad t_{\mathrm{th}} = R_{th} C_{th}
 $$
 
-The equilibrium temperature is $T_{\mathrm{amb}} + R_{th} P_{\mathrm{loss}}$, and with the example values $\tau_{th} = 0.42 \times 105 \approx 44\,\mathrm{s}$. Splitting into winding $T_w$ and housing $T_h$,
+The equilibrium temperature is $T_{\mathrm{amb}} + R_{th} P_{\mathrm{loss}}$, and with the example values $t_{\mathrm{th}} = 0.42 \times 105 \approx 44\,\mathrm{s}$. Splitting into winding $T_w$ and stator/housing $T_s$,
 
 $$
-C_w \dot T_w = P_{Cu} - \frac{T_w - T_h}{R_{wh}}, \qquad
-C_h \dot T_h = \frac{T_w - T_h}{R_{wh}} + P_{\mathrm{other}} - \frac{T_h - T_{\mathrm{amb}}}{R_{ha}}
+C_w \dot T_w = P_{Cu} - \frac{T_w - T_s}{R_{ws}}, \qquad
+C_s \dot T_s = \frac{T_w - T_s}{R_{ws}} + P_{\mathrm{other}} - \frac{T_s - T_{\mathrm{amb}}}{R_{sa}}
 $$
 
-and since usually $C_w \ll C_h$, the winding's time constant is much shorter. A sensor on the housing sees only $T_h$, so many values of $T_w$ correspond to the same $T_h$.
+and since usually $C_w \ll C_s$, the winding's time constant is much shorter. A sensor on the housing sees only $T_s$, so many values of $T_w$ correspond to the same $T_s$.
 
 </details>
 
@@ -158,7 +158,7 @@ $$
 \hat\tau_{\mathrm{ext}} = \hat\tau_{\mathrm{act}} - \hat M(q)\ddot q - \hat C(q,\dot q)\dot q - \hat G(q) - \hat\tau_f(q, \dot q)
 $$
 
-Since $\ddot q$ is noisy, in practice this is implemented in a form that does not use acceleration directly, such as a momentum observer. For a square, nonsingular Jacobian and an external wrench at the modeled end-effector, $\hat F = J^{-\top}\hat\tau_{\mathrm{ext}}$. A redundant robot or contacts at other locations require a corresponding estimation formulation. A relative error $\delta$ in $\hat K_t$ multiplies the entire actuator torque, not the external force, so in a joint holding a gravity load $G$ it creates a bias of $\delta\,G$ in the external force estimate.
+Since $\ddot q$ is noisy, in practice this is implemented in a form that does not use acceleration directly, such as a momentum observer. For a square, nonsingular Jacobian and an external wrench at the modeled end-effector, $\hat F = J^{-\top}\hat\tau_{\mathrm{ext}}$. A redundant robot or contacts at other locations require a corresponding estimation formulation. A relative error $\varepsilon$ in $\hat K_t$ multiplies the entire actuator torque, not the external force, so in a joint holding a gravity load $G$ it creates a bias of $\varepsilon\,G$ in the external force estimate.
 
 </details>
 
@@ -190,14 +190,14 @@ Every error covered from 02 through this post comes down to the same question: w
 | --- | --- | --- | --- |
 | Current loop bandwidth and delay | Current step response, time delay between commanded and measured torque | Actuator delay, first-order filter | [02](/hardware02/), [04](/hardware04/) |
 | Speed-dependent torque limit | Datasheet $K_e$, resistance, bus voltage | Torque–speed limit, bus voltage randomization | [02](/hardware02/) |
-| reflected inertia | Acceleration in response to a torque step | Joint armature | [03](/hardware03/) |
+| Reflected inertia | Acceleration in response to a torque step | Joint armature | [03](/hardware03/) |
 | Friction and backdrivability | Mean current in constant-speed sweeps, backdrive breakaway torque | Coulomb and viscous friction, per-joint randomization | [03](/hardware03/) |
 | Reducer stiffness and resonance | Torque–twist curve with output locked, chirp response | Two-inertia model or observation delay | [03](/hardware03/) |
 | Contact impedance | Low-frequency torque–displacement slope, frequency response | Fit kp·kd together with armature and friction | [04](/hardware04/) |
 | Torque ripple and electrical angle error | Torque versus position at low constant speed | Periodic disturbance tied to electrical angle | [05](/hardware05/) |
-| Reducer transmission error | Input-angle analysis of input–output encoder difference at low constant speed | Periodic position error tied to input rotation | [05](/hardware05/), reducer subposts |
+| Reducer transmission error | Input-angle analysis of input–output encoder difference at low constant speed | Periodic position error tied to input rotation | [05](/hardware05/), reducer subposts ([03-1](/hardware03-01/)–[03-3](/hardware03-03/)) |
 | Backlash and lost motion | Bidirectional torque–deflection loop | Dead zone and direction hysteresis, observation of recent motion direction | [05](/hardware05/) |
-| Momentary load limit | Momentary peak torque and shock limit per reducer (datasheet) | Impact torque monitoring, penalty or episode termination when exceeded | [03](/hardware03/), reducer subposts |
+| Momentary load limit | Momentary peak torque and shock limit per reducer (datasheet) | Impact torque monitoring, penalty or episode termination when exceeded | [03](/hardware03/), reducer subposts ([03-1](/hardware03-01/)–[03-3](/hardware03-03/)) |
 | Torque constant unit variation, saturation, temperature | Current–torque with a load cell, up to large currents, repeated cold and warm | Per-joint $K_t$ and $R$ randomization, slow drift, available-torque observation | This post |
 
 Not every item needs to be included. In tasks such as fast walking, where the ripple frequency is far above the mechanical bandwidth, omitting ripple may have little effect on link motion, and in position-control-oriented tasks the torque constant error is masked by the position loop. Include an item when its error falls inside the task's bandwidth, as in contact, force control, slow precise motion, and sustained loads. What the errors in this table have in common is that they are tied to state, not random. Knowing whether that state is position, direction, speed, or temperature tells you which errors to measure and what to show the policy.

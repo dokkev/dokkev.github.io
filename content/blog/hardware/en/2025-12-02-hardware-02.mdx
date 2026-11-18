@@ -23,7 +23,7 @@ tags: [Hardware]
 
 import FocDemo from "../../../../src/components/demos/FocDemo";
 
-## Introduction: The Motor Inside the Simulator
+## The Motor Inside the Simulator
 
 Consider a locomotion policy that jumps lower on the real robot than in simulation, or whose landings change as the robot warms up. Motor voltage and thermal limits are possible causes to check alongside the policy and the rest of the system.
 
@@ -44,7 +44,7 @@ The BLDC motors widely used in high-performance multi-joint robots put the coils
 In robot joints that need precise torque control, these motors are mostly driven with FOC (Field-Oriented Control). FOC uses the rotor's electrical angle as a reference to split the three-phase currents into a flux component $i_d$ and a torque component $i_q$ and controls each separately. For a surface-mounted permanent magnet motor operated at $i_d \approx 0$, where magnetic saturation can be neglected, torque is controlled through $i_q$, and the motor torque reduces to this very simple expression.
 
 $$
-\tau \approx K_t\, i_q
+\tau_m \approx K_t\, i_q
 $$
 
 For reluctance torque in interior permanent magnet motors, or for high-speed field weakening, the role of $i_d$ also has to be considered [2](#ref-2), [3](#ref-3).
@@ -52,12 +52,12 @@ For reluctance torque in interior permanent magnet motors, or for high-speed fie
 <details className="math-details">
 <summary>FOC equations: Park transform, voltage equation, mechanical equation</summary>
 
-The FOC controller uses the electrical angle $\theta$ read from the encoder to move the phase currents $(i_\alpha, i_\beta)$ from the stationary frame into a frame that rotates with the rotor (Park transform).
+The FOC controller uses the electrical angle $\theta_e$ read from the encoder to move the phase currents $(i_\alpha, i_\beta)$ from the stationary frame into a frame that rotates with the rotor (Park transform).
 
 $$
 \begin{bmatrix} i_d \\ i_q \end{bmatrix}
 =
-\begin{bmatrix} \cos\theta & \sin\theta \\ -\sin\theta & \cos\theta \end{bmatrix}
+\begin{bmatrix} \cos\theta_e & \sin\theta_e \\ -\sin\theta_e & \cos\theta_e \end{bmatrix}
 \begin{bmatrix} i_\alpha \\ i_\beta \end{bmatrix}
 $$
 
@@ -71,7 +71,7 @@ $$
 The last term, $\omega_e \lambda$, is the back-EMF. The torque the motor produces accelerates the rotor, so speed and current are tied together through the mechanical equation.
 
 $$
-J\dot\omega = K_t\, i_q - B\omega - \tau_{\mathrm{load}}
+J_m\dot\omega_m = K_t\, i_q - B_m\omega_m - \tau_{\mathrm{load}}
 $$
 
 </details>
@@ -80,7 +80,7 @@ The demo below simulates the three FOC equations above as written. Apply $i_q^*$
 
 <FocDemo client:visible lang="en" />
 
-$\tau \approx K_t\, i_q$ is how real hardware implements the simulator's "ideal torque source." The rest of this post is about where this equation breaks down. There are three main cases.
+$\tau_m \approx K_t\, i_q$ is how real hardware implements the simulator's "ideal torque source." The rest of this post is about where this equation breaks down. There are three main cases.
 
 1. When there is not enough voltage to produce the desired $i_q$
 
@@ -93,10 +93,10 @@ $\tau \approx K_t\, i_q$ is how real hardware implements the simulator's "ideal 
 Current determines torque, but producing that current takes voltage. Simplifying the q-axis voltage equation from the FOC equations above to a single phase gives the following [4](#ref-4).
 
 $$
-v = Ri + L\frac{di}{dt} + K_e\,\omega
+v = Ri + L\frac{di}{dt} + K_e\,\omega_m
 $$
 
-The last term, $K_e\omega$, is the **back-EMF**, the same term as $\omega_e\lambda$ in the q-axis equation written in terms of mechanical speed. The faster the motor spins, the larger the back-EMF, and the less voltage headroom is left for pushing current. The speed at which the back-EMF and the resistive voltage drop use up the voltage allowed by the DC bus and the inverter's modulation scheme is the **base speed**. Above it, the available torque drops quickly and reaches zero at the no-load speed.
+The last term, $K_e\omega_m$, is the **back-EMF**, the same term as $\omega_e\lambda$ in the q-axis equation written in terms of mechanical speed. The faster the motor spins, the larger the back-EMF, and the less voltage headroom is left for pushing current. The speed at which the back-EMF and the resistive voltage drop use up the voltage allowed by the DC bus and the inverter's modulation scheme is the **base speed**. Above it, the available torque drops quickly and reaches zero at the no-load speed.
 
 <figure>
   <img src="/assets/img/hardware/motor_thermal_limit.jpg" alt="Motor torque–speed curve marking rated torque, peak torque, base speed, and no-load speed" loading="lazy" />
@@ -119,17 +119,17 @@ Back-EMF also appears when an external force turns the motor. If the driver is o
 
 In other words, the same joint has different damping depending on the driver's state. With a single constant damping term in the model, the differences among a zero-torque command, a disabled driver, and brake mode do not show up in the model. When the joint is turned by external force, as in **kinesthetic teaching** where a person moves the robot by hand to demonstrate, these differences end up directly in the data. Backdriving the joint at a constant speed in each driver state and measuring the required torque lets you compare the damping of each state directly.
 
-## Motor Geometry and Reflected Inertia: Mass the Simulator Easily Misses
+## Motor Geometry and Reflected Inertia: Mass Missed by Simulators
 
-### Torque Scales with the Square of the Radius
+### Radius-Squared Torque Scaling
 
-If the force per unit area that the air-gap surface between magnets and coils can produce, the air-gap shear stress σ, is taken as constant, then force is proportional to the air-gap area, and multiplying by the radius once more gives torque.
+If the force per unit area that the air-gap surface between magnets and coils can produce, the air-gap shear stress $\sigma$, is taken as constant, then force is proportional to the air-gap area, and multiplying by the radius once more gives torque.
 
 $$
-\tau \approx \sigma \cdot (2\pi r L) \cdot r = 2\pi\sigma\, r^2 L
+\tau_m \approx \sigma \cdot (2\pi r\,l_{\mathrm{stack}}) \cdot r = 2\pi\sigma\, r^2\,l_{\mathrm{stack}}
 $$
 
-Here r is the air-gap radius and L is the stack length. Doubling the radius quadruples the torque. This relationship drives the choice of motor geometry, and that choice in turn determines how heavy the joint feels.
+Here $r$ is the air-gap radius and $l_{\mathrm{stack}}$ is the stack length. Doubling the radius quadruples the torque. This relationship drives the choice of motor geometry, and that choice in turn determines how heavy the joint feels.
 
 <figure>
   <img src="/assets/img/hardware/bldc_type.png" alt="Rotor and stator arrangement of inner-runner and outer-runner BLDC motors" loading="lazy" />
@@ -149,15 +149,15 @@ The comparison below describes design trends at similar electromagnetic loading 
 
 ### Reflected Inertia: Hidden Mass That Grows with the Square of the Ratio
 
-Through a reducer, the motor rotor's inertia appears at the joint multiplied by the square of the reduction ratio N.
+Through a reducer, the motor rotor's inertia appears at the joint multiplied by the square of the reduction ratio $N$.
 
 $$
-J_{\mathrm{reflected}} = N^2 J_{\mathrm{rotor}}
+J_{\mathrm{reflected}} = N^2 J_m
 $$
 
-As an illustrative calculation, attach a 100:1 reducer to a small inner-runner motor with a rotor inertia of 1×10⁻⁵ kg·m², and the reflected inertia seen at the joint becomes 0.1 kg·m². That is about the same as the inertia of a 1 kg point mass 0.3 m from the joint (about 0.09 kg·m²). In a high-ratio joint, the rotor's contribution to inertia can exceed that of the link itself. The effect of the reduction ratio is covered in detail in the [next post](/hardware03/).
+As an illustrative calculation, attach a 100:1 reducer to a small inner-runner motor with a rotor inertia of $1\times 10^{-5}\,\mathrm{kg\cdot m^2}$, and the reflected inertia seen at the joint becomes $0.1\,\mathrm{kg\cdot m^2}$. That is about the same as the inertia of a $1\,\mathrm{kg}$ point mass $0.3\,\mathrm{m}$ from the joint (about $0.09\,\mathrm{kg\cdot m^2}$). In a high-ratio joint, the rotor's contribution to inertia can exceed that of the link itself. The effect of the reduction ratio is covered in detail in the [next post](/hardware03/).
 
-The problem is that robot models such as URDF often contain only link masses and inertias and leave out the rotor inertia. MuJoCo provides a per-joint parameter called armature for this [8](#ref-8), and most other simulators offer a similar setting. If this value is missing, the simulated joint moves much more lightly than the real one, and acceleration, collision response, and compliance to external forces all change. In QDD joints with outer-runner motors and low reduction ratios, $N^2 J_{\mathrm{rotor}}$ can be designed to be small. The error from omitting rotor inertia then shrinks as well, but the actual value still has to be computed from both the rotor inertia and the reduction ratio.
+The problem is that robot models such as URDF often contain only link masses and inertias and leave out the rotor inertia. MuJoCo provides a per-joint parameter called armature for this [8](#ref-8), and most other simulators offer a similar setting. If this value is missing, the simulated joint moves much more lightly than the real one, and acceleration, collision response, and compliance to external forces all change. In QDD joints with outer-runner motors and low reduction ratios, $N^2 J_m$ can be designed to be small. The error from omitting rotor inertia then shrinks as well, but the actual value still has to be computed from both the rotor inertia and the reduction ratio.
 
 ### Cogging and Friction
 
@@ -167,7 +167,7 @@ Simulators approximate friction with a single constant or omit it altogether, an
 
 ## Errors in Current-Based Torque Estimation
 
-Many robots estimate joint torque from motor current without a joint torque sensor. Including the reduction ratio N and the reducer efficiency η gives the following.
+Many robots estimate joint torque from motor current without a joint torque sensor. Including the reduction ratio $N$ and the reducer efficiency $\eta$ gives the following.
 
 $$
 \tau_{\mathrm{joint}} \approx \eta\, N\, K_t\, i_q
@@ -198,7 +198,7 @@ A motor datasheet is usually used to pick a motor, but from a Physical AI perspe
 
 | Datasheet value | Where it is used in the model or simulator | What happens if it is missing |
 | --- | --- | --- |
-| Rotor inertia | Joint armature (N²J) | The simulated joint moves more lightly than the real one |
+| Rotor inertia | Joint armature ($N^2 J_m$) | The simulated joint moves more lightly than the real one |
 | $K_e$ or $K_v$, phase resistance $R$, rated voltage | Speed-dependent torque limit | Torque at high speed is overestimated |
 | Peak and continuous torque and current | Torque limit and allowable duty | A policy that uses torque the real motor cannot sustain |
 | Torque constant $K_t$ | Current-to-torque conversion | Bias in torque estimates and commands |
@@ -223,7 +223,7 @@ The differences between a simulated joint and a real BLDC motor are summarized b
 | Torque limit | Constant, independent of speed | Decreases as speed rises, depending on back-EMF and battery voltage | Torque in fast motions is overestimated | This post |
 | Joint inertia | Link inertia only | Rotor reflected inertia $N^2J_m$ is added | Acceleration and collision response are lighter than in reality | [03](/hardware03/) |
 | Friction and cogging | None or constant | Varies with position, speed, and temperature | Stick-slip at low speed, position-dependent disturbances | [Torque ripple](/hardware05/) |
-| Current–torque relationship | $\tau = K_t i$ holds exactly | Unit-to-unit variation, saturation, ripple, sensor noise | Bias in torque estimates and commands | [Torque estimation](/hardware06/) |
+| Current–torque relationship | $\tau_m = K_t i_q$ holds exactly | Unit-to-unit variation, saturation, ripple, sensor noise | Bias in torque estimates and commands | [Torque estimation](/hardware06/) |
 | Change over time | Always the same | $K_t$ and $R$ change with temperature, and derating kicks in | Torque loss and data bias in long experiments | [Heat](/hardware06/) |
 | Joint damping | A single constant | Back-EMF damping depends on driver state | Damping mismatch in backdriving and demonstration data | This post |
 

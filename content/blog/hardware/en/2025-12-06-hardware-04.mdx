@@ -23,7 +23,7 @@ tags: [Hardware]
 import PendulumSwingDemo from "../../../../src/components/demos/PendulumSwingDemo";
 import ReflectedInertiaDemo from "../../../../src/components/demos/ReflectedInertiaDemo";
 
-## Introduction: Same Command, Different Force
+## Same Command, Different Force
 
 A torque rating alone does not tell us how a joint moves under load. Two robots can have the same torque limit and still grasp a cup with different forces under the same position command. We also need to know how their joints respond to contact.
 
@@ -38,19 +38,19 @@ The reflected inertia and friction from [03](/hardware03/) are terms set by the 
 <details className="math-details">
 <summary>Math: joint impedance in the s-plane</summary>
 
-Treating the reducer as rigid, the joint's equation of motion is $I_{\mathrm{BWD}}\ddot q + (B + B_c)\dot q + K_p q = \tau_{ext}$, and its Laplace transform gives
+Treating the reducer as rigid, the joint's equation of motion is $I_{\mathrm{BWD}}\ddot q + (B_s + B_c)\dot q + K_p q = \tau_{\mathrm{ext}}$ (where $I_{\mathrm{BWD}}$ is the backward effective inertia from post 03), and its Laplace transform gives
 
 $$
-Z(s) = I_{\mathrm{BWD}}\,s + (B + B_c) + \frac{K_p}{s} = \frac{I_{\mathrm{BWD}}\,s^2 + (B + B_c)\,s + K_p}{s}
+Z(s) = I_{\mathrm{BWD}}\,s + (B_s + B_c) + \frac{K_p}{s} = \frac{I_{\mathrm{BWD}}\,s^2 + (B_s + B_c)\,s + K_p}{s}
 $$
 
 The zeros of $Z$ are the poles of the joint's response to external force, $1/Z$. Writing the numerator in standard second-order form gives
 
 $$
-\omega_n = \sqrt{\frac{K_p}{I_{\mathrm{BWD}}}}, \qquad \zeta = \frac{B + B_c}{2\sqrt{K_p I_{\mathrm{BWD}}}}, \qquad s = -\zeta\omega_n \pm j\,\omega_n\sqrt{1-\zeta^2}
+\omega_n = \sqrt{\frac{K_p}{I_{\mathrm{BWD}}}}, \qquad \zeta = \frac{B_s + B_c}{2\sqrt{K_p I_{\mathrm{BWD}}}}, \qquad s = -\zeta\omega_n \pm j\,\omega_n\sqrt{1-\zeta^2}
 $$
 
-The distance from a pole to the origin is $\omega_n$, and the cosine of its angle from the negative real axis is $\zeta$. The frequency response $|Z(j\omega)|$ tends to $K_p/\omega$ (spring) for $\omega \ll \omega_n$ and to $I_{\mathrm{BWD}}\,\omega$ (mass) for $\omega \gg \omega_n$; at $\omega = \omega_n$ the two terms cancel and only the damping $B + B_c$ remains. The boundary in the main text is this $\omega_n$. With $I \approx 0.19\,\mathrm{kg\,m^2}$ and $K_p = 100$, $\omega_n \approx 23\,\mathrm{rad/s}$, about 3.6 Hz. Raising $K_p$ tenfold raises $\omega_n$ by only $\sqrt{10} \approx 3.2$ times.
+The distance from a pole to the origin is $\omega_n$, and the cosine of its angle from the negative real axis is $\zeta$. The frequency response $|Z(j\omega)|$ tends to $K_p/\omega$ (spring) for $\omega \ll \omega_n$ and to $I_{\mathrm{BWD}}\,\omega$ (mass) for $\omega \gg \omega_n$; at $\omega = \omega_n$ the two terms cancel and only the damping $B_s + B_c$ remains. The boundary in the main text is this $\omega_n$. With $I \approx 0.19\,\mathrm{kg\,m^2}$ and $K_p = 100$, $\omega_n \approx 23\,\mathrm{rad/s}$, about 3.6 Hz. Raising $K_p$ tenfold raises $\omega_n$ by only $\sqrt{10} \approx 3.2$ times.
 
 </details>
 
@@ -80,7 +80,7 @@ Hardware impedance and control impedance each produce torque in response to the 
 
 $$
 Z(s) = Z_{\mathrm{hw}}(s) + Z_{\mathrm{ctrl}}(s), \qquad
-Z_{\mathrm{hw}} \approx I_{\mathrm{BWD}}\,s + B, \qquad
+Z_{\mathrm{hw}} \approx I_{\mathrm{BWD}}\,s + B_s, \qquad
 Z_{\mathrm{ctrl}} \approx \Big(B_c + \frac{K_p}{s}\Big)\,G(s)
 $$
 
@@ -93,16 +93,16 @@ $$
 Looking only at the damping term, it turns negative only for $\omega > \pi/(2T)$ (about 125 Hz at $T = 2\,\mathrm{ms}$), so delay looks like a problem only at high frequency. But the stiffness term also acquires a real part once it passes through the delay, and at low frequency the second term is about $-K_p T$. In effect, delay turns part of the controller's stiffness into negative damping even at low frequency. If the effective damping, including hardware damping, becomes negative, the joint becomes an impedance that releases energy, i.e. a joint that has lost passivity. In the low-frequency approximation the condition is
 
 $$
-B + B_c > K_p T \quad\Longleftrightarrow\quad K_p < \frac{B + B_c}{T}
+B_s + B_c > K_p T \quad\Longleftrightarrow\quad K_p < \frac{B_s + B_c}{T}
 $$
 
-which has the same form as the stability bound $K_d/T$ obtained from the Routh criterion in the demo math below. Ignoring hardware damping, with $B_c = 1.5\,\mathrm{N\,m\,s/rad}$ and $T = 2\,\mathrm{ms}$, it is about 750 N·m/rad.
+which has the same form as the stability bound $B_c/T$ obtained from the Routh criterion in the demo math below. Ignoring hardware damping, with $B_c = 1.5\,\mathrm{N\,m\,s/rad}$ and $T = 2\,\mathrm{ms}$, it is about 750 N·m/rad.
 
 </details>
 
-The demo below swings an upright 1-DOF arm (0.3 m, 1 kg) through ±60° under PD position control (2 ms control delay; $K_d$ is the $B_c$ from above). The frequency range over which the arm follows the command is the range over which the controller sets the joint's impedance.
+The demo below swings an upright 1-DOF arm (0.3 m, 1 kg) through ±60° under PD position control (2 ms control delay; $K_d$ in the demo is $B_c$ from above). The frequency range over which the arm follows the command is the range over which the controller sets the joint's impedance.
 
-The pole plot in the demo shows the closed-loop poles in the s-plane. The farther a pole is from the origin, the faster the arm follows; the closer it is to the imaginary axis, the less damping there is, and the arm swings more than commanded near resonance. At the same gains, raising the gear ratio moves the poles toward both the origin and the imaginary axis because of reflected inertia, and raising $K_p$ eventually pushes the poles into the right half-plane because of the delay. An SEA adds another pole pair formed by the spring and the link, and the spring shows up only when the swing frequency approaches that resonance.
+The pole plot in the demo shows the closed-loop poles in the s-plane. The farther a pole is from the origin, the faster the arm follows; the closer it is to the imaginary axis, the less damping there is, and the arm swings more than commanded near resonance. At the same gains, raising the gear ratio moves the poles toward both the origin and the imaginary axis because of reflected inertia, and raising $K_p$ eventually pushes the poles into the right half-plane because of the delay. A series elastic actuator (**SEA**) adds another pole pair formed by the spring and the link, and the spring shows up only when the swing frequency approaches that resonance.
 
 <PendulumSwingDemo client:visible lang="en" />
 
@@ -112,23 +112,23 @@ The pole plot in the demo shows the closed-loop poles in the s-plane. The farthe
 **Rigid joint.** For the upright arm, linearizing with $\sin q \approx q$ makes gravity act as a negative stiffness $-mgl$. Without delay, the closed-loop characteristic equation is
 
 $$
-I s^2 + (B + K_d)\,s + (K_p - mgl) = 0, \qquad I = J_L + N^2 J_m
+I s^2 + (B_s + B_c)\,s + (K_p - mgl) = 0, \qquad I = J_L + N^2 J_m
 $$
 
-with $\omega_n = \sqrt{(K_p - mgl)/I}$ and $\zeta = (B + K_d)/\big(2\sqrt{(K_p - mgl)I}\big)$. If $K_p < mgl$, one real root lies in the right half-plane and the arm cannot stand up. At the same gains, raising $N$ increases $I$, moving the poles toward both the origin ($\omega_n \propto 1/\sqrt I$) and the imaginary axis ($\zeta \propto 1/\sqrt I$). At 50:1, $\omega_n/2\pi \approx 3.5$ Hz and $\zeta \approx 0.30$; at 160:1, about 2.0 Hz and $\zeta \approx 0.17$. The amplitude ratio from command $q_d$ to $q$ peaks higher at resonance the smaller $\zeta$ is (maximum $\approx 1/2\zeta$); past resonance it falls off as $(\omega_n/\omega)^2$ and the phase lag approaches 180°.
+with $\omega_n = \sqrt{(K_p - mgl)/I}$ and $\zeta = (B_s + B_c)/\big(2\sqrt{(K_p - mgl)I}\big)$. If $K_p < mgl$, one real root lies in the right half-plane and the arm cannot stand up. At the same gains, raising $N$ increases $I$, moving the poles toward both the origin ($\omega_n \propto 1/\sqrt I$) and the imaginary axis ($\zeta \propto 1/\sqrt I$). At 50:1, $\omega_n/2\pi \approx 3.5$ Hz and $\zeta \approx 0.30$; at 160:1, about 2.0 Hz and $\zeta \approx 0.17$. The amplitude ratio from command $q_d$ to $q$ peaks higher at resonance the smaller $\zeta$ is (maximum $\approx 1/2\zeta$); past resonance it falls off as $(\omega_n/\omega)^2$ and the phase lag approaches 180°.
 
 **Delay.** Replacing the delay $e^{-sT}$ with the first-order Padé approximation $(1 - sT/2)/(1 + sT/2)$ introduces a pole at $s = -2/T$ and a right-half-plane zero at $s = +2/T$. As $K_p$ increases, the root locus is drawn toward this zero and crosses the imaginary axis (the gray locus in the demo). Applying the Routh criterion to the third-order characteristic equation gives the stability condition
 
 $$
-K_p < \frac{K_d}{T} - \frac{K_d^2}{4I}
+K_p < \frac{B_c}{T} - \frac{B_c^2}{4I}
 $$
 
-(a first-order approximation without friction and gravity). The second term is usually small, so the bound is close to $K_d/T$. This says the same thing as the passivity condition above: the negative damping $K_p T$ that delay creates at low frequency must not exceed $K_d$. With $K_d = 1.5$, $T = 2\,\mathrm{ms}$, and 50:1, it is about 745; solving exactly with friction and gravity included gives the demo's value of about 770. Because this bound grows with $K_d$, it does not by itself prevent scaling the gains in proportion to inertia. Torque limits and velocity measurement noise, which this model lacks, set the real bound.
+(a first-order approximation without friction and gravity). The second term is usually small, so the bound is close to $B_c/T$. This says the same thing as the passivity condition above: the negative damping $K_p T$ that delay creates at low frequency must not exceed $B_c$. With $B_c = 1.5$, $T = 2\,\mathrm{ms}$, and 50:1, it is about 745; solving exactly with friction and gravity included gives the demo's value of about 770. Because this bound grows with $B_c$, it does not by itself prevent scaling the gains in proportion to inertia. Torque limits and velocity measurement noise, which this model lacks, set the real bound.
 
-**SEA.** If the PD acts on the motor angle $\theta$, the link is a mass pulled along by a spring attached to the motor angle.
+**SEA.** If the PD acts on the motor angle $\theta_m$, the link is a mass pulled along by a spring attached to the output-referenced motor angle $\theta_m/N$.
 
 $$
-\frac{q}{\theta}(j\omega) \approx \frac{K_s}{K_s - mgl - J_L\,\omega^2}, \qquad f_s = \frac{1}{2\pi}\sqrt{\frac{K_s - mgl}{J_L}}
+\frac{q}{\theta_m/N}(j\omega) \approx \frac{K_s}{K_s - mgl - J_L\,\omega^2}, \qquad f_s = \frac{1}{2\pi}\sqrt{\frac{K_s - mgl}{J_L}}
 $$
 
 For $f \ll f_s$ the ratio is close to 1 and the spring is invisible; as $f$ approaches $f_s$, the link swings more than the motor. This resonance is set by $K_s$ and $J_L$ regardless of the control gains, so no matter how high the motor-side gains go, the link's tracking bandwidth can hardly exceed $f_s$.
@@ -149,9 +149,9 @@ As shown in [short impacts](/hardware03/#how-the-link-separates-from-the-rotor-i
 
 On a multi-joint robot, the environment meets the end effector, not a joint. Each joint's inertia maps differently into each direction at the end effector depending on the configuration, so the same arm feels heavier in some directions than others. This direction-dependent heaviness is the effective mass.
 
-The demo below draws the effective mass at the end effector of a 2-DOF arm as an ellipse. Raising the gear ratio enlarges the ellipse as reflected inertia increases each joint's inertia, and the ellipse's shape becomes determined more by the arm's kinematics than by how the link mass is distributed. At low gear ratios the FWD ellipse, in which the link inertia appears enlarged by the forward efficiency, is larger; at high gear ratios the BWD ellipse, in which the reflected inertia appears enlarged by the backward efficiency, becomes larger. In other words, the end effector feels different in mass depending on whether the motor is pushing or the environment is pushing.
+The demo below draws the effective mass at the end effector of a 2-DOF arm as an ellipse. Raising the gear ratio enlarges the ellipse as reflected inertia increases each joint's inertia, and the ellipse's shape becomes determined more by the arm's kinematics than by how the link mass is distributed. At low gear ratios the forward (**FWD**) ellipse, in which the link inertia appears enlarged by the forward efficiency, is larger; at high gear ratios the backward (**BWD**) ellipse, in which the reflected inertia appears enlarged by the backward efficiency, becomes larger. In other words, the end effector feels different in mass depending on whether the motor is pushing or the environment is pushing.
 
-In the demo, clicking an arrow around the arm tip sends the same ball (1 kg, 3 m/s) flying in from that direction. If the effective mass in that direction is sufficiently heavier than the ball, the ball bounces back; if it is lighter, the ball pushes the arm tip and keeps going. Because the end-effector inertia differs by direction, the arm tip is pushed at an angle to the ball's incoming direction. The graph below shows the end-effector displacement while the position controller brings the arm back after the collision.
+When the same ball (1 kg, 3 m/s) approaches the arm tip from one of the directions around it, the ball bounces back if the effective mass in that direction is sufficiently heavier than the ball; if it is lighter, the ball pushes the arm tip and keeps going. Because the end-effector inertia differs by direction, the arm tip is pushed at an angle to the ball's incoming direction. The graph below shows the end-effector displacement while the position controller brings the arm back after the collision.
 
 <ReflectedInertiaDemo client:visible lang="en" />
 
